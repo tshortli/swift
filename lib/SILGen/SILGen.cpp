@@ -1169,20 +1169,29 @@ static void emitOrDelayFunction(SILGenModule &SGM, SILDeclRef constant) {
                   !isPossiblyUsedExternally(linkage, SGM.M.isWholeModule());
 
   if (!mayDelay) {
+    llvm::errs() << "ALLANXXX: may not delay " << constant.getDecl()->getName() << "\n";
+    llvm::errs() << "    hasUserWrittenCode " << constant.hasUserWrittenCode() << "\n";
+    llvm::errs() << "    isDynamicallyReplaceable " << constant.isDynamicallyReplaceable() << "\n";
+    llvm::errs() << "    isPossiblyUsedExternally " << isPossiblyUsedExternally(linkage, SGM.M.isWholeModule()) << "\n";
+
     SGM.emitFunctionDefinition(constant, SGM.getFunction(constant, ForDefinition));
     return;
   }
 
   // If the function is already forced then it was previously delayed and then
   // referenced. We don't need to emit or delay it again.
-  if (SGM.forcedFunctions.contains(constant))
+  if (SGM.forcedFunctions.contains(constant)) {
+    llvm::errs() << "ALLANXXX: skipping forced func " << constant.getDecl()->getName() << "\n";
     return;
+  }
 
   if (auto *f = SGM.getEmittedFunction(constant, ForDefinition)) {
+    llvm::errs() << "ALLANXXX: emitting " << constant.getDecl()->getName() << "\n";
     SGM.emitFunctionDefinition(constant, f);
     return;
   }
 
+  llvm::errs() << "ALLANXXX: delaying " << constant.getDecl()->getName() << "\n";
   // This is a delayable function so remember how to emit it in case it gets
   // referenced later.
   SGM.delayedFunctions.insert({constant, emitAfter});
@@ -1421,6 +1430,7 @@ void SILGenModule::emitAbstractFuncDecl(AbstractFunctionDecl *AFD) {
 }
 
 void SILGenModule::emitFunction(FuncDecl *fd) {
+  llvm::errs() << "ALLANXXX: emit function " << fd->getName() << "\n";
   Types.setCaptureTypeExpansionContext(SILDeclRef(fd), M);
 
   SILDeclRef::Loc decl = fd;
