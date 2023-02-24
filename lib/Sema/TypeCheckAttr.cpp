@@ -1878,13 +1878,22 @@ void AttributeChecker::visitAvailableAttr(AvailableAttr *attr) {
       D->getASTContext().Diags.diagnose(
           D->getLoc(), diag::invalid_decl_attribute, attr);
     }
-
   }
 
   // Skip the remaining diagnostics in swiftinterfaces.
   auto *SF = D->getDeclContext()->getParentSourceFile();
   if (SF && SF->Kind == SourceFileKind::Interface)
     return;
+
+  if (attr->isUnconditionallyUnavailable() || attr->isUnconditionallyDeprecated()) {
+    if (auto availableRangeAttrPair = D->getSemanticAvailableRangeAttr()) {
+      // ALLANXXX diagnose conflict
+      const AvailableAttr *availableRangeAttr = availableRangeAttrPair->first;
+
+
+      return;
+    }
+  }
 
   if (!attr->hasPlatform() || !attr->isActivePlatform(Ctx) ||
       !attr->Introduced.has_value()) {

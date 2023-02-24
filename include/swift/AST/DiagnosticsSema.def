@@ -5953,6 +5953,11 @@ WARNING(availability_deprecated_rename, Deprecation,
          unsigned, StringRef))
 #undef REPLACEMENT_DECL_KIND_SELECT
 
+ERROR(availability_unconditional_conflicts_with_specific, none,
+      "unconditional %select{deprecation|unavailability}0 conflicts with "
+      " availability of %1 %2 or newer",
+      (unsigned, StringRef, llvm::VersionTuple))
+
 NOTE(note_deprecated_rename, none,
      "use '%0' instead", (StringRef))
 
