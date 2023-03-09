@@ -76,6 +76,14 @@ public:
   /// modifier; if \c None, do nothing.
   Optional<bool> Dynamic;
 
+  /// If \c true, add a public modifier; if \c false, delete a public
+  /// modifier; if \c None, do nothing.
+  Optional<bool> Public;
+
+  /// If \c true, add a usableFromInline modifier; if \c false, delete a
+  /// usableFromInline modifier; if \c None, do nothing.
+  Optional<bool> UsableFromInline;
+
   /// If set, modify an @objc attribute to give it the specified \c ObjCName.
   /// If \c ObjC would otherwise be \c None, it will be set to \c true.
   Optional<ObjCSelector> ObjCName;

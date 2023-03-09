@@ -1657,6 +1657,16 @@ static void applyAccessNote(ValueDecl *VD, const AccessNote &note,
     return new (ctx) DynamicAttr(true);
   });
 
+  addOrRemoveAttr<AccessControlAttr>(VD, notes, note.Public, removedAttrs, [&] {
+    return new (ctx)
+        AccessControlAttr(VD->getAttributeInsertionLoc(/*isModifier=*/true),
+                          VD->getSourceRange(), AccessLevel::Public);
+  });
+
+  addOrRemoveAttr<UsableFromInlineAttr>(
+      VD, notes, note.UsableFromInline, removedAttrs,
+      [&] { return new (ctx) UsableFromInlineAttr(true); });
+
   // FIXME: If we ever have more attributes, we'll need to sort removedAttrs by
   // SourceLoc. As it is, attrs are always before modifiers, so we're okay now.
 
