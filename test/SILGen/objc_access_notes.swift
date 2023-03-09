@@ -551,8 +551,8 @@ func useWotsit(_ w: Wotsit<String>) {
 
 func other() { }
 
-// expected-remark@+2 {{implicitly added '@usableFromInlin' to this struct, as specified by access note for fancy test suite}}
-// expected-note@+1 {{add '@usableFromInlin' explicitly to silence this warning}} {{1-1=@usableFromInline}}
+// expected-remark@+2 {{implicitly added '@usableFromInline' to this struct, as specified by access note for fancy test suite}}
+// expected-note@+1 {{add '@usableFromInline' explicitly to silence this warning}} {{1-1=@usableFromInline}}
 struct MyStruct {
 
   // expected-remark@+2 {{implicitly added 'public dynamic' to this property, as specified by access note for fancy test suite}}

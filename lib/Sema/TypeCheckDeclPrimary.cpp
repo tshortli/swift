@@ -1566,7 +1566,7 @@ static StringRef prettyPrintAttrs(const ValueDecl *VD,
 
   PrintOptions opts = PrintOptions::printDeclarations();
   VD->getAttrs().print(printer, opts, attrs, VD);
-  return StringRef(out.begin(), out.size()).drop_back();
+  return StringRef(out.begin(), out.size()).trim(' ');
 }
 
 static void diagnoseChangesByAccessNote(
