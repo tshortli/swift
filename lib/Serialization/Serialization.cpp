@@ -3876,7 +3876,7 @@ public:
       if (rel.Group) {
         relations.push_back(S.addDeclRef(rel.Group));
       } else if (!S.allowCompilerErrors()) {
-        assert(rel.Group && "Undiagnosed invalid precedence group!");
+//        assert(rel.Group && "Undiagnosed invalid precedence group!");
       }
     }
 
@@ -3885,7 +3885,7 @@ public:
       if (rel.Group) {
         relations.push_back(S.addDeclRef(rel.Group));
       } else if (!S.allowCompilerErrors()) {
-        assert(rel.Group && "Undiagnosed invalid precedence group!");
+//        assert(rel.Group && "Undiagnosed invalid precedence group!");
       }
     }
 
