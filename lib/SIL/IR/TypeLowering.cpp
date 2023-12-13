@@ -2461,7 +2461,7 @@ namespace {
       auto subMap = enumType->getContextSubstitutionMap(&TC.M, D);
 
       // Accumulate the properties of all direct payloads.
-      for (auto elt : D->getAllElements()) {
+      for (auto elt : D->getAllElements()) { // ALLANXXX enum type lowering
         // No-payload elements do not affect any recursive properties.
         if (!elt->hasAssociatedValues())
           continue;
@@ -2864,7 +2864,7 @@ bool TypeConverter::visitAggregateLeaves(
         }
       } else if (auto *decl = ty.getEnumOrBoundGenericEnum()) {
         auto subMap = ty->getContextSubstitutionMap(&M, decl);
-        for (auto *element : decl->getAllElements()) {
+        for (auto *element : decl->getAllElements()) { // ALLANXXX enum type lowering
           if (!element->hasAssociatedValues())
             continue;
           // TODO: Callback for indirect elements.
@@ -4586,7 +4586,7 @@ static void countNumberOfInnerFields(unsigned &fieldsCount, TypeConverter &TC,
            "types at all");
     unsigned fieldsCountBefore = fieldsCount;
     unsigned maxEnumCount = 0;
-    for (auto elt : enumDecl->getAllElements()) {
+    for (auto elt : enumDecl->getAllElements()) { // ALLANXXX enum type lowering
       if (!elt->hasAssociatedValues())
         continue;
 

@@ -1638,7 +1638,7 @@ bool SimplifyCFG::simplifyCondBrBlock(CondBranchInst *BI) {
   if (auto *SEI = dyn_cast<SelectEnumInst>(BI->getCondition())) {
     EnumDecl *E = SEI->getEnumOperand()->getType().getEnumOrBoundGenericEnum();
 
-    auto AllElts = E->getAllElements();
+    auto AllElts = E->getAllElements(); // ALLANXXX fix now - needs test
     auto Iter = AllElts.begin();
     EnumElementDecl *FirstElt = *Iter;
 
@@ -3591,7 +3591,7 @@ static bool simplifySwitchEnumToSelectEnum(SILBasicBlock *BB, unsigned ArgNum,
     // Count the number of possible case tags for a given enum type
     auto *Enum = SEI->getOperand()->getType().getEnumOrBoundGenericEnum();
     unsigned ElemCount = 0;
-    for (auto E : Enum->getAllElements()) {
+    for (auto E : Enum->getAllElements()) { // ALLANXXX should be ok, needs test
       if (E)
         ++ElemCount;
     }

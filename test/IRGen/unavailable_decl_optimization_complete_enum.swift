@@ -1,5 +1,5 @@
-// RUN: %target-swift-frontend -parse-as-library -module-name Test -validate-tbd-against-ir=missing %s -emit-ir | %FileCheck %s --check-prefixes=CHECK,CHECK-NO-STRIP
-// RUN: %target-swift-frontend -parse-as-library -module-name Test -validate-tbd-against-ir=missing -enable-library-evolution %s -emit-ir | %FileCheck %s --check-prefixes=CHECK,CHECK-NO-STRIP,CHECK-RESILIENT,CHECK-NO-STRIP-RESILIENT
+// RUN: %target-swift-frontend -parse-as-library -module-name Test -validate-tbd-against-ir=missing -unavailable-decl-optimization=none %s -emit-ir | %FileCheck %s --check-prefixes=CHECK,CHECK-NO-STRIP
+// RUN: %target-swift-frontend -parse-as-library -module-name Test -validate-tbd-against-ir=missing -enable-library-evolution -unavailable-decl-optimization=none %s -emit-ir | %FileCheck %s --check-prefixes=CHECK,CHECK-NO-STRIP,CHECK-RESILIENT,CHECK-NO-STRIP-RESILIENT
 
 // RUN: %target-swift-frontend -parse-as-library -module-name Test -validate-tbd-against-ir=missing -unavailable-decl-optimization=complete %s -emit-ir | %FileCheck %s --check-prefixes=CHECK,CHECK-STRIP
 // RUN: %target-swift-frontend -parse-as-library -module-name Test -validate-tbd-against-ir=missing -enable-library-evolution -unavailable-decl-optimization=complete %s -emit-ir | %FileCheck %s --check-prefixes=CHECK,CHECK-STRIP,CHECK-RESILIENT,CHECK-STRIP-RESILIENT

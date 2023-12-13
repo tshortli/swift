@@ -34,6 +34,7 @@ static bool canDeriveConformance(NominalTypeDecl *type) {
   // a CaseIterable conformance.
   //
   // FIXME: Lift the availability restriction.
+  // ALLANXXX file an issue to investigate this
   return !enumDecl->hasPotentiallyUnavailableCaseValue()
       && enumDecl->hasOnlyCasesWithoutAssociatedValues();
 }

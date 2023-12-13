@@ -35,16 +35,6 @@ public func useConditionallyAvailableConformance() {
 // CHECK-OLD-LABEL: @"$s31weak_import_availability_helper21AlwaysAvailableStructVAA0eF8ProtocolAAWP" = extern_weak global ptr
 // CHECK-NEW-LABEL: @"$s31weak_import_availability_helper21AlwaysAvailableStructVAA0eF8ProtocolAAWP" = external global ptr
 
-@available(macOS, unavailable)
-func useUnavailableConformance<T : UnavailableProtocol>(_: T.Type) {}
-
-@available(macOS, unavailable)
-public func useUnavailableConformance() {
-  useUnavailableConformance(AlwaysAvailableStruct.self)
-}
-
-// CHECK-LABEL: @"$s31weak_import_availability_helper21AlwaysAvailableStructVAA19UnavailableProtocolAAWP" = extern_weak global ptr, align 8
-
 @available(macOS 10.50, *)
 public func callConditionallyAvailableFunction() {
   conditionallyAvailableFunction()
@@ -52,13 +42,6 @@ public func callConditionallyAvailableFunction() {
 
 // CHECK-OLD-LABEL: declare extern_weak swiftcc void @"$s31weak_import_availability_helper30conditionallyAvailableFunctionyyF"()
 // CHECK-NEW-LABEL: declare swiftcc void @"$s31weak_import_availability_helper30conditionallyAvailableFunctionyyF"()
-
-@available(macOS, unavailable)
-public func callUnavailableFunction() {
-  unavailableFunction()
-}
-
-// CHECK-LABEL: declare extern_weak swiftcc void @"$s31weak_import_availability_helper19unavailableFunctionyyF"()
 
 @available(macOS 10.50, *)
 public func useConditionallyAvailableGlobal() {
@@ -75,17 +58,6 @@ public func useConditionallyAvailableGlobal() {
 
 // CHECK-OLD-LABEL: declare extern_weak swiftcc { ptr, ptr } @"$s31weak_import_availability_helper28conditionallyAvailableGlobalSivM"(ptr noalias dereferenceable(32))
 // CHECK-NEW-LABEL: declare swiftcc { ptr, ptr } @"$s31weak_import_availability_helper28conditionallyAvailableGlobalSivM"(ptr noalias dereferenceable(32))
-
-@available(macOS, unavailable)
-public func useUnavailableGlobal() {
-  _ = unavailableGlobal
-  unavailableGlobal = 0
-  unavailableGlobal += 1
-}
-
-// CHECK-LABEL: declare extern_weak swiftcc i64 @"$s31weak_import_availability_helper17unavailableGlobalSivg"()
-// CHECK-LABEL: declare extern_weak swiftcc void @"$s31weak_import_availability_helper17unavailableGlobalSivs"(i64)
-// CHECK-LABEL: declare extern_weak swiftcc { ptr, ptr } @"$s31weak_import_availability_helper17unavailableGlobalSivM"(ptr noalias dereferenceable(32))
 
 func blackHole<T>(_: T) {}
 

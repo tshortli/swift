@@ -2875,8 +2875,8 @@ SILType irgen::getSingletonAggregateFieldType(IRGenModule &IGM, SILType t,
     if (IGM.isResilient(enumDecl, expansion))
       return SILType();
 
-    auto allCases = enumDecl->getAllElements();
-    
+    auto allCases = enumDecl->getAllElements(); // ALLANXXX enum type lowering (non-resilient layout)
+
     auto theCase = allCases.begin();
     if (!allCases.empty() && std::next(theCase) == allCases.end()
         && (*theCase)->hasAssociatedValues()) {

@@ -4993,7 +4993,7 @@ public:
       // In canonical SIL, select instructions must not cover any enum elements
       // that are unavailable.
       if (F.getModule().getStage() >= SILStage::Canonical) {
-        require(elt->isAvailableDuringLowering(),
+        require(elt->isAvailableDuringLowering(), // ALLANXXX
                 "select_enum dispatches on enum element that is unavailable "
                 "during lowering.");
       }
@@ -5092,7 +5092,7 @@ public:
       // In canonical SIL, switch instructions must not cover any enum elements
       // that are unavailable.
       if (F.getModule().getStage() >= SILStage::Canonical) {
-        require(elt->isAvailableDuringLowering(),
+        require(elt->isAvailableDuringLowering(), // ALLANXXX
                 "switch_enum dispatches on enum element that is unavailable "
                 "during lowering.");
       }
@@ -5204,7 +5204,7 @@ public:
       // In canonical SIL, switch instructions must not cover any enum elements
       // that are unavailable.
       if (F.getModule().getStage() >= SILStage::Canonical) {
-        require(elt->isAvailableDuringLowering(),
+        require(elt->isAvailableDuringLowering(), // ALLANXXX
                 "switch_enum_addr dispatches on enum element that is "
                 "unavailable during lowering.");
       }

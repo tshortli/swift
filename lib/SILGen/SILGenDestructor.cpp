@@ -535,7 +535,7 @@ void SILGenFunction::emitMoveOnlyMemberDestruction(SILValue selfValue,
     SmallVector<std::pair<EnumElementDecl *, SILBasicBlock *>, 8> caseCleanups;
     auto *contBlock = createBasicBlock();
 
-    for (auto *enumElt : enumDecl->getAllElements()) {
+    for (auto *enumElt : enumDecl->getAllElements()) { // ALLANXXX enum destructuring
       auto *enumBlock = createBasicBlock();
       SILBuilder builder(enumBlock, enumBlock->begin());
 

@@ -1,4 +1,4 @@
-// RUN: %target-swift-emit-silgen(mock-sdk: %clang-importer-sdk) -enable-objc-interop -import-objc-header %S/Inputs/objc_init_unavailable.h %s | %FileCheck %s
+// RUN: %target-swift-emit-silgen(mock-sdk: %clang-importer-sdk) -enable-objc-interop -import-objc-header %S/Inputs/objc_init_unavailable.h -unavailable-decl-optimization=none %s | %FileCheck %s
 // REQUIRES: objc_interop
 // REQUIRES: OS=macosx
 

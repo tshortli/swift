@@ -512,7 +512,7 @@ void OwnershipModelEliminatorVisitor::splitDestroy(DestroyValueInst *destroy) {
   auto *destroyBlock = destroy->getParent();
   auto *contBlock = destroyBlock->split(std::next(destroy->getIterator()));
 
-  for (auto *enumElt : enumDecl->getAllElements()) {
+  for (auto *enumElt : enumDecl->getAllElements()) { // ALLANXXX enum destructuring
     auto *enumBlock = function->createBasicBlockBefore(contBlock);
     SILBuilder builder(enumBlock, enumBlock->begin());
     if (enumElt->hasAssociatedValues()) {

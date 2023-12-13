@@ -109,6 +109,8 @@ bool TypeBase::isUninhabited() {
   // Empty enum declarations are uninhabited
   if (auto nominalDecl = getAnyNominal())
     if (auto enumDecl = dyn_cast<EnumDecl>(nominalDecl))
+      // ALLANXXX file a bug about resilient empty enums
+      // ALLANXXX file a bug about treating enums with all unavailable cases as uninhabited
       // Objective-C enums may be allowed to hold any value representable by
       // the underlying type, but only if they come from clang.
       if (enumDecl->getAllElements().empty() &&

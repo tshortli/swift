@@ -342,6 +342,7 @@ bb6:
   unreachable
 }
 
+// ALLANXXX emulate
 // CHECK-LABEL: simplify_switch_to_select_enum
 sil @simplify_switch_to_select_enum : $@convention(thin) (X) -> Bool {
 bb0(%0 : $X):

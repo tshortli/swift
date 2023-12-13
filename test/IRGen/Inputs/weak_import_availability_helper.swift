@@ -21,6 +21,7 @@ public struct ConditionallyAvailableStruct {
   public func conditionallyAvailableMethod() {}
 }
 
+@available(macOS 10.50, *)
 extension ConditionallyAvailableStruct {
   public struct NestedStruct {}
 }

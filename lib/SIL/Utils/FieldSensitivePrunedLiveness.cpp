@@ -377,7 +377,7 @@ void TypeTreeLeafTypeRange::constructFilteredProjections(
     unsigned start = startEltOffset;
 
     unsigned maxSubEltCount = 0;
-    for (auto *eltDecl : enumDecl->getAllElements()) {
+    for (auto *eltDecl : enumDecl->getAllElements()) { // ALLANXXX enum destructuring
       if (!eltDecl->hasAssociatedValues())
         continue;
       auto nextType = type.getEnumElementType(eltDecl, fn);
