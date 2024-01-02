@@ -352,6 +352,9 @@ TypeCheckSourceFileRequest::evaluate(Evaluator &eval, SourceFile *SF) const {
 
 void swift::performWholeModuleTypeChecking(SourceFile &SF) {
   auto &Ctx = SF.getASTContext();
+  if (Ctx.TypeCheckerOpts.EnableLazyTypecheck)
+    return;
+
   FrontendStatsTracer tracer(Ctx.Stats,
                              "perform-whole-module-type-checking");
   switch (SF.Kind) {
@@ -372,10 +375,13 @@ void swift::performWholeModuleTypeChecking(SourceFile &SF) {
 }
 
 void swift::loadDerivativeConfigurations(SourceFile &SF) {
+  auto &Ctx = SF.getASTContext();
+  if (Ctx.TypeCheckerOpts.EnableLazyTypecheck)
+    return;
+
   if (!isDifferentiableProgrammingEnabled(SF))
     return;
 
-  auto &Ctx = SF.getASTContext();
   FrontendStatsTracer tracer(Ctx.Stats,
                              "load-derivative-configurations");
 
