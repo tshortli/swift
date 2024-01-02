@@ -1390,7 +1390,7 @@ void AttributeChecker::visitObjCAttr(ObjCAttr *attr) {
     newAttr->setImplicit(attr->isImplicit());
     newAttr->setNameImplicit(attr->isNameImplicit());
     newAttr->setAddedByAccessNote(attr->getAddedByAccessNote());
-    D->getAttrs().add(newAttr);
+    D->getAttrs().add(newAttr); // ALLANXXX
 
     D->getAttrs().removeAttribute(attr);
     attr->setInvalid();
@@ -6687,7 +6687,7 @@ void AttributeChecker::visitTransposeAttr(TransposeAttr *attr) {
     attr->setInvalid();
     return;
   }
-  attr->setOriginalFunction(originalAFD);
+  attr->setOriginalFunction(originalAFD); // ALLANXXX transpose attr
 
   // Diagnose if original function has opaque result types.
   if (auto *opaqueResultTypeDecl = originalAFD->getOpaqueResultTypeDecl()) {
@@ -6744,7 +6744,7 @@ void AttributeChecker::visitTransposeAttr(TransposeAttr *attr) {
   }
 
   // Set the resolved linearity parameter indices in the attribute.
-  attr->setParameterIndices(linearParamIndices);
+  attr->setParameterIndices(linearParamIndices); // ALLANXXX transpose attr
 }
 
 void AttributeChecker::visitActorAttr(ActorAttr *attr) {
@@ -7280,7 +7280,7 @@ void AttributeChecker::visitRawLayoutAttr(RawLayoutAttr *attr) {
   }
   
   // The storage is not directly referenceable by stored properties.
-  sd->setHasUnreferenceableStorage(true);
+  sd->setHasUnreferenceableStorage(true); // ALLANXXX raw layout attr
 }
 
 void AttributeChecker::visitNonEscapableAttr(NonEscapableAttr *attr) {

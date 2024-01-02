@@ -3,6 +3,11 @@
 // RUN: llvm-bcanalyzer %t/transpose_attr.swiftmodule | %FileCheck %s -check-prefix=BCANALYZER
 // RUN: %target-sil-opt -enable-sil-verify-all %t/transpose_attr.swiftmodule -o - | %FileCheck %s
 
+// RU/N: %empty-directory(%t/lazy)
+// RU/N: %target-swift-frontend %s -emit-module -parse-as-library -experimental-lazy-typecheck -experimental-skip-non-inlinable-function-bodies -o %t/lazy
+// RU/N: llvm-bcanalyzer %t/lazy/transpose_attr.swiftmodule | %FileCheck %s -check-prefix=BCANALYZER
+// RU/N: %target-sil-opt -enable-sil-verify-all %t/lazy/transpose_attr.swiftmodule -o - | %FileCheck %s
+
 // BCANALYZER-NOT: UnknownCode
 
 import _Differentiation

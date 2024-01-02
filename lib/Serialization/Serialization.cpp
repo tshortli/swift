@@ -3096,6 +3096,7 @@ class Serializer::DeclSerializer : public DeclVisitor<DeclSerializer> {
     case DAK_Transpose: {
       auto abbrCode = S.DeclTypeAbbrCodes[TransposeDeclAttrLayout::Code];
       auto *attr = cast<TransposeAttr>(DA);
+      // ALLANXXX
       assert(attr->getOriginalFunction() &&
              "`@transpose` attribute should have original declaration set "
              "during construction or parsing");
