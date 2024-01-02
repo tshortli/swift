@@ -6252,19 +6252,15 @@ static bool typeCheckDerivativeAttr(DerivativeAttr *attr) {
     return true;
   }
 
-  // Get the resolved differentiability parameter indices.
-  auto *resolvedDiffParamIndices = attr->getParameterIndices();
-
   // Get the parsed differentiability parameter indices, which have not yet been
   // resolved. Parsed differentiability parameter indices are defined only for
   // parsed attributes.
   auto parsedDiffParams = attr->getParsedParameters();
 
   // If differentiability parameter indices are not resolved, compute them.
-  if (!resolvedDiffParamIndices)
-    resolvedDiffParamIndices = computeDifferentiabilityParameters(
-        parsedDiffParams, derivative, derivative->getGenericEnvironment(),
-        attr->getAttrName(), attr->getLocation());
+  auto *resolvedDiffParamIndices = computeDifferentiabilityParameters(
+      parsedDiffParams, derivative, derivative->getGenericEnvironment(),
+      attr->getAttrName(), attr->getLocation());
   if (!resolvedDiffParamIndices)
     return true;
 

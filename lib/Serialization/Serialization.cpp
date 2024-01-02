@@ -3075,13 +3075,13 @@ class Serializer::DeclSerializer : public DeclVisitor<DeclSerializer> {
       auto origName = origDeclNameRef.Name.getBaseName();
       IdentifierID origNameId = S.addDeclBaseNameRef(origName);
       DeclID origDeclID = S.addDeclRef(attr->getOriginalFunction(ctx));
-      auto derivativeKind =
-          getRawStableAutoDiffDerivativeFunctionKind(attr->getDerivativeKind());
+      auto derivativeKind = getRawStableAutoDiffDerivativeFunctionKind(
+          attr->getDerivativeKind(ctx));
       uint8_t rawAccessorKind = 0;
       auto origAccessorKind = origDeclNameRef.AccessorKind;
       if (origAccessorKind)
         rawAccessorKind = uint8_t(getStableAccessorKind(*origAccessorKind));
-      auto *parameterIndices = attr->getParameterIndices();
+      auto *parameterIndices = attr->getParameterIndices(ctx);
       assert(parameterIndices && "Parameter indices must be resolved");
       SmallVector<bool, 4> paramIndicesVector;
       for (unsigned i : range(parameterIndices->getCapacity()))
@@ -6286,7 +6286,7 @@ static void recordDerivativeFunctionConfig(
     auto *origAFD = attr->getOriginalFunction(ctx);
     auto mangledName = ctx.getIdentifier(Mangler.mangleDeclAsUSR(origAFD, ""));
     derivativeConfigs[mangledName].insert(
-        {ctx.getIdentifier(attr->getParameterIndices()->getString()),
+        {ctx.getIdentifier(attr->getParameterIndices(ctx)->getString()),
          AFD->getGenericSignature()});
   }
 }

@@ -491,17 +491,17 @@ public:
                          differentiableAttr->getDerivativeGenericSignature()));
     }
 
+    auto &ctx = AFD->getASTContext();
     for (const auto *derivativeAttr :
          AFD->getAttrs().getAttributes<DerivativeAttr>()) {
       auto *resultIndices = autodiff::getFunctionSemanticResultIndices(
-        derivativeAttr->getOriginalFunction(AFD->getASTContext()),
-        derivativeAttr->getParameterIndices());
+          derivativeAttr->getOriginalFunction(ctx),
+          derivativeAttr->getParameterIndices(ctx));
       addDerivativeConfiguration(
           DifferentiabilityKind::Reverse,
           derivativeAttr->getOriginalFunction(AFD->getASTContext()),
-          AutoDiffConfig(derivativeAttr->getParameterIndices(),
-                         resultIndices,
-                         AFD->getGenericSignature()));
+          AutoDiffConfig(derivativeAttr->getParameterIndices(ctx),
+                         resultIndices, AFD->getGenericSignature()));
     }
 
     visitDefaultArguments(AFD, AFD->getParameters());

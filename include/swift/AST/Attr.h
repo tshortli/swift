@@ -2138,10 +2138,7 @@ public:
   void setOriginalFunctionResolver(LazyMemberLoader *resolver,
                                    uint64_t resolverContextData);
 
-  AutoDiffDerivativeFunctionKind getDerivativeKind() const {
-    assert(Kind && "Derivative function kind has not yet been resolved");
-    return *Kind;
-  }
+  AutoDiffDerivativeFunctionKind getDerivativeKind(ASTContext &context) const;
   void setDerivativeKind(AutoDiffDerivativeFunctionKind kind) { Kind = kind; }
 
   /// The parsed differentiability parameters, i.e. the list of parameters
@@ -2156,10 +2153,9 @@ public:
     return NumParsedParameters;
   }
 
-  IndexSubset *getParameterIndices() const {
-    return ParameterIndices;
-  }
+  IndexSubset *getParameterIndices(ASTContext &context) const;
   void setParameterIndices(IndexSubset *parameterIndices) {
+    assert(!ParameterIndices && "ParameterIndices already set");
     ParameterIndices = parameterIndices;
   }
 

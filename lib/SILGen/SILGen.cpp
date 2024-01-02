@@ -1278,6 +1278,7 @@ void SILGenModule::emitDifferentiabilityWitnessesForFunction(
       constant.isThunk())
     return;
   auto *AFD = constant.getAbstractFunctionDecl();
+  auto &ctx = AFD->getASTContext();
   auto emitWitnesses = [&](DeclAttributes &Attrs) {
     for (auto *diffAttr : Attrs.getAttributes<DifferentiableAttr>()) {
       assert((!F->getLoweredFunctionType()->getSubstGenericSignature() ||
@@ -1300,7 +1301,7 @@ void SILGenModule::emitDifferentiabilityWitnessesForFunction(
     for (auto *derivAttr : Attrs.getAttributes<DerivativeAttr>()) {
       SILFunction *jvp = nullptr;
       SILFunction *vjp = nullptr;
-      switch (derivAttr->getDerivativeKind()) {
+      switch (derivAttr->getDerivativeKind(ctx)) {
       case AutoDiffDerivativeFunctionKind::JVP:
         jvp = F;
         break;
@@ -1315,10 +1316,9 @@ void SILGenModule::emitDifferentiabilityWitnessesForFunction(
       auto witnessGenSig =
           autodiff::getDifferentiabilityWitnessGenericSignature(
               origAFD->getGenericSignature(), AFD->getGenericSignature());
-      auto *resultIndices =
-        autodiff::getFunctionSemanticResultIndices(origAFD,
-                                                   derivAttr->getParameterIndices());
-      AutoDiffConfig config(derivAttr->getParameterIndices(), resultIndices,
+      auto *resultIndices = autodiff::getFunctionSemanticResultIndices(
+          origAFD, derivAttr->getParameterIndices(ctx));
+      AutoDiffConfig config(derivAttr->getParameterIndices(ctx), resultIndices,
                             witnessGenSig);
       emitDifferentiabilityWitness(origAFD, origFn,
                                    DifferentiabilityKind::Reverse, config, jvp,

@@ -1357,8 +1357,9 @@ bool DeclAttribute::printImpl(ASTPrinter &Printer, const PrintOptions &Options,
       baseType->print(Printer, Options);
     attr->getOriginalFunctionName().print(Printer);
     auto *derivative = cast<AbstractFunctionDecl>(D);
+    auto &ctx = D->getASTContext();
     auto diffParamsString = getDifferentiationParametersClauseString(
-        derivative, attr->getParameterIndices(), attr->getParsedParameters(),
+        derivative, attr->getParameterIndices(ctx), attr->getParsedParameters(),
         DifferentiationParameterKind::Differentiability);
     if (!diffParamsString.empty())
       Printer << ", " << diffParamsString;
@@ -2444,6 +2445,19 @@ DerivativeAttr::getOriginalFunction(ASTContext &context) const {
       context.evaluator,
       DerivativeAttrOriginalDeclRequest{const_cast<DerivativeAttr *>(this)},
       nullptr);
+}
+
+AutoDiffDerivativeFunctionKind
+DerivativeAttr::getDerivativeKind(ASTContext &context) const {
+  // Trigger a typechecking request to populate Kind if necessary.
+  (void)getOriginalFunction(context);
+  return *Kind;
+}
+
+IndexSubset *DerivativeAttr::getParameterIndices(ASTContext &context) const {
+  // Trigger a typechecking request to populate ParameterIndices if necessary.
+  (void)getOriginalFunction(context);
+  return ParameterIndices;
 }
 
 void DerivativeAttr::setOriginalFunction(AbstractFunctionDecl *decl) {

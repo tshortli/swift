@@ -3,6 +3,11 @@
 // RUN: llvm-bcanalyzer %t/derivative_attr.swiftmodule | %FileCheck %s -check-prefix=BCANALYZER
 // RUN: %target-sil-opt -enable-sil-verify-all %t/derivative_attr.swiftmodule -o - | %FileCheck %s
 
+// RUN: %empty-directory(%t/lazy)
+// RUN: %target-swift-frontend %s -emit-module -parse-as-library -experimental-lazy-typecheck -experimental-skip-non-inlinable-function-bodies -o %t/lazy
+// RUN: llvm-bcanalyzer %t/lazy/derivative_attr.swiftmodule | %FileCheck %s -check-prefix=BCANALYZER
+// RUN: %target-sil-opt -enable-sil-verify-all %t/lazy/derivative_attr.swiftmodule -o - | %FileCheck %s
+
 // BCANALYZER-NOT: UnknownCode
 
 import _Differentiation
