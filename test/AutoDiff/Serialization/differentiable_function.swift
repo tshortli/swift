@@ -3,6 +3,11 @@
 // RUN: llvm-bcanalyzer %t/differentiable_function.swiftmodule | %FileCheck %s -check-prefix=BCANALYZER
 // RUN: %target-sil-opt -enable-sil-verify-all %t/differentiable_function.swiftmodule -o - | %FileCheck %s
 
+// RUN: %empty-directory(%t/lazy)
+// RUN: %target-swift-frontend %s -emit-module -parse-as-library -experimental-lazy-typecheck -experimental-skip-non-inlinable-function-bodies -o %t/lazy
+// RUN: llvm-bcanalyzer %t/lazy/differentiable_function.swiftmodule | %FileCheck %s -check-prefix=BCANALYZER
+// RUN: %target-sil-opt -enable-sil-verify-all %t/lazy/differentiable_function.swiftmodule -o - | %FileCheck %s
+
 // BCANALYZER-NOT: UnknownCode
 
 import _Differentiation

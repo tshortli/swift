@@ -3,6 +3,11 @@
 // RUN: llvm-bcanalyzer %t/differentiable_attr.swiftmodule | %FileCheck %s -check-prefix=BCANALYZER
 // RUN: %target-sil-opt -enable-sil-verify-all %t/differentiable_attr.swiftmodule -o - | %FileCheck %s
 
+// RUN: %empty-directory(%t/lazy)
+// RUN: %target-swift-frontend %s -emit-module -parse-as-library -experimental-lazy-typecheck -experimental-skip-non-inlinable-function-bodies -o %t/lazy
+// RUN: llvm-bcanalyzer %t/lazy/differentiable_attr.swiftmodule | %FileCheck %s -check-prefix=BCANALYZER
+// RUN: %target-sil-opt -enable-sil-verify-all %t/lazy/differentiable_attr.swiftmodule -o - | %FileCheck %s
+
 // BCANALYZER-NOT: UnknownCode
 
 import _Differentiation
@@ -136,5 +141,12 @@ extension P {
 extension P where Self : Differentiable, Self == Self.TangentVector {
   func vjpTestWhereClauseMethodTypeConstraint() -> (Self, (Self.TangentVector) -> Self.TangentVector) {
     return (self, { v in v })
+  }
+}
+
+struct Subscript: Differentiable {
+  @differentiable(reverse, wrt: self)
+  subscript(_ x: Int) -> Subscript {
+    return self
   }
 }
