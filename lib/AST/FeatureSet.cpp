@@ -12,11 +12,14 @@
 
 #include "FeatureSet.h"
 
+#include "swift/AST/ASTVisitor.h"
 #include "swift/AST/Decl.h"
 #include "swift/AST/ExistentialLayout.h"
+#include "swift/AST/GenericParamList.h"
 #include "swift/AST/InverseMarking.h"
 #include "swift/AST/ParameterList.h"
 #include "swift/AST/Pattern.h"
+#include "swift/AST/TypeCheckRequests.h"
 #include "clang/AST/DeclObjC.h"
 
 using namespace swift;
@@ -89,6 +92,93 @@ static bool hasInverse(
   return false;
 }
 
+
+template <typename F>
+[[nodiscard]] static bool usesTypeDeclMatching(Decl *originalDecl, F predicate) {
+  SmallPtrSet<Decl *, 16> didVisit;
+  llvm::SmallSetVector<Decl *, 16> toVisit;
+  toVisit.insert(originalDecl);
+
+  auto visitType = [&toVisit, &didVisit](Type ty) {
+    if (ty) {
+      if (auto *nominal = ty->getAnyNominal()) {
+        if (!didVisit.contains(nominal))
+          toVisit.insert(nominal);
+      }
+    }
+  };
+
+  auto visitInherited = [&visitType](InheritedTypes inherited) {
+    for (unsigned i : inherited.getIndices()) {
+      visitType(inherited.getResolvedType(i));
+    }
+  };
+
+  auto visitGenericContext = [&visitType,
+                              &visitInherited](const GenericContext *ownerCtx) {
+    if (!ownerCtx->isGenericContext())
+      return;
+
+    if (auto params = ownerCtx->getGenericParams()) {
+      for (auto param : *params) {
+        visitInherited(param->getInherited());
+      }
+    }
+
+    if (ownerCtx->getTrailingWhereClause()) {
+      WhereClauseOwner(const_cast<GenericContext *>(ownerCtx))
+          .visitRequirements(
+              TypeResolutionStage::Interface,
+              [&visitType](const Requirement &req, RequirementRepr *reqRepr) {
+                switch (req.getKind()) {
+                case RequirementKind::SameShape:
+                case RequirementKind::Conformance:
+                case RequirementKind::SameType:
+                case RequirementKind::Superclass:
+                  visitType(req.getFirstType());
+                  visitType(req.getSecondType());
+                  break;
+                case RequirementKind::Layout:
+                  visitType(req.getFirstType());
+                  break;
+                }
+                return false;
+              });
+    }
+  };
+
+  while (toVisit.size() > 0) {
+    auto decl = toVisit.pop_back_val();
+    if (!didVisit.insert(decl).second)
+      continue;
+
+    if (predicate(decl))
+      return true;
+
+    if (auto nominal = dyn_cast<NominalTypeDecl>(decl))
+      visitInherited(nominal->getInherited());
+
+    if (auto ext = dyn_cast<ExtensionDecl>(decl)) {
+      visitType(ext->getExtendedType());
+      visitInherited(ext->getInherited());
+      visitGenericContext(decl->getAsGenericContext());
+    }
+
+    if (auto value = dyn_cast<ValueDecl>(decl)) {
+      if (auto genericContext = decl->getAsGenericContext())
+        visitGenericContext(genericContext);
+
+      if (Type type = value->getInterfaceType()) {
+        type.visit([visitType](Type ty) {
+          visitType(ty);
+        });
+      }
+    }
+  }
+
+  return false;
+}
+
 // ----------------------------------------------------------------------------
 // MARK: - Standard Features
 // ----------------------------------------------------------------------------
@@ -104,79 +194,12 @@ static bool hasInverse(
 #define UNINTERESTING_FEATURE(FeatureName)                                     \
   static bool usesFeature##FeatureName(Decl *decl) { return false; }
 
-static bool usesFeatureRethrowsProtocol(Decl *decl,
-                                        SmallPtrSet<Decl *, 16> &checked) {
-  // Make sure we don't recurse.
-  if (!checked.insert(decl).second)
-    return false;
-
-  // Check an inheritance clause for a marker protocol.
-  auto checkInherited = [&](InheritedTypes inherited) -> bool {
-    for (unsigned i : inherited.getIndices()) {
-      if (auto inheritedType = inherited.getResolvedType(i)) {
-        if (inheritedType->isExistentialType()) {
-          auto layout = inheritedType->getExistentialLayout();
-          for (ProtocolDecl *proto : layout.getProtocols()) {
-            if (usesFeatureRethrowsProtocol(proto, checked))
-              return true;
-          }
-        }
-      }
-    }
-
-    return false;
-  };
-
-  if (auto nominal = dyn_cast<NominalTypeDecl>(decl)) {
-    if (checkInherited(nominal->getInherited()))
-      return true;
-  }
-
-  if (auto proto = dyn_cast<ProtocolDecl>(decl)) {
-    if (proto->getAttrs().hasAttribute<AtRethrowsAttr>())
-      return true;
-  }
-
-  if (auto ext = dyn_cast<ExtensionDecl>(decl)) {
-    if (auto nominal = ext->getSelfNominalTypeDecl())
-      if (usesFeatureRethrowsProtocol(nominal, checked))
-        return true;
-
-    if (checkInherited(ext->getInherited()))
-      return true;
-  }
-
-  if (auto genericSig =
-          decl->getInnermostDeclContext()->getGenericSignatureOfContext()) {
-    for (const auto &req : genericSig.getRequirements()) {
-      if (req.getKind() == RequirementKind::Conformance &&
-          usesFeatureRethrowsProtocol(req.getProtocolDecl(), checked))
-        return true;
-    }
-  }
-
-  if (auto value = dyn_cast<ValueDecl>(decl)) {
-    if (Type type = value->getInterfaceType()) {
-      bool hasRethrowsProtocol = type.findIf([&](Type type) {
-        if (auto nominal = type->getAnyNominal()) {
-          if (usesFeatureRethrowsProtocol(nominal, checked))
-            return true;
-        }
-
-        return false;
-      });
-
-      if (hasRethrowsProtocol)
-        return true;
-    }
-  }
-
-  return false;
-}
-
 static bool usesFeatureRethrowsProtocol(Decl *decl) {
-  SmallPtrSet<Decl *, 16> checked;
-  return usesFeatureRethrowsProtocol(decl, checked);
+  return usesTypeDeclMatching(decl, [](Decl *typeDecl) {
+    if (auto proto = dyn_cast<ProtocolDecl>(typeDecl))
+      return proto->getAttrs().hasAttribute<AtRethrowsAttr>();
+    return false;
+  });
 }
 
 UNINTERESTING_FEATURE(BuiltinBuildTaskExecutorRef)
@@ -262,8 +285,14 @@ static bool usesFeatureMoveOnly(Decl *decl) {
 }
 
 static bool usesFeatureMoveOnlyResilientTypes(Decl *decl) {
-  if (auto *nomDecl = dyn_cast<NominalTypeDecl>(decl))
-    return nomDecl->isResilient() && usesFeatureMoveOnly(decl);
+  if (usesFeatureMoveOnly(decl)) {
+    return usesTypeDeclMatching(decl, [](Decl *typeDecl) {
+      if (auto *nominal = dyn_cast<NominalTypeDecl>(typeDecl))
+        return nominal->isResilient();
+      return false;
+    });
+  }
+
   return false;
 }
 
@@ -519,7 +548,9 @@ UNINTERESTING_FEATURE(DoExpressions)
 UNINTERESTING_FEATURE(ImplicitLastExprResults)
 
 static bool usesFeatureRawLayout(Decl *decl) {
-  return decl->getAttrs().hasAttribute<RawLayoutAttr>();
+  return usesTypeDeclMatching(decl, [](Decl *typeDecl) {
+    return typeDecl->getAttrs().hasAttribute<RawLayoutAttr>();
+  });
 }
 
 UNINTERESTING_FEATURE(Embedded)
@@ -580,7 +611,9 @@ static bool usesFeatureNonescapableTypes(Decl *decl) {
 }
 
 static bool usesFeatureStaticExclusiveOnly(Decl *decl) {
-  return decl->getAttrs().hasAttribute<StaticExclusiveOnlyAttr>();
+  return usesTypeDeclMatching(decl, [](Decl *typeDecl) {
+    return typeDecl->getAttrs().hasAttribute<StaticExclusiveOnlyAttr>();
+  });
 }
 
 static bool usesFeatureExtractConstantsFromMembers(Decl *decl) {
