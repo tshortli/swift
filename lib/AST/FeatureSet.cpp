@@ -92,6 +92,93 @@ static bool hasInverse(
   return false;
 }
 
+// ALLANXXX document, nest in FeatureUseChecker
+class ReferencedTypesCollector : public DeclVisitor<ReferencedTypesCollector> {
+  llvm::SmallPtrSet<Type, 16> &Types;
+
+  void addType(Type ty) {
+    if (!ty)
+      return;
+
+    Types.insert(ty);
+
+    // ALLANXXX
+//    Decl *declToVisit = nullptr;
+//    if (auto *nominal = ty->getAnyNominal()) {
+//      declToVisit = nominal;
+//    } else if (auto *generic = ty->getAnyGeneric()) {
+//      declToVisit = generic;
+//    }
+//
+//    if (declToVisit) {
+//      if (!DidVisit.contains(declToVisit))
+//        ToVisit.insert(declToVisit);
+//    }
+  }
+
+  void addInheritedTypes(InheritedTypes inherited) {
+    for (unsigned i : inherited.getIndices()) {
+      addType(inherited.getResolvedType(i));
+    }
+  }
+
+  void addTypesFromGenericContext(const GenericContext *ownerCtx) {
+    if (auto params = ownerCtx->getGenericParams()) {
+      for (auto param : *params) {
+        addInheritedTypes(param->getInherited());
+      }
+    }
+
+    if (ownerCtx->getTrailingWhereClause()) {
+      WhereClauseOwner(const_cast<GenericContext *>(ownerCtx))
+        .visitRequirements(
+                           TypeResolutionStage::Interface,
+                           [this](const Requirement &req, RequirementRepr *reqRepr) {
+                             switch (req.getKind()) {
+                               case RequirementKind::SameShape:
+                               case RequirementKind::Conformance:
+                               case RequirementKind::SameType:
+                               case RequirementKind::Superclass:
+                                 addType(req.getFirstType());
+                                 addType(req.getSecondType());
+                                 break;
+                               case RequirementKind::Layout:
+                                 addType(req.getFirstType());
+                                 break;
+                             }
+                             return false;
+                           });
+    }
+  }
+
+public:
+  ReferencedTypesCollector(llvm::SmallPtrSet<Type, 16> &types) : Types(types) {}
+
+  void visitNominalTypeDecl(NominalTypeDecl *nominal) {
+    addInheritedTypes(nominal->getInherited());
+  }
+
+  void visitExtensionDecl(ExtensionDecl *extension) {
+    addType(extension->getExtendedType());
+    addInheritedTypes(extension->getInherited());
+    addTypesFromGenericContext(extension);
+  }
+
+  void visitValueDecl(ValueDecl *value) {
+    if (auto genericContext = value->getAsGenericContext())
+      addTypesFromGenericContext(genericContext);
+
+    if (Type type = value->getInterfaceType()) {
+      type.visit([this](Type ty) {
+        addType(ty);
+      });
+    }
+  }
+};
+
+class FeatureUseChecker {
+
+};
 
 template <typename F>
 [[nodiscard]] static bool usesTypeDeclMatching(Decl *originalDecl, F predicate) {
