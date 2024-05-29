@@ -3,29 +3,35 @@
 // RUN: %empty-directory(%t)
 
 /// Using the flag directly raises warnings and fixits.
-// RUN: %swiftc_driver -typecheck -parse-as-library -Xfrontend -verify %s \
+// RUN: %target-swift-frontend -typecheck -parse-as-library -verify %s \
 // RUN:   -target %target-cpu-apple-macosx10.10 -require-explicit-availability \
-// RUN:   -require-explicit-availability-target "macOS 10.10"
-// RUN: %swiftc_driver -typecheck -parse-as-library -Xfrontend -verify %s \
+// RUN:   -require-explicit-availability-target "macOS 10.10" \
+// RUN:   -verify-additional-prefix always-
+// RUN: %target-swift-frontend -typecheck -parse-as-library -verify %s \
 // RUN:   -target %target-cpu-apple-macosx10.10 -require-explicit-availability=warn \
-// RUN:   -require-explicit-availability-target "macOS 10.10"
+// RUN:   -require-explicit-availability-target "macOS 10.10" \
+// RUN:   -verify-additional-prefix always-
 
 /// Using -library-level api defaults to enabling warnings, without fixits.
 // RUN: sed -e "s/}} {{.*/}}/" < %s > %t/NoFixits.swift
 // RUN: %target-swift-frontend -typecheck -parse-as-library -verify %t/NoFixits.swift \
-// RUN:   -target %target-cpu-apple-macosx10.10 -library-level api
+// RUN:   -target %target-cpu-apple-macosx10.10 -library-level api \
+// RUN:   -verify-additional-prefix always-
 
 /// Explicitly disable the diagnostic.
 // RUN: sed -e 's/xpected-warning/not-something-expected/' < %s > %t/None.swift
 // RUN: %target-swift-frontend -typecheck -parse-as-library -verify %t/None.swift \
 // RUN:   -target %target-cpu-apple-macosx10.10 -require-explicit-availability=ignore \
-// RUN:   -require-explicit-availability-target "macOS 10.10" -library-level api
+// RUN:   -require-explicit-availability-target "macOS 10.10" -library-level api \
+// RUN:   -verify-additional-prefix norequire- \
+// RUN:   -verify-additional-prefix always-
 
 /// Upgrade the diagnostic to an error.
 // RUN: sed -e "s/xpected-warning/xpected-error/" < %s > %t/Errors.swift
 // RUN: %target-swift-frontend -typecheck -parse-as-library -verify %t/Errors.swift \
 // RUN:   -target %target-cpu-apple-macosx10.10 -require-explicit-availability=error \
-// RUN:   -require-explicit-availability-target "macOS 10.10"
+// RUN:   -require-explicit-availability-target "macOS 10.10" \
+// RUN:   -verify-additional-prefix always-
 
 /// Error on an invalid argument.
 // RUN: not %target-swift-frontend -typecheck %s -require-explicit-availability=NotIt 2>&1 \
@@ -237,3 +243,21 @@ extension StructWithImplicitMembers: Hashable { }
 // expected-note @-1 {{add @available attribute to enclosing extension}}
 // expected-warning @-2 {{public declarations should have an availability attribute with an introduction version}}
 // expected-error @-3 {{'StructWithImplicitMembers' is only available in macOS 10.15 or newer}}
+
+@available(macOS 10.10, *)
+public func availabilityQueryFunc() { // expected-always-note 2 {{enclosing scope here}}
+  if #available(macOS 10.9, *) {} // expected-always-warning {{unnecessary check for 'macOS'; enclosing scope ensures guard will always be true}}
+  if #available(macOS 10.10, *) {} // expected-always-warning {{unnecessary check for 'macOS'; enclosing scope ensures guard will always be true}}
+  if #available(macOS 10.11, *) {}
+
+  if #available(iOS 9.0, *) {}
+}
+
+@available(macOS 10.10, *)
+@inlinable public func inlinableAvailabilityQueryFunc() { // expected-norequire-note 2 {{enclosing scope here}}
+  if #available(macOS 10.9, *) {} // expected-norequire-warning {{unnecessary check for 'macOS'; enclosing scope ensures guard will always be true}}
+  if #available(macOS 10.10, *) {} // expected-norequire-warning {{unnecessary check for 'macOS'; enclosing scope ensures guard will always be true}}
+  if #available(macOS 10.11, *) {}
+
+  if #available(iOS 9.0, *) {}
+}

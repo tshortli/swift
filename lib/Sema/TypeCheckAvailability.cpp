@@ -442,6 +442,9 @@ class TypeRefinementContextBuilder : private ASTWalker {
   };
   std::vector<DeclBodyContextInfo> DeclBodyContextStack;
 
+  /// The Decls that are currently being visited by the AST walk.
+  llvm::SmallVector<Decl *, 8> DeclStack;
+
   TypeRefinementContext *getCurrentTRC() {
     return ContextStack.back().TRC;
   }
@@ -524,6 +527,7 @@ private:
 
   PreWalkAction walkToDeclPre(Decl *D) override {
     PrettyStackTraceDecl trace(stackTraceAction(), D);
+    DeclStack.push_back(D);
 
     // Implicit decls don't have source locations so they cannot have a TRC.
     if (D->isImplicit())
@@ -534,7 +538,7 @@ private:
     // tree to indicate that the subtree should be expanded lazily when it
     // needs to be traversed.
     if (buildLazyContextForDecl(D))
-      return Action::SkipNode();
+      return Action::SkipChildren();
 
     // Adds in a TRC that covers the entire declaration.
     if (auto DeclTRC = getNewContextForSignatureOfDecl(D)) {
@@ -558,6 +562,8 @@ private:
       DeclBodyContextStack.pop_back();
     }
 
+    assert(DeclStack.back() == D);
+    DeclStack.pop_back();
     return Action::Continue();
   }
 
@@ -1137,6 +1143,16 @@ private:
         if (isUnavailability.value()) {
           continue;
         }
+        if (auto explicitAvailability = Context.LangOpts.RequireExplicitAvailability) {
+          if (DeclStack.size() > 0 && *explicitAvailability != DiagnosticBehavior::Ignore) {
+            auto decl = DeclStack.back();
+            auto dc = decl->getInnermostDeclContext();
+            if (dc->getFragileFunctionKind().kind != FragileFunctionKind::Kind::None) {
+              continue; // ALLANXXX comment
+            }
+          }
+        }
+
         DiagnosticEngine &Diags = Context.Diags;
         if (CurrentTRC->getReason() != TypeRefinementContext::Reason::Root) {
           PlatformKind BestPlatform = targetPlatform(Context.LangOpts);
