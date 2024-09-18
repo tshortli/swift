@@ -462,3 +462,67 @@ void ExpandChildTypeRefinementContextsRequest::cacheResult(
   TRC->Children = children;
   TRC->setNeedsExpansion(false);
 }
+
+static void error(llvm::StringRef msg, const TypeRefinementContext *context, ASTContext &ctx) {
+  llvm::errs() << msg << "\n";
+  if (context) {
+    context->print(llvm::errs(), ctx.SourceMgr);
+    llvm::errs() << "\n";
+  }
+  abort();
+}
+
+void TypeRefinementContext::verify(const TypeRefinementContext *parent, ASTContext &ctx) {
+  // Sort children by their source locations.
+  llvm::SmallVector<TypeRefinementContext *, 4> children(Children.begin(), Children.end());
+  std::sort(children.begin(), children.end(), [](TypeRefinementContext *lhs, TypeRefinementContext *rhs) {
+    return lhs->SrcRange.Start.getOpaquePointerValue() < rhs->SrcRange.Start.getOpaquePointerValue();
+  });
+
+  // Verify the children first.
+  for (auto child : children) {
+    child->verify(this, ctx);
+  }
+
+  // Verify that the children's source ranges do not overlap.
+  if (!children.empty()) {
+    auto previous = children.front();
+    for (auto child : ArrayRef(children).drop_front()) {
+      if (previous->SrcRange.contains(child->SrcRange.Start)) {
+        llvm::errs() << "------------------------------------------------\n";
+        llvm::errs() << "overlapping child 1:\n";
+        previous->dump(llvm::errs(), ctx.SourceMgr);
+        llvm::errs() << "overlapping child 2:\n";
+        child->dump(llvm::errs(), ctx.SourceMgr);
+        // ALLANXXX
+        error("overlapping child source ranges", this, ctx);
+      }
+      previous = child;
+    }
+  }
+
+  // Only root nodes are allowed to have no parent.
+  if (!parent) {
+    if (getReason() != Reason::Root)
+      error("interior node reason without parent", this, ctx);
+    return;
+  }
+
+  // All nodes with a parent must have a valid source range.
+  if (!SrcRange.isValid())
+    error("invalid source range", this, ctx);
+
+
+  if (getReason() != Reason::Root) {
+    auto parentRange = parent->SrcRange;
+    if (parentRange.isValid() && !(parentRange.contains(SrcRange.Start) && parentRange.contains(SrcRange.End)))
+      error("child source range not contained", parent, ctx);
+  }
+
+  if (!AvailabilityInfo.isContainedIn(parent->AvailabilityInfo))
+    error("child availability range not contained", parent, ctx);
+}
+
+void TypeRefinementContext::verify(ASTContext &ctx) {
+  verify(nullptr, ctx);
+}
