@@ -696,6 +696,8 @@ private:
       return nullptr;
 
     // Declarations with explicit availability attributes always get a TRC.
+    // ALLANXXX modify this check to cover any attribute that can alter an
+    // AvailabilityContext
     if (AvailabilityInference::attrForAnnotatedAvailableRange(D)) {
       return TypeRefinementContext::createForDecl(
           Context, D, getCurrentTRC(),

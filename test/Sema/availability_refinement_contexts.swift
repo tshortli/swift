@@ -311,6 +311,8 @@ func testStringInterpolation() {
     """
 }
 
+// ALLANXXX test unavailability/deprecation
+
 // CHECK-NEXT: {{^}}  (decl version=51 decl=FinalDecl
 
 @available(OSX 51, *)

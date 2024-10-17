@@ -36,8 +36,8 @@ TypeRefinementContext::TypeRefinementContext(ASTContext &Ctx, IntroNode Node,
   if (Parent) {
     assert(SrcRange.isValid());
     Parent->addChild(this, Ctx);
-    assert(Info->getPlatformRange().isContainedIn(
-        Parent->getPlatformAvailabilityRange()));
+    // ALLANXXX
+    assert(Info->isContainedIn(Parent->getAvailabilityContext()));
   }
   Ctx.addDestructorCleanup(Children);
 }
@@ -400,6 +400,7 @@ void TypeRefinementContext::print(raw_ostream &OS, SourceManager &SrcMgr,
   OS.indent(Indent);
   OS << "(" << getReasonName(getReason());
 
+  // ALLANXXX print other availability info
   OS << " version=" << stringForAvailability(getPlatformAvailabilityRange());
 
   if (getReason() == Reason::Decl || getReason() == Reason::DeclImplicit) {
@@ -581,8 +582,8 @@ void TypeRefinementContext::verify(const TypeRefinementContext *parent,
                         {{"child", this}, {"parent", parent}});
   }
 
-  if (!getPlatformAvailabilityRange().isContainedIn(
-          parent->getPlatformAvailabilityRange()))
+  if (!getAvailabilityContext()->isContainedIn(
+          parent->getAvailabilityContext()))
     verificationError(ctx, "child availability range not contained",
                       {{"child", this}, {"parent", parent}});
 }
