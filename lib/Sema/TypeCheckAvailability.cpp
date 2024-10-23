@@ -345,8 +345,9 @@ static bool computeContainedByDeploymentTarget(TypeRefinementContext *TRC,
 /// Returns true if the reference or any of its parents is an
 /// unconditional unavailable declaration for the same platform.
 static bool isInsideCompatibleUnavailableDeclaration(
-    const Decl *D, const ExportContext &where, const AvailableAttr *attr) {
-  auto referencedPlatform = where.getUnavailablePlatformKind();
+    const Decl *D, AvailabilityContext availabilityContext,
+    const AvailableAttr *attr) {
+  auto referencedPlatform = availabilityContext.getUnavailablePlatformKind();
   if (!referencedPlatform)
     return false;
 
@@ -374,7 +375,7 @@ ExportContext::shouldDiagnoseDeclAsUnavailable(const Decl *D) const {
   if (!attr)
     return nullptr;
 
-  if (isInsideCompatibleUnavailableDeclaration(D, *this, attr))
+  if (isInsideCompatibleUnavailableDeclaration(D, Availability, attr))
     return nullptr;
 
   return attr;
@@ -1490,22 +1491,29 @@ bool TypeChecker::isDeclarationUnavailable(
   return !runningOSOverApprox.isContainedIn(safeRangeUnderApprox);
 }
 
-std::optional<AvailabilityRange>
-TypeChecker::checkDeclarationAvailability(const Decl *D,
-                                          const ExportContext &Where) {
+std::optional<AvailabilityRange> TypeChecker::checkDeclarationAvailability(
+    const Decl *D, const DeclContext *referenceDC,
+    AvailabilityContext availabilityContext) {
   // Skip computing potential unavailability if the declaration is explicitly
   // unavailable and the context is also unavailable.
   if (const AvailableAttr *Attr = AvailableAttr::isUnavailable(D))
-    if (isInsideCompatibleUnavailableDeclaration(D, Where, Attr))
+    if (isInsideCompatibleUnavailableDeclaration(D, availabilityContext, Attr))
       return std::nullopt;
 
-  if (isDeclarationUnavailable(D, Where.getDeclContext(), [&Where] {
-        return Where.getAvailabilityRange();
+  if (isDeclarationUnavailable(D, referenceDC, [&availabilityContext] {
+        return availabilityContext.getPlatformRange();
       })) {
     return AvailabilityInference::availableRange(D);
   }
 
   return std::nullopt;
+}
+
+std::optional<AvailabilityRange>
+TypeChecker::checkDeclarationAvailability(const Decl *D,
+                                          const ExportContext &Where) {
+  return checkDeclarationAvailability(D, Where.getDeclContext(),
+                                      Where.getAvailability());
 }
 
 std::optional<AvailabilityRange>
