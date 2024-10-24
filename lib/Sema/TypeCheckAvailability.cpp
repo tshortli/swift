@@ -72,6 +72,44 @@ static bool
 diagnoseTypeReprAvailability(const TypeRepr *T, const ExportContext &where,
                              DeclAvailabilityFlags flags = std::nullopt);
 
+// ALLANXXX move to header
+class UnmetAvailabilityRequirement {
+public:
+  enum Kind {
+    /// The declaration is referenced in a context in which it will
+    /// always be unavailable. For example, a reference to a declaration that is unavailable on macOS from a context that may execute on macOS has this unmet requirement.
+    AlwaysUnavailable,
+
+    /// The declaration is referenced in a context in which it is considered obsolete.
+    /// For example, a reference to a declaration that is obsolete in macOS 13 from a context that may execute on macOS 13 or later has this unmet requirement.
+    Obsoleted,
+
+    /// The declaration is only available in a different version. For example, the declaration might only be introduced in the Swift 6 language mode while the module is being compiled in the Swift 5 language mode.
+    IntroducedInVersion,
+
+    /// The declaration is referenced in a context that does not have a sufficient version constraint. This kind of unmet
+    /// requirement can be addressed by raising the minimum version of the context
+    /// in which the declaration is used (e.g., `if #available(...)`).
+    IntroducedInNewerVersion,
+  } kind;
+
+private:
+  const AvailableAttr *attr;
+
+  UnmetAvailabilityRequirement(Kind kind, const AvailableAttr *attr) : kind(kind), attr(attr) {};
+
+public:
+  static UnmetAvailabilityRequirement forAlwaysUnavailable(const AvailableAttr *attr) {
+    return UnmetAvailabilityRequirement(Kind::AlwaysUnavailable, attr);
+  }
+
+  static UnmetAvailabilityRequirement forIntroducedInNewerVersion(const AvailableAttr *attr) {
+    return UnmetAvailabilityRequirement(Kind::IntroducedInNewerVersion, attr);
+  }
+
+  Kind getKind() const { return kind; }
+};
+
 ExportContext::ExportContext(DeclContext *DC, AvailabilityContext availability,
                              FragileFunctionKind kind, bool spi, bool exported,
                              bool implicit)
@@ -1459,6 +1497,17 @@ AvailabilityRange TypeChecker::overApproximateAvailabilityAtLocation(
     SourceLoc loc, const DeclContext *DC,
     const TypeRefinementContext **MostRefined) {
   return availabilityAtLocation(loc, DC, MostRefined).getPlatformRange();
+}
+
+bool TypeChecker::isDeclarationUnavailable(
+    const Decl *decl, const DeclContext *referenceDC,
+                              AvailabilityContext availabilityContext) {
+  if (auto attr = AvailableAttr::isUnavailable(decl))
+    return !isInsideCompatibleUnavailableDeclaration(decl, availabilityContext, attr);
+
+  return TypeChecker::isDeclarationUnavailable(decl, referenceDC, [&availabilityContext] {
+          return availabilityContext.getPlatformRange();
+  });
 }
 
 bool TypeChecker::isDeclarationUnavailable(

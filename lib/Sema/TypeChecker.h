@@ -1032,6 +1032,10 @@ diagnosticIfDeclCannotBePotentiallyUnavailable(const Decl *D);
 /// is allowed.
 std::optional<Diagnostic> diagnosticIfDeclCannotBeUnavailable(const Decl *D);
 
+bool isDeclarationUnavailable(
+    const Decl *D, const DeclContext *referenceDC,
+    AvailabilityContext availabilityContext);
+
 /// Same as \c checkDeclarationAvailability but doesn't give a reason for
 /// unavailability.
 bool isDeclarationUnavailable(

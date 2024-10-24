@@ -4678,20 +4678,14 @@ void ConstraintSystem::diagnoseFailureFor(SyntacticElementTarget target) {
 
 bool ConstraintSystem::isDeclUnavailable(const Decl *D,
                                          ConstraintLocator *locator) const {
-  // First check whether this declaration is universally unavailable.
-  if (D->getAttrs().isUnavailable(getASTContext()))
-    return true;
+  SourceLoc loc;
+  if (locator) {
+    if (auto anchor = locator->getAnchor())
+      loc = getLoc(anchor);
+  }
 
-  return TypeChecker::isDeclarationUnavailable(D, DC, [&] {
-    SourceLoc loc;
-
-    if (locator) {
-      if (auto anchor = locator->getAnchor())
-        loc = getLoc(anchor);
-    }
-
-    return TypeChecker::overApproximateAvailabilityAtLocation(loc, DC);
-  });
+  auto availabilityContext = TypeChecker::availabilityAtLocation(loc, DC);
+  return TypeChecker::isDeclarationUnavailable(D, DC, availabilityContext);
 }
 
 bool ConstraintSystem::isConformanceUnavailable(ProtocolConformanceRef conformance,
