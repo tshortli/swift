@@ -21,6 +21,13 @@
 
 using namespace swift;
 
+AvailabilitySpec *AvailabilitySpec::createWildcard(ASTContext &ctx, SourceLoc starLoc) {
+  return new (ctx) AvailabilitySpec(AvailabilitySpecKind::Wildcard, std::nullopt,
+                                    starLoc,
+                                    /*Version=*/{},
+                                    /*VersionStartLoc=*/{});
+}
+
 llvm::VersionTuple AvailabilitySpec::getVersion() const {
   switch (getKind()) {
   case AvailabilitySpecKind::PlatformVersionConstraint: {
@@ -40,7 +47,7 @@ llvm::VersionTuple AvailabilitySpec::getVersion() const {
   }
   case AvailabilitySpecKind::LanguageVersionConstraint:
   case AvailabilitySpecKind::PackageDescriptionVersionConstraint:
-  case AvailabilitySpecKind::OtherPlatform:
+  case AvailabilitySpecKind::Wildcard:
     return Version;
   }
 }
@@ -67,11 +74,5 @@ void PlatformAgnosticVersionConstraintAvailabilitySpec::print(raw_ostream &OS,
                          "swift" : "package_description")
                     << "'"
                     << " version='" << getVersion() << "'"
-                    << ')';
-}
-
-void OtherPlatformAvailabilitySpec::print(raw_ostream &OS, unsigned Indent) const {
-  OS.indent(Indent) << '(' << "other_constraint_availability_spec"
-                    << " "
                     << ')';
 }

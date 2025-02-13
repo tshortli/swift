@@ -118,8 +118,8 @@ static AvailabilitySpecKind unbridge(BridgedAvailabilitySpecKind kind) {
   switch (kind) {
   case BridgedAvailabilitySpecKindPlatformVersionConstraint:
     return AvailabilitySpecKind::PlatformVersionConstraint;
-  case BridgedAvailabilitySpecKindOtherPlatform:
-    return AvailabilitySpecKind::OtherPlatform;
+  case BridgedAvailabilitySpecKindWildcard:
+    return AvailabilitySpecKind::Wildcard;
   case BridgedAvailabilitySpecKindLanguageVersionConstraint:
     return AvailabilitySpecKind::LanguageVersionConstraint;
   case BridgedAvailabilitySpecKindPackageDescriptionVersionConstraint:
@@ -149,13 +149,6 @@ BridgedPlatformAgnosticVersionConstraintAvailabilitySpec_createParsed(
           cVersionSrcRange.unbridged());
 }
 
-BridgedOtherPlatformAvailabilitySpec
-BridgedOtherPlatformAvailabilitySpec_createParsed(BridgedASTContext cContext,
-                                                  BridgedSourceLoc cLoc) {
-  return new (cContext.unbridged())
-      OtherPlatformAvailabilitySpec(cLoc.unbridged());
-}
-
 BridgedAvailabilitySpec
 BridgedPlatformVersionConstraintAvailabilitySpec_asAvailabilitySpec(
     BridgedPlatformVersionConstraintAvailabilitySpec spec) {
@@ -165,11 +158,6 @@ BridgedPlatformVersionConstraintAvailabilitySpec_asAvailabilitySpec(
 BridgedAvailabilitySpec
 BridgedPlatformAgnosticVersionConstraintAvailabilitySpec_asAvailabilitySpec(
     BridgedPlatformAgnosticVersionConstraintAvailabilitySpec spec) {
-  return static_cast<AvailabilitySpec *>(spec.unbridged());
-}
-
-BridgedAvailabilitySpec BridgedOtherPlatformAvailabilitySpec_asAvailabilitySpec(
-    BridgedOtherPlatformAvailabilitySpec spec) {
   return static_cast<AvailabilitySpec *>(spec.unbridged());
 }
 
