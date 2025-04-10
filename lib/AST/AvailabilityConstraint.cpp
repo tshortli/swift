@@ -44,11 +44,7 @@ bool AvailabilityConstraint::isActiveForRuntimeQueries(
 static bool constraintIsStronger(const AvailabilityConstraint &lhs,
                                  const AvailabilityConstraint &rhs) {
   DEBUG_ASSERT(lhs.getDomain() == rhs.getDomain());
-
-  // If the constraints have matching domains but different reasons, the
-  // constraint with the lowest reason is "strongest".
-  if (lhs.getReason() != rhs.getReason())
-    return lhs.getReason() < rhs.getReason();
+  DEBUG_ASSERT(lhs.getReason() == rhs.getReason());
 
   switch (lhs.getReason()) {
   case AvailabilityConstraint::Reason::UnconditionallyUnavailable:
@@ -72,10 +68,12 @@ void addConstraint(llvm::SmallVector<AvailabilityConstraint, 4> &constraints,
 
   auto iter = llvm::find_if(
       constraints, [&constraint](AvailabilityConstraint &existing) {
-        return constraint.getDomain() == existing.getDomain();
+        return constraint.getDomain() == existing.getDomain() &&
+               constraint.getReason() == existing.getReason();
       });
 
-  // There's no existing constraint for the same domain so just add it.
+  // There's no existing constraint with the same domain and reason so just add
+  // the new one.
   if (iter == constraints.end()) {
     constraints.emplace_back(constraint);
     return;
@@ -91,8 +89,8 @@ std::optional<AvailabilityConstraint>
 DeclAvailabilityConstraints::getPrimaryConstraint() const {
   std::optional<AvailabilityConstraint> result;
 
-  auto isStrongerConstraint = [](const AvailabilityConstraint &lhs,
-                                 const AvailabilityConstraint &rhs) {
+  auto isHigherPriorityConstraint = [](const AvailabilityConstraint &lhs,
+                                       const AvailabilityConstraint &rhs) {
     // Constraint reasons are defined in descending order of strength.
     if (lhs.getReason() != rhs.getReason())
       return lhs.getReason() < rhs.getReason();
@@ -106,7 +104,7 @@ DeclAvailabilityConstraints::getPrimaryConstraint() const {
 
   // Pick the strongest constraint.
   for (auto const &constraint : constraints) {
-    if (!result || isStrongerConstraint(constraint, *result))
+    if (!result || isHigherPriorityConstraint(constraint, *result))
       result.emplace(constraint);
   }
 
@@ -137,9 +135,9 @@ isInsideCompatibleUnavailableDeclaration(const Decl *decl,
 /// Returns the `AvailabilityConstraint` that describes how \p attr restricts
 /// use of \p decl in \p context or `std::nullopt` if there is no restriction.
 static std::optional<AvailabilityConstraint>
-getAvailabilityConstraintForAttr(const Decl *decl,
-                                 const SemanticAvailableAttr &attr,
-                                 const AvailabilityContext &context) {
+getUnavailabilityConstraintForAttr(const Decl *decl,
+                                   const SemanticAvailableAttr &attr,
+                                   const AvailabilityContext &context) {
   // Is the decl unconditionally unavailable?
   if (attr.isUnconditionallyUnavailable())
     return AvailabilityConstraint::unconditionallyUnavailable(attr);
@@ -153,6 +151,17 @@ getAvailabilityConstraintForAttr(const Decl *decl,
     if (deploymentRange && deploymentRange->isContainedIn(*obsoletedRange))
       return AvailabilityConstraint::obsoleted(attr);
   }
+
+  return std::nullopt;
+}
+
+static std::optional<AvailabilityConstraint>
+getIntroductionConstraintForAttr(const Decl *decl,
+                                 const SemanticAvailableAttr &attr,
+                                 const AvailabilityContext &context) {
+  auto &ctx = decl->getASTContext();
+  auto domain = attr.getDomain();
+  auto deploymentRange = domain.getDeploymentRange(ctx);
 
   // Is the decl not yet introduced in the local context?
   if (auto introducedRange = attr.getIntroducedRange(ctx)) {
@@ -169,7 +178,6 @@ getAvailabilityConstraintForAttr(const Decl *decl,
       return AvailabilityConstraint::unavailableForDeployment(attr);
   }
 
-  // FIXME: [availability] Model deprecation as an availability constraint.
   return std::nullopt;
 }
 
@@ -210,8 +218,14 @@ static void getAvailabilityConstraintsForDecl(
         !activePlatformDomain->contains(domain))
       continue;
 
-    if (auto constraint = getAvailabilityConstraintForAttr(decl, attr, context))
+    if (auto constraint =
+            getUnavailabilityConstraintForAttr(decl, attr, context))
       addConstraint(constraints, *constraint, ctx);
+
+    if (auto constraint = getIntroductionConstraintForAttr(decl, attr, context))
+      addConstraint(constraints, *constraint, ctx);
+
+    // FIXME: [availability] Model deprecation as an availability constraint.
   }
 
   // After resolving constraints, remove any constraints that indicate the

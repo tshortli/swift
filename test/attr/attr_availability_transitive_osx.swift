@@ -534,7 +534,7 @@ func available_func_call_extension_methods(_ e: ExtendMe) { // expected-note {{a
 }
 
 @available(OSX, obsoleted: 10.9)
-struct OSXObsoleted {} // expected-note 2 {{'OSXObsoleted' was obsoleted in macOS 10.9}}
+struct OSXObsoleted {} // expected-note 4 {{'OSXObsoleted' was obsoleted in macOS 10.9}}
 
 @available(OSX, unavailable)
 @available(OSX, introduced: 99)
@@ -565,13 +565,47 @@ func osx_unavailable_func(
   _ = OSXFutureAvailable() // expected-error {{'OSXFutureAvailable' is only available in macOS 99 or newer}}
   // expected-note@-1 {{add 'if #available' version check}}
   _ = OSXObsoleted() // expected-error {{'OSXObsoleted' is unavailable in macOS}}
+  _ = OSXUnavailableAndIntroducedInFuture() // expected-error {{'OSXUnavailableAndIntroducedInFuture' is only available in macOS 99 or newer}}
+  // expected-note@-1 {{add 'if #available' version check}}
+  _ = OSXUnavailableAndIntroducedInFutureSameAttribute()
+  _ = OSXIntroducedInFutureAndUnavailable()  // expected-error {{'OSXIntroducedInFutureAndUnavailable' is only available in macOS 99 or newer}}
+  // expected-note@-1 {{add 'if #available' version check}}
+
+  func takesType<T>(_ t: T.Type) {}
+  takesType(OSXFutureAvailable.self) // expected-error {{'OSXFutureAvailable' is only available in macOS 99 or newer}}
+  // expected-note@-1 {{add 'if #available' version check}}
+  takesType(OSXObsoleted.self) // expected-error {{'OSXObsoleted' is unavailable in macOS}}
+  takesType(OSXUnavailableAndIntroducedInFuture.self) // expected-error {{'OSXUnavailableAndIntroducedInFuture' is only available in macOS 99 or newer}}
+  // expected-note@-1 {{add 'if #available' version check}}
+  takesType(OSXUnavailableAndIntroducedInFutureSameAttribute.self)
+  takesType(OSXIntroducedInFutureAndUnavailable.self) // expected-error {{'OSXIntroducedInFutureAndUnavailable' is only available in macOS 99 or newer}}
+  // expected-note@-1 {{add 'if #available' version check}}
+
+  return (s1, s2, s3, s4, s5)
+}
+
+@available(OSX, introduced: 99, unavailable)
+func osx_unavailable_and_future_func(
+  _ s1: OSXFutureAvailable,
+  _ s2: OSXObsoleted,
+  _ s3: OSXUnavailableAndIntroducedInFuture,
+  _ s4: OSXUnavailableAndIntroducedInFutureSameAttribute,
+  _ s5: OSXIntroducedInFutureAndUnavailable,
+) -> (
+  OSXFutureAvailable,
+  OSXObsoleted,
+  OSXUnavailableAndIntroducedInFuture,
+  OSXUnavailableAndIntroducedInFutureSameAttribute,
+  OSXIntroducedInFutureAndUnavailable
+) {
+  _ = OSXFutureAvailable()
+  _ = OSXObsoleted() // expected-error {{'OSXObsoleted' is unavailable in macOS}}
   _ = OSXUnavailableAndIntroducedInFuture()
   _ = OSXUnavailableAndIntroducedInFutureSameAttribute()
   _ = OSXIntroducedInFutureAndUnavailable()
 
   func takesType<T>(_ t: T.Type) {}
-  takesType(OSXFutureAvailable.self) // expected-error {{'OSXFutureAvailable' is only available in macOS 99 or newer}}
-  // expected-note@-1 {{add 'if #available' version check}}
+  takesType(OSXFutureAvailable.self)
   takesType(OSXObsoleted.self) // expected-error {{'OSXObsoleted' is unavailable in macOS}}
   takesType(OSXUnavailableAndIntroducedInFuture.self)
   takesType(OSXUnavailableAndIntroducedInFutureSameAttribute.self)
@@ -579,4 +613,3 @@ func osx_unavailable_func(
 
   return (s1, s2, s3, s4, s5)
 }
-
