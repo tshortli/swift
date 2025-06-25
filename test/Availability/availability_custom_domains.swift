@@ -193,3 +193,19 @@ struct EnabledDomainAvailable {
     unavailableInDisabledDomain() // expected-error {{'unavailableInDisabledDomain()' is unavailable}}
   }
 }
+
+protocol P { }
+
+@available(EnabledDomain)
+struct AvailableInEnabledDomain: P { }
+
+@available(EnabledDomain, unavailable)
+struct UnavailableInEnabledDomain: P { }
+
+func testOpaqueReturnType() -> some P {
+  if #available(EnabledDomain) { // FIXME diagnose
+    return AvailableInEnabledDomain()
+  } else {
+    return UnavailableInEnabledDomain()
+  }
+}

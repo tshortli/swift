@@ -3530,6 +3530,24 @@ public:
       return;
     }
 
+    // Diagnose unsupported availability domains.
+    bool anyUnsupportedDomain = false;
+    for (const auto &entry : Candidates) {
+      IfStmt *stmt = entry.first;
+      if (!stmt) continue;
+
+      for (const auto &elt : stmt->getCond()) {
+        if (elt.getKind() != StmtConditionElement::CK_Availability)
+          continue;
+
+        auto availableInfo = elt.getAvailability();
+        // ALLANXXX emit opaque_type_unsupported_availability if domain is unsupported
+      }
+    }
+
+    if (anyUnsupportedDomain)
+      return;
+
     SmallVector<Candidate, 4> universallyUniqueCandidates;
 
     for (const auto &entry : Candidates) {
