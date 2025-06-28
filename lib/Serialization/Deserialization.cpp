@@ -18,6 +18,7 @@
 #include "swift/AST/Attr.h"
 #include "swift/AST/AttrKind.h"
 #include "swift/AST/AutoDiff.h"
+#include "swift/AST/AvailabilityQuery.h"
 #include "swift/AST/ConformanceLookup.h"
 #include "swift/AST/DiagnosticsSema.h"
 #include "swift/AST/DistributedDecl.h"
@@ -42,10 +43,10 @@
 #include "swift/ClangImporter/ClangModule.h"
 #include "swift/ClangImporter/SwiftAbstractBasicReader.h"
 #include "swift/Serialization/SerializedModuleLoader.h"
-#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/Attr.h"
-#include "clang/Basic/SourceManager.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/AttributeCommonInfo.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Index/USRGeneration.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Compiler.h"
@@ -4556,7 +4557,7 @@ public:
   }
 
   void deserializeConditionalSubstitutionConditions(
-      SmallVectorImpl<OpaqueTypeDecl::AvailabilityCondition> &conditions) {
+      SmallVectorImpl<AvailabilityQuery> &queries) {
     using namespace decls_block;
 
     SmallVector<uint64_t, 4> scratch;
@@ -4584,8 +4585,9 @@ public:
       llvm::VersionTuple condition;
       DECODE_VER_TUPLE(condition);
 
-      conditions.push_back(std::make_pair(VersionRange::allGTE(condition),
-                                          isUnavailability));
+      // ALLANXXX
+//      queries.push_back(std::make_pair(VersionRange::allGTE(condition),
+//                                          isUnavailability));
     }
   }
 
@@ -4612,10 +4614,10 @@ public:
       decls_block::ConditionalSubstitutionLayout::readRecord(
           scratch, substitutionMapRef);
 
-      SmallVector<OpaqueTypeDecl::AvailabilityCondition, 2> conditions;
-      deserializeConditionalSubstitutionConditions(conditions);
+      SmallVector<AvailabilityQuery, 2> queries;
+      deserializeConditionalSubstitutionConditions(queries);
 
-      if (conditions.empty())
+      if (queries.empty())
         return MF.diagnoseAndConsumeFatal();
 
       auto subMapOrError = MF.getSubstitutionMapChecked(substitutionMapRef);
@@ -4624,7 +4626,7 @@ public:
 
       limitedAvailability.push_back(
           OpaqueTypeDecl::ConditionallyAvailableSubstitutions::get(
-              ctx, conditions, subMapOrError.get()));
+              ctx, queries, subMapOrError.get()));
     }
   }
 
@@ -4720,10 +4722,11 @@ public:
         if (limitedAvailability.empty()) {
           opaqueDecl->setUniqueUnderlyingTypeSubstitutions(subMapOrError.get());
         } else {
-          limitedAvailability.push_back(
-              OpaqueTypeDecl::ConditionallyAvailableSubstitutions::get(
-                  ctx, {{VersionRange::all(), /*unavailability=*/false}},
-                  subMapOrError.get()));
+          // ALLANXXX
+//          limitedAvailability.push_back(
+//              OpaqueTypeDecl::ConditionallyAvailableSubstitutions::get(
+//                  ctx, {{VersionRange::all(), /*unavailability=*/false}},
+//                  subMapOrError.get()));
 
           opaqueDecl->setConditionallyAvailableSubstitutions(limitedAvailability);
         }
@@ -5735,6 +5738,11 @@ public:
     return macro;
   }
 
+  Expected<AvailabilityDomain> decodeAvailabilityDomain(uint8_t rawDomainKind,
+                                                        uint8_t rawPlatform,
+                                                        DeclID declID,
+                                                        const ASTContext &ctx);
+
   Expected<AvailableAttr *>
   readAvailable_DECL_ATTR(SmallVectorImpl<uint64_t> &scratch,
                           StringRef blobData);
@@ -5810,11 +5818,16 @@ decodeDomainKind(uint8_t kind) {
   }
 }
 
-static std::optional<AvailabilityDomain>
-decodeAvailabilityDomain(AvailabilityDomainKind domainKind,
-                         PlatformKind platformKind, Decl *decl,
-                         const ASTContext &ctx) {
-  switch (domainKind) {
+Expected<AvailabilityDomain>
+DeclDeserializer::decodeAvailabilityDomain(uint8_t rawDomainKind,
+                                           uint8_t rawPlatform, DeclID declID,
+                                           const ASTContext &ctx) {
+  auto maybeDomainKind = decodeDomainKind(rawDomainKind);
+  if (!maybeDomainKind)
+    return llvm::make_error<InvalidEnumValueError>(rawDomainKind,
+                                                   "AvailabilityDomainKind");
+
+  switch (*maybeDomainKind) {
   case AvailabilityDomainKind::Universal:
     return AvailabilityDomain::forUniversal();
   case AvailabilityDomainKind::SwiftLanguage:
@@ -5823,10 +5836,25 @@ decodeAvailabilityDomain(AvailabilityDomainKind domainKind,
     return AvailabilityDomain::forPackageDescription();
   case AvailabilityDomainKind::Embedded:
     return AvailabilityDomain::forEmbedded();
-  case AvailabilityDomainKind::Platform:
-    return AvailabilityDomain::forPlatform(platformKind);
-  case AvailabilityDomainKind::Custom:
-    return AvailabilityDomain::forCustom(decl, ctx);
+  case AvailabilityDomainKind::Platform: {
+    auto maybePlatform = platformFromUnsigned(rawPlatform);
+    if (!maybePlatform.has_value())
+      return llvm::make_error<InvalidEnumValueError>(rawPlatform,
+                                                     "PlatformKind");
+
+    return AvailabilityDomain::forPlatform(*maybePlatform);
+  }
+  case AvailabilityDomainKind::Custom: {
+    Decl *domainDecl = nullptr;
+    if (declID) {
+      SET_OR_RETURN_ERROR(domainDecl, MF.getDeclChecked(declID));
+    }
+
+    auto domain = AvailabilityDomain::forCustom(domainDecl, ctx);
+    if (!domain)
+      return llvm::make_error<InavalidAvailabilityDomainError>();
+    return *domain;
+  }
   }
 }
 
@@ -5853,16 +5881,6 @@ DeclDeserializer::readAvailable_DECL_ATTR(SmallVectorImpl<uint64_t> &scratch,
       LIST_VER_TUPLE_PIECES(Introduced), LIST_VER_TUPLE_PIECES(Deprecated),
       LIST_VER_TUPLE_PIECES(Obsoleted), messageSize, renameSize);
 
-  auto maybeDomainKind = decodeDomainKind(rawDomainKind);
-  if (!maybeDomainKind)
-    return llvm::make_error<InvalidEnumValueError>(rawDomainKind, "AvailabilityDomainKind");
-
-  auto maybePlatform = platformFromUnsigned(rawPlatform);
-  if (!maybePlatform.has_value())
-    return llvm::make_error<InvalidEnumValueError>(rawPlatform, "PlatformKind");
-
-  AvailabilityDomainKind domainKind = *maybeDomainKind;
-  PlatformKind platform = *maybePlatform;
   StringRef message = blobData.substr(0, messageSize);
   blobData = blobData.substr(messageSize);
   StringRef rename = blobData.substr(0, renameSize);
@@ -5881,17 +5899,13 @@ DeclDeserializer::readAvailable_DECL_ATTR(SmallVectorImpl<uint64_t> &scratch,
   else
     kind = AvailableAttr::Kind::Default;
 
-  Decl *domainDecl = nullptr;
-  if (domainDeclID) {
-    SET_OR_RETURN_ERROR(domainDecl, MF.getDeclChecked(domainDeclID));
-  }
-
-  auto domain = decodeAvailabilityDomain(domainKind, platform, domainDecl, ctx);
-  if (!domain)
-    return llvm::make_error<InavalidAvailabilityDomainError>();
+  AvailabilityDomain domain;
+  SET_OR_RETURN_ERROR(
+      domain,
+      decodeAvailabilityDomain(rawDomainKind, rawPlatform, domainDeclID, ctx));
 
   auto attr = new (ctx)
-      AvailableAttr(SourceLoc(), SourceRange(), *domain, SourceLoc(), kind,
+      AvailableAttr(SourceLoc(), SourceRange(), domain, SourceLoc(), kind,
                     message, rename, Introduced, SourceRange(), Deprecated,
                     SourceRange(), Obsoleted, SourceRange(), isImplicit, isSPI);
   return attr;

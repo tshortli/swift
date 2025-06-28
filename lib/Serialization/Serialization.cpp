@@ -4896,14 +4896,16 @@ public:
             S.Out, S.ScratchRecord, abbrCode,
             S.addSubstitutionMapRef(subs->getSubstitutions()));
 
+        // ALLANXXX update ConditionalSubstitutionConditionLayout to support
+        // arbitrary availability queries
         unsigned condAbbrCode =
             S.DeclTypeAbbrCodes[ConditionalSubstitutionConditionLayout::Code];
-        for (const auto &condition : subs->getAvailability()) {
+        for (const auto &query : subs->getAvailabilityQueries()) {
           ENCODE_VER_TUPLE(osVersion, std::optional<llvm::VersionTuple>(
-                                          condition.first.getLowerEndpoint()));
+                                          query.getPrimaryArgument()));
           ConditionalSubstitutionConditionLayout::emitRecord(
               S.Out, S.ScratchRecord, condAbbrCode,
-              /*isUnavailable=*/condition.second,
+              query.isUnavailability(),
               LIST_VER_TUPLE_PIECES(osVersion));
         }
       }

@@ -3659,8 +3659,6 @@ public:
   // There is no clear winner here since there are candidates within
   // limited availability contexts.
   void finalizeOpaque(const Candidate &universallyAvailable) {
-    using AvailabilityCondition = OpaqueTypeDecl::AvailabilityCondition;
-
     SmallVector<OpaqueTypeDecl::ConditionallyAvailableSubstitutions *, 4>
         conditionalSubstitutions;
     SubstitutionMap universalSubstMap = std::get<1>(universallyAvailable);
@@ -3673,37 +3671,31 @@ public:
         continue;
 
       unsigned neverAvailableCount = 0, alwaysAvailableCount = 0;
-      SmallVector<AvailabilityCondition, 4> conditions;
+      SmallVector<AvailabilityQuery, 4> queries;
 
       for (const auto &elt : stmt->getCond()) {
         auto condition = elt.getAvailability();
+        auto availabilityQuery = condition->getAvailabilityQuery();
 
-        auto availabilityRange = condition->getAvailableRange();
-
-        // Type checking did not set a range for this query (it may be invalid).
+        // Type checking did not populate this query (it may be invalid).
         // Treat the condition as if it were always true.
-        if (!availabilityRange.has_value()) {
+        if (!availabilityQuery) {
           alwaysAvailableCount++;
           continue;
         }
 
-        // If there is no lower endpoint it means that the condition has no
-        // OS version specification that matches the target platform.
-        // FIXME: [availability] Handle empty ranges (never available).
-        if (!availabilityRange->hasLowerEndpoint()) {
-          // An inactive #unavailable condition trivially evaluates to false.
-          if (condition->isUnavailability()) {
+        // If the query result is constant, then the corresponding type is
+        // either always available or never available at runtime.
+        if (auto constantResult = availabilityQuery->getConstantResult()) {
+          if (*constantResult) {
+            alwaysAvailableCount++;
+          } else {
             neverAvailableCount++;
-            continue;
           }
-
-          // An inactive #available condition trivially evaluates to true.
-          alwaysAvailableCount++;
           continue;
         }
 
-        conditions.push_back(
-            {*availabilityRange, condition->isUnavailability()});
+        queries.push_back(*availabilityQuery);
       }
 
       // If there were any conditions that were always false, then this
@@ -3719,18 +3711,18 @@ public:
         break;
       }
 
-      ASSERT(conditions.size() > 0);
+      ASSERT(queries.size() > 0);
 
       conditionalSubstitutions.push_back(
           OpaqueTypeDecl::ConditionallyAvailableSubstitutions::get(
-              Ctx, conditions,
+              Ctx, queries,
               std::get<1>(candidate).mapReplacementTypesOutOfContext()));
     }
 
     // Add universally available choice as the last one.
     conditionalSubstitutions.push_back(
         OpaqueTypeDecl::ConditionallyAvailableSubstitutions::get(
-            Ctx, {{VersionRange::all(), /*unavailable=*/false}},
+            Ctx, {}, // ALLANXXX
             universalSubstMap.mapReplacementTypesOutOfContext()));
 
     OpaqueDecl->setConditionallyAvailableSubstitutions(
