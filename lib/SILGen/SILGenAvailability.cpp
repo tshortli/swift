@@ -389,6 +389,8 @@ static void emitBackDeployForwardApplyAndReturnOrThrow(
 SILValue
 SILGenFunction::emitIfAvailableQuery(SILLocation loc,
                                      PoundAvailableInfo *availability) {
+  llvm_unreachable("not yet implemented");
+  /* ALLANXXX
   auto &ctx = getASTContext();
   SILValue result;
 
@@ -453,7 +455,16 @@ SILGenFunction::emitIfAvailableQuery(SILLocation loc,
   }
 
   return result;
+   */
 }
+
+// ALLANXXX new SILGenFunction method that takes AvailabilityQuery
+// - if static: emit literal, else (dynamic): emit apply
+//   - assert func decl takes expected arguments:
+//     - no arguments for no versions
+//     - 3 words for one version
+//     - 6 words for two versions
+// for #unavailable, emit xor of result
 
 bool SILGenModule::requiresBackDeploymentThunk(ValueDecl *decl,
                                                ResilienceExpansion expansion) {
