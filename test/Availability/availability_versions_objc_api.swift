@@ -183,7 +183,7 @@ class SubclassOfFrameworkClassConformingToUnannotatedFrameworkProtocol : Framewo
   }
 
   @available(OSX 51, *)
-  override var someProperty: AnnotatedFrameworkClass {
+  override var someProperty: AnnotatedFrameworkClass { // expected-error {{overriding 'someProperty' must be as available as declaration it overrides}}
     get { return AnnotatedFrameworkClass() }
     set(newValue) { }
   }
@@ -212,7 +212,7 @@ class SubclassOfFrameworkClassConformingToLaterAnnotatedFrameworkProtocol : Fram
   override func someMethodWithAvailability() { }
 
   @available(OSX 52, *)
-  override var someProperty: AnnotatedFrameworkClass {
+  override var someProperty: AnnotatedFrameworkClass { // expected-error {{overriding 'someProperty' must be as available as declaration it overrides}}
     get { return AnnotatedFrameworkClass() }
     set(newValue) { }
   }

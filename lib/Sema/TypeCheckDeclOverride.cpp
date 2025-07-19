@@ -22,6 +22,7 @@
 #include "TypeCheckUnsafe.h"
 #include "TypeChecker.h"
 #include "swift/AST/ASTVisitor.h"
+#include "swift/AST/AvailabilityConstraint.h"
 #include "swift/AST/AvailabilityInference.h"
 #include "swift/AST/AvailabilityRange.h"
 #include "swift/AST/Decl.h"
@@ -1814,22 +1815,25 @@ OverrideRequiresKeyword swift::overrideRequiresKeyword(ValueDecl *overridden) {
 /// makes it a safe override, given the availability of the base declaration.
 static bool isAvailabilitySafeForOverride(ValueDecl *override,
                                           ValueDecl *base) {
+  auto &ctx = override->getASTContext();
+
   // API availability ranges are contravariant: make sure the version range
   // of an overridden declaration is fully contained in the range of the
   // overriding declaration.
-  AvailabilityRange overrideInfo =
-      AvailabilityInference::availableRange(override);
-  AvailabilityRange baseInfo = AvailabilityInference::availableRange(base);
+  auto baseAvailability = AvailabilityContext::forDeclSignature(base);
 
-  if (baseInfo.isContainedIn(overrideInfo))
-    return true;
-
-  // Allow overrides that are not as available as the base decl as long as the
-  // override is as available as its context.
-  auto availabilityContext = AvailabilityContext::forDeclSignature(
+  // The override is allowed to be less available than the base decl as long as
+  // it is as available as its containing nominal decl.
+  auto nominalAvailability = AvailabilityContext::forDeclSignature(
       override->getDeclContext()->getSelfNominalTypeDecl());
+  baseAvailability.constrainWithContext(nominalAvailability, ctx);
 
-  return availabilityContext.getPlatformRange().isContainedIn(overrideInfo);
+  auto overrideConstraints =
+      getAvailabilityConstraintsForDecl(override, baseAvailability);
+  return llvm::none_of(overrideConstraints,
+                       [](const AvailabilityConstraint &constraint) {
+                         return constraint.isPotentiallyAvailable();
+                       });
 }
 
 /// Returns true if a diagnostic about an accessor being less available
@@ -1962,6 +1966,7 @@ checkOverrideUnavailability(ValueDecl *override, ValueDecl *base) {
   if (baseUnavailableAttr && !overrideUnavailableAttr)
     return {OverrideUnavailabilityStatus::BaseUnavailable, baseUnavailableAttr};
 
+  // FIXME: [availability] Diagnose unavailable overrides when the base is not.
   return {OverrideUnavailabilityStatus::Compatible, std::nullopt};
 }
 
@@ -2232,11 +2237,9 @@ static bool checkSingleOverride(ValueDecl *override, ValueDecl *base) {
   }
 
   // FIXME: [availability] Possibly should extend to more availability checking.
-  auto unavailabilityStatusAndAttr =
-      checkOverrideUnavailability(override, base);
-  auto unavailableAttr = unavailabilityStatusAndAttr.second;
+  auto [status, unavailableAttr] = checkOverrideUnavailability(override, base);
 
-  switch (unavailabilityStatusAndAttr.first) {
+  switch (status) {
   case OverrideUnavailabilityStatus::BaseUnavailable: {
     diagnoseOverrideOfUnavailableDecl(override, base, unavailableAttr.value());
 

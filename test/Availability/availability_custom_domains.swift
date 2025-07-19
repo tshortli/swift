@@ -257,3 +257,87 @@ func testOpaqueReturnType() -> some P {
     return UnavailableConformsToP()
   }
 }
+
+class Base {
+  func alwaysAvailable() { }
+
+  @available(EnabledDomain)
+  func overrideAsAvailable() { } // expected-note {{overridden declaration is here}}
+
+  func overrideLessAvailable() { } // expected-note 2 {{overridden declaration is here}}
+
+  @available(EnabledDomain)
+  func overrideMoreAvailable() { }
+
+  @available(EnabledDomain, unavailable)
+  func overrideAsUnavailable() { }
+
+  @available(EnabledDomain, unavailable)
+  func overrideLessUnavailable() { } // expected-note 2 {{'overrideLessUnavailable()' has been explicitly marked unavailable here}}
+
+  func overrideMoreUnavailable() { }
+}
+
+class DerivedAlwaysAvailable: Base {
+  override func alwaysAvailable() { }
+
+  @available(EnabledDomain)
+  override func overrideAsAvailable() { }
+
+  @available(EnabledDomain)
+  override func overrideLessAvailable() { } // expected-error {{overriding 'overrideLessAvailable' must be as available as declaration it overrides}}
+
+  override func overrideMoreAvailable() { }
+
+  @available(EnabledDomain, unavailable)
+  override func overrideAsUnavailable() { }
+
+  override func overrideLessUnavailable() { } // expected-error {{cannot override 'overrideLessUnavailable' which has been marked unavailable}}
+  // expected-note@-1 {{remove 'override' modifier to declare a new 'overrideLessUnavailable'}}
+
+  @available(EnabledDomain, unavailable)
+  override func overrideMoreUnavailable() { }
+}
+
+@available(EnabledDomain)
+class DerivedAvailable: Base {
+  override func alwaysAvailable() { }
+
+  @available(EnabledDomain)
+  override func overrideAsAvailable() { }
+
+  @available(EnabledDomain)
+  override func overrideLessAvailable() { }
+
+  override func overrideMoreAvailable() { }
+
+  @available(EnabledDomain, unavailable)
+  override func overrideAsUnavailable() { }
+
+  override func overrideLessUnavailable() { } // expected-error {{cannot override 'overrideLessUnavailable' which has been marked unavailable}}
+  // expected-note@-1 {{remove 'override' modifier to declare a new 'overrideLessUnavailable'}}
+
+  @available(EnabledDomain, unavailable)
+  override func overrideMoreUnavailable() { }
+}
+
+@available(EnabledDomain, unavailable)
+class DerivedUnavailable: Base {
+  override func alwaysAvailable() { }
+
+  @available(EnabledDomain)
+  override func overrideAsAvailable() { } // expected-error {{overriding 'overrideAsAvailable' must be as available as declaration it overrides}}
+
+  @available(EnabledDomain)
+  override func overrideLessAvailable() { } // expected-error {{overriding 'overrideLessAvailable' must be as available as declaration it overrides}}
+
+  override func overrideMoreAvailable() { }
+
+  @available(EnabledDomain, unavailable)
+  override func overrideAsUnavailable() { }
+
+  override func overrideLessUnavailable() { }
+
+  @available(EnabledDomain, unavailable)
+  override func overrideMoreUnavailable() { }
+}
