@@ -275,7 +275,7 @@ class Base {
   @available(EnabledDomain, unavailable)
   func overrideLessUnavailable() { } // expected-note 2 {{'overrideLessUnavailable()' has been explicitly marked unavailable here}}
 
-  func overrideMoreUnavailable() { }
+  func overrideMoreUnavailable() { } // expected-note 2 {{overridden declaration is here}}
 }
 
 class DerivedAlwaysAvailable: Base {
@@ -296,7 +296,7 @@ class DerivedAlwaysAvailable: Base {
   // expected-note@-1 {{remove 'override' modifier to declare a new 'overrideLessUnavailable'}}
 
   @available(EnabledDomain, unavailable)
-  override func overrideMoreUnavailable() { }
+  override func overrideMoreUnavailable() { } // expected-error {{cannot override 'overrideMoreUnavailable' with a declaration that is marked unavailable}}{{298:3-41=}}
 }
 
 @available(EnabledDomain)
@@ -318,7 +318,7 @@ class DerivedAvailable: Base {
   // expected-note@-1 {{remove 'override' modifier to declare a new 'overrideLessUnavailable'}}
 
   @available(EnabledDomain, unavailable)
-  override func overrideMoreUnavailable() { }
+  override func overrideMoreUnavailable() { } // expected-error {{cannot override 'overrideMoreUnavailable' with a declaration that is marked unavailable}}{{320:3-41=}}
 }
 
 @available(EnabledDomain, unavailable)

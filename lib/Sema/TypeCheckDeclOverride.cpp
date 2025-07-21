@@ -1928,6 +1928,8 @@ enum class OverrideUnavailabilityStatus {
   Compatible,
   /// The base decl is unavailable but the override decl is not.
   BaseUnavailable,
+  /// The override decl is unavailable but the base decl is not.
+  OverrideUnavailable,
   /// Do not diagnose the unavailability of these decls.
   Ignored,
 };
@@ -1966,7 +1968,10 @@ checkOverrideUnavailability(ValueDecl *override, ValueDecl *base) {
   if (baseUnavailableAttr && !overrideUnavailableAttr)
     return {OverrideUnavailabilityStatus::BaseUnavailable, baseUnavailableAttr};
 
-  // FIXME: [availability] Diagnose unavailable overrides when the base is not.
+  if (!baseUnavailableAttr && overrideUnavailableAttr)
+    return {OverrideUnavailabilityStatus::OverrideUnavailable,
+            overrideUnavailableAttr};
+
   return {OverrideUnavailabilityStatus::Compatible, std::nullopt};
 }
 
@@ -2236,7 +2241,6 @@ static bool checkSingleOverride(ValueDecl *override, ValueDecl *base) {
     return true;
   }
 
-  // FIXME: [availability] Possibly should extend to more availability checking.
   auto [status, unavailableAttr] = checkOverrideUnavailability(override, base);
 
   switch (status) {
@@ -2252,6 +2256,23 @@ static bool checkSingleOverride(ValueDecl *override, ValueDecl *base) {
             .fixItRemove(modifier->getRange());
       }
     }
+    break;
+  }
+  case OverrideUnavailabilityStatus::OverrideUnavailable: {
+    auto domain = unavailableAttr.value().getDomain();
+    auto parsedAttr = unavailableAttr->getParsedAttr();
+
+    if (!domain.isCustom()) {
+      // FIXME: [availability] Diagnose as an error in a future Swift version.
+      break;
+    }
+
+    if (parsedAttr->getLocation().isValid())
+      ctx.Diags.diagnose(override, diag::override_unavailable, override)
+          .fixItRemove(parsedAttr->getRangeWithAt());
+    else
+      ctx.Diags.diagnose(override, diag::override_unavailable, override);
+    ctx.Diags.diagnose(base, diag::overridden_here);
     break;
   }
   case OverrideUnavailabilityStatus::Compatible:
