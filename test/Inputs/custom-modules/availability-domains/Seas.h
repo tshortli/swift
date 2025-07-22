@@ -1,4 +1,7 @@
 #include <feature-availability.h>
+#if OBJC
+@import ObjectiveC;
+#endif
 
 static struct __AvailabilityDomain __Baltic __attribute__((
     availability_domain(Baltic))) = {__AVAILABILITY_DOMAIN_ENABLED, 0};
@@ -10,6 +13,12 @@ static struct __AvailabilityDomain __Mediterranean __attribute__((
 
 __attribute__((availability(domain:Baltic, AVAIL)))
 void available_in_baltic(void);
+
+#if OBJC
+__attribute__((availability(domain : Baltic, AVAIL)))
+@interface AvailableInBaltic : NSObject
+@end
+#endif
 
 #undef UNAVAIL
 #undef AVAIL

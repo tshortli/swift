@@ -21,6 +21,7 @@
 #include "SwiftDeclSynthesizer.h"
 #include "swift/AST/ASTContext.h"
 #include "swift/AST/Attr.h"
+#include "swift/AST/AvailabilityContext.h"
 #include "swift/AST/AvailabilityInference.h"
 #include "swift/AST/Builtins.h"
 #include "swift/AST/ClangModuleLoader.h"
@@ -584,6 +585,7 @@ static void inferProtocolMemberAvailability(ClangImporter::Implementation &impl,
   if (!valueDecl)
     return;
 
+  // ALLANXXX
   AvailabilityRange requiredRange =
       AvailabilityInference::inferForType(valueDecl->getInterfaceType());
 
@@ -7396,6 +7398,7 @@ bool SwiftDeclConverter::existingConstructorIsWorse(
   // FIXME: But if one of them is now deprecated, should we prefer the
   // other?
   llvm::VersionTuple introduced = findLatestIntroduction(objcMethod);
+  // ALLANXXX
   AvailabilityRange existingAvailability =
       AvailabilityInference::availableRange(existingCtor);
   assert(!existingAvailability.isKnownUnreachable());
@@ -10103,6 +10106,7 @@ ClangImporter::Implementation::importMirroredDecl(const clang::NamedDecl *decl,
 
       if (proto->getAttrs().hasAttribute<AvailableAttr>()) {
         if (!result->getAttrs().hasAttribute<AvailableAttr>()) {
+          // ALLANXXX
           AvailabilityRange protoRange =
               AvailabilityInference::availableRange(proto);
           applyAvailableAttribute(result, protoRange, SwiftContext);

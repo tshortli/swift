@@ -1,5 +1,8 @@
 #include <Rivers.h>
 #include <feature-availability.h>
+#if OBJC
+@import ObjectiveC;
+#endif
 
 int arctic_pred(void);
 int pacific_pred(void);
@@ -23,6 +26,16 @@ void unavailable_in_pacific(void);
 __attribute__((availability(domain:Colorado, AVAIL)))
 __attribute__((availability(domain:Pacific, AVAIL)))
 void available_in_colorado_river_delta(void);
+
+#if OBJC
+__attribute__((availability(domain : Arctic, AVAIL)))
+@interface AvailableInArctic : NSObject
+@end
+
+__attribute__((availability(domain : Pacific, UNAVAIL)))
+@interface UnavailableInPacific : NSObject
+@end
+#endif
 
 #undef UNAVAIL
 #undef AVAIL
