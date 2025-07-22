@@ -242,19 +242,19 @@ extension Container {
   func unavailableInEnabledDomain() { }
 }
 
-protocol P { }
+protocol OpaqueReturnType { }
 
 @available(EnabledDomain)
-struct AvailableConformsToP: P { }
+struct AvailableOpaqueReturnType: OpaqueReturnType { }
 
 @available(EnabledDomain, unavailable)
-struct UnavailableConformsToP: P { }
+struct UnavailableOpaqueReturnType: OpaqueReturnType { }
 
-func testOpaqueReturnType() -> some P {
+func testOpaqueReturnType() -> some OpaqueReturnType {
   if #available(EnabledDomain) { // expected-error {{opaque return type cannot depend on EnabledDomain availability}}
-    return AvailableConformsToP()
+    return AvailableOpaqueReturnType()
   } else {
-    return UnavailableConformsToP()
+    return UnavailableOpaqueReturnType()
   }
 }
 
@@ -340,4 +340,8 @@ class DerivedUnavailable: Base {
 
   @available(EnabledDomain, unavailable)
   override func overrideMoreUnavailable() { }
+}
+
+protocol HasRequirementsInEnabledDomain {
+  // ALLANXXX
 }

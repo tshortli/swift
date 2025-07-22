@@ -7122,9 +7122,9 @@ WARNING(availability_enum_element_no_potential_warn,
         none, "enum cases with associated values cannot be marked potentially unavailable with "
         "'@available'", ())
 
-ERROR(availability_protocol_requires_version,
-      none, "protocol %0 requires %1 to be available in %2 %3 and newer",
-      (const ProtocolDecl *, const ValueDecl *, AvailabilityDomain,
+ERROR(availability_protocol_requires,
+      none, "protocol %0 requires %1 to be available in %2%select{| %4 and newer}3",
+      (const ProtocolDecl *, const ValueDecl *, AvailabilityDomain, bool,
        AvailabilityRange))
 
 NOTE(availability_protocol_requirement_here, none,

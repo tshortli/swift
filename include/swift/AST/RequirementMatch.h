@@ -12,6 +12,7 @@
 #ifndef SWIFT_AST_REQUIREMENTMATCH_H
 #define SWIFT_AST_REQUIREMENTMATCH_H
 
+#include "swift/AST/AvailabilityConstraint.h"
 #include "swift/AST/RequirementEnvironment.h"
 #include "swift/AST/Type.h"
 #include "swift/AST/Types.h"
@@ -252,6 +253,7 @@ class RequirementCheck {
 
     /// Storage for `CheckKind::Availability`.
     struct {
+      AvailabilityConstraint constraint;
       AvailabilityRange requiredRange;
     } Availability;
   };
@@ -266,8 +268,10 @@ public:
   RequirementCheck(AccessScope requiredAccessScope, bool forSetter)
       : Kind(CheckKind::Access), Access{requiredAccessScope, forSetter} {}
 
-  RequirementCheck(AvailabilityRange requiredRange)
-      : Kind(CheckKind::Availability), Availability{requiredRange} {}
+  RequirementCheck(AvailabilityConstraint constraint,
+                   AvailabilityRange requiredRange)
+      : Kind(CheckKind::Availability), Availability{constraint, requiredRange} {
+  }
 
   CheckKind getKind() const { return Kind; }
 
@@ -280,7 +284,7 @@ public:
   /// True if the witness is less available than the requirement.
   bool isLessAvailable() const {
     return (Kind == CheckKind::Availability)
-               ? !Availability.requiredRange.isKnownUnreachable()
+               ? Availability.constraint.isPotentiallyAvailable()
                : false;
   }
 
@@ -289,6 +293,13 @@ public:
   AccessScope getRequiredAccessScope() const {
     ASSERT(Kind == CheckKind::Access);
     return Access.requiredScope;
+  }
+
+  /// The availability constraint that would fail if the witness were accessed
+  /// from contexts in which the requirement is available.
+  AvailabilityConstraint getAvailabilityConstraint() const {
+    ASSERT(Kind == CheckKind::Availability);
+    return Availability.constraint;
   }
 
   /// The required availability range for checks that failed due to the witness
