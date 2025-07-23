@@ -585,9 +585,11 @@ static void inferProtocolMemberAvailability(ClangImporter::Implementation &impl,
   if (!valueDecl)
     return;
 
+  llvm::errs() << "ALLANXXX inferProtocolMemberAvailability " << valueDecl->getName();
   // ALLANXXX
   AvailabilityRange requiredRange =
       AvailabilityInference::inferForType(valueDecl->getInterfaceType());
+  llvm::errs() << "  req range for type: " << requiredRange;
 
   ASTContext &C = impl.SwiftContext;
 
@@ -596,6 +598,7 @@ static void inferProtocolMemberAvailability(ClangImporter::Implementation &impl,
       AvailabilityInference::availableRange(innermostDecl);
 
   requiredRange.intersectWith(containingDeclRange);
+  llvm::errs() << "  req range intersected with parent: " << requiredRange << "\n";
 
   applyAvailableAttribute(valueDecl, requiredRange, C);
 }

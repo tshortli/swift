@@ -1872,6 +1872,25 @@ checkWitnessAvailability(const ValueDecl *requirement, const ValueDecl *witness,
                             witness, requiredAvailability, flags)
                             .getPrimaryConstraint()) {
     if (constraint->isPotentiallyAvailable()) {
+      llvm::errs() << "ALLANXXX checkWitnessAvailability failed";
+      llvm::errs() << "\n  requirement: ";
+      requirement->dumpRef(llvm::errs());
+      llvm::errs() << "\n  requirement parent: ";
+      printDeclDescription(llvm::errs(), requirement->parentDeclForAvailability());
+      llvm::errs() << "\n  requirement avail: " << AvailabilityContext::forDeclSignature(requirement);
+
+      auto availability = AvailabilityContext::forInliningTarget(ctx);
+      availability.constrainWithDecl(requirement);
+      llvm::errs() << "\n  requirement avail manual: " << availability;
+
+      llvm::errs() << "\n  witness: ";
+      witness->dumpRef(llvm::errs());
+      llvm::errs() << "\n  witness parent: ";
+      printDeclDescription(llvm::errs(), witness->parentDeclForAvailability());
+      llvm::errs() << "\n  constraint: " << *constraint;
+
+      llvm::errs() << "\n";
+
       auto range = requiredAvailability.getAvailabilityRange(
           constraint->getDomain(), ctx);
       ASSERT(range);
