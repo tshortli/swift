@@ -15,15 +15,16 @@
 //
 //===----------------------------------------------------------------------===//
 #include "swift/ABI/MetadataValues.h"
+#include "swift/AST/AvailabilityQuery.h"
 #include "swift/AST/IRGenOptions.h"
 #include "swift/Basic/Assertions.h"
 #include "swift/Basic/SourceLoc.h"
 #include "swift/IRGen/Linking.h"
-#include "llvm/IR/Instructions.h"
+#include "llvm/BinaryFormat/MachO.h"
 #include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
-#include "llvm/BinaryFormat/MachO.h"
 
 #include "Callee.h"
 #include "Explosion.h"
@@ -301,6 +302,40 @@ static unsigned getBaseMachOPlatformID(const llvm::Triple &TT) {
   default:
     return /*Unknown platform*/ 0;
   }
+}
+
+llvm::Value *
+IRGenFunction::emitAvailabilityQuery(const AvailabilityQuery &query) {
+  // If the query's result is known at compile time, emit a constant.
+  if (auto constantResult = query.getConstantResult())
+    return nullptr; // ALLANXXX
+
+  llvm::SmallVector<unsigned, 6> rawArgs;
+  auto queryDecl = query.getDynamicQueryDeclAndArguments(rawArgs, ctx);
+
+  // FIXME: [availability] Once dynamic custom domains have decls, DEBUG_ASSERT.
+  if (!queryDecl)
+    return nullptr; // ALLANXXX
+
+  auto queryType = queryDecl->getInterfaceType()->getAs<FunctionType>();
+  ASSERT(queryType);
+  ASSERT(queryType->getResult()->getAs<BuiltinIntegerType>());
+
+  auto queryParams = queryType->getParams();
+  ASSERT(rawArgs.size() == queryParams.size());
+
+  // ALLANXXX emit the integer literals
+
+  // ALLANXXX emit the function ref
+
+  // ALLANXXX emit the apply
+
+  // If this is an unavailability check, invert the result using xor with -1.
+  if (query.isUnavailability()) {
+    // ALLANXXX invert
+  }
+
+  llvm_unreachable("ALLANXXX");
 }
 
 llvm::Value *

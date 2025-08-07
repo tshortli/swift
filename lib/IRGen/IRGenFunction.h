@@ -40,6 +40,7 @@ namespace llvm {
 
 namespace swift {
   class ArchetypeType;
+  class AvailabilityQuery;
   class IRGenOptions;
   class SILDebugScope;
   class SILType;
@@ -375,6 +376,8 @@ public:
   void emitDeallocBoxCall(llvm::Value *box, llvm::Value *typeMetadata);
 
   void emitTSanInoutAccessCall(llvm::Value *address);
+
+  llvm::Value *emitAvailabilityQuery(const AvailabilityQuery &query);
 
   llvm::Value *emitTargetOSVersionAtLeastCall(llvm::Value *major,
                                               llvm::Value *minor,

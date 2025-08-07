@@ -262,7 +262,7 @@ struct AvailableOpaqueReturnType: OpaqueReturnType { }
 struct UnavailableOpaqueReturnType: OpaqueReturnType { }
 
 func testOpaqueReturnType() -> some OpaqueReturnType {
-  if #available(EnabledDomain) { // expected-error {{opaque return type cannot depend on EnabledDomain availability}}
+  if #available(EnabledDomain) {
     return AvailableOpaqueReturnType()
   } else {
     return UnavailableOpaqueReturnType()

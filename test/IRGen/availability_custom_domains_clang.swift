@@ -49,6 +49,36 @@ public func ifAvailableDynamicDomain() {
   }
 }
 
+public protocol Opaque { }
+
+struct OpaqueAlwaysAvailable: Opaque { }
+
+@available(EnabledDomain)
+struct OpaqueAvailableInEnabledDomain: Opaque { }
+
+@available(DisabledDomain)
+struct OpaqueAvailableInDisabledDomain: Opaque { }
+
+@available(DynamicDomain)
+struct OpaqueAvailableInDynamicDomain: Opaque { }
+
+// CHECK-LABEL:   define {{.*}}define swiftcc void @"$s4Test17returnsOpaqueTypeQryF"
+public func returnsOpaqueType() -> some Opaque {
+  if #available(DynamicDomain) {
+    return OpaqueAvailableInDynamicDomain()
+  }
+
+  if #available(DisabledDomain) {
+    return OpaqueAvailableInDisabledDomain()
+  }
+
+  if #available(EnabledDomain) {
+    return OpaqueAvailableInEnabledDomain()
+  }
+
+  return OpaqueAlwaysAvailable()
+}
+
 // CHECK-O-NONE-LABEL: define {{.*}}swiftcc i1 @"$sSC33__swift_DynamicDomain_isAvailableBi1_yF"()
 // CHECK-O-NONE:       entry:
 // CHECK-O-NONE:         [[CALL:%.*]] = call {{.*}}i1 @__DynamicDomain_isAvailable()
