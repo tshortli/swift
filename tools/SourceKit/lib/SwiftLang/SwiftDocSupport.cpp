@@ -689,6 +689,7 @@ static void reportAvailabilityAttributes(ASTContext &Ctx, const Decl *D,
   static UIdent PlatformOpenBSD("source.availability.platform.openbsd");
   static UIdent PlatformWindows("source.availability.platform.windows");
   static UIdent PlatformAndroid("source.availability.platform.android");
+  static UIdent PlatformSwift("source.availability.platform.swift");
   std::vector<SemanticAvailableAttr> Scratch;
 
   for (auto Attr : getAvailableAttrs(D, Scratch)) {
@@ -746,6 +747,9 @@ static void reportAvailabilityAttributes(ASTContext &Ctx, const Decl *D,
       break;
     case PlatformKind::Android:
       PlatformUID = PlatformAndroid;
+      break;
+    case PlatformKind::Swift:
+      PlatformUID = PlatformSwift;
       break;
     }
     // FIXME: [availability] Handle other availability domains?

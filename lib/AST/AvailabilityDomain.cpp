@@ -102,14 +102,13 @@ AvailabilityDomain::forCustom(ValueDecl *decl) {
 }
 
 static AvailabilityDomain getSwiftRuntimeDomain(ASTContext &ctx) {
-  // If -enable-experimental-feature StandaloneSwiftAvailability is specified
-  // then forcibly separate platform and Swift runtime availability.
-  if (ctx.LangOpts.hasFeature(Feature::StandaloneSwiftAvailability))
+  switch (ctx.LangOpts.TargetSwiftRuntimeAvailability) {
+  case SwiftRuntimeAvailability::Standalone:
     return AvailabilityDomain::forStandaloneSwiftRuntime();
-
-  // FIXME: [runtime availability] Return the platform Swift runtime domain.
-
-  return AvailabilityDomain::forStandaloneSwiftRuntime();
+  case SwiftRuntimeAvailability::Platform:
+  case SwiftRuntimeAvailability::Ignored:
+    return AvailabilityDomain::forPlatform(PlatformKind::Swift);
+  }
 }
 
 std::optional<AvailabilityDomain>
@@ -151,6 +150,13 @@ bool AvailabilityDomain::isVersioned() const {
   }
 }
 
+bool isValidSwiftRuntimeVersion(const llvm::VersionTuple &version) {
+  // Swift 5.0 is the first ABI stable Swift runtime version.
+  if (version.getMajor() < 5)
+    return false;
+  return true;
+}
+
 bool AvailabilityDomain::isVersionValid(
     const llvm::VersionTuple &version) const {
   ASSERT(isVersioned());
@@ -163,14 +169,12 @@ bool AvailabilityDomain::isVersionValid(
   case Kind::PackageDescription:
     return true;
   case Kind::StandaloneSwiftRuntime:
-    // Swift 5.0 is the first ABI stable Swift runtime version.
-    if (version.getMajor() < 5)
-      return false;
-    return true;
-
+    return isValidSwiftRuntimeVersion(version);
   case Kind::Platform:
     if (auto osType = tripleOSTypeForPlatform(getPlatformKind()))
       return llvm::Triple::isValidVersionForOS(*osType, version);
+    if (getPlatformKind() == PlatformKind::Swift)
+      return isValidSwiftRuntimeVersion(version);
     return true;
   case Kind::Custom:
     return true;
@@ -214,10 +218,8 @@ bool AvailabilityDomain::isActive(const ASTContext &ctx,
   case Kind::Embedded:
     return true;
   case Kind::StandaloneSwiftRuntime:
-    // FIXME: [runtime availability] Active either when
-    // StandaloneSwiftAvailability is enabled or the target supports a
-    // standalone Swift runtime.
-    return ctx.LangOpts.hasFeature(Feature::SwiftRuntimeAvailability);
+    return ctx.LangOpts.TargetSwiftRuntimeAvailability ==
+           SwiftRuntimeAvailability::Standalone;
   case Kind::Platform:
     return isPlatformActive(getPlatformKind(), ctx.LangOpts, forTargetVariant);
   case Kind::Custom:
@@ -403,6 +405,8 @@ AvailabilityDomain AvailabilityDomain::getRootDomain() const {
 const AvailabilityDomain
 AvailabilityDomain::getRemappedDomain(const ASTContext &ctx,
                                       bool &didRemap) const {
+  // ALLANXXX remap Swift domain
+  
   if (getPlatformKind() == PlatformKind::iOS &&
       isPlatformActive(PlatformKind::visionOS, ctx.LangOpts)) {
     didRemap = true;

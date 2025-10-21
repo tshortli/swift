@@ -1833,6 +1833,10 @@ public:
       case PlatformKind::Android:
         plat = "android";
         break;
+      case PlatformKind::Swift:
+        // FIXME: [runtime availability] Figure out how to support this.
+        ASSERT(0);
+        break;
       case PlatformKind::none:
         llvm_unreachable("handled above");
       }

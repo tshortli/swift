@@ -119,6 +119,7 @@ swift::basePlatformForExtensionPlatform(PlatformKind Platform) {
   case PlatformKind::OpenBSD:
   case PlatformKind::Windows:
   case PlatformKind::Android:
+  case PlatformKind::Swift:
   case PlatformKind::none:
     return std::nullopt;
   }
@@ -127,17 +128,20 @@ swift::basePlatformForExtensionPlatform(PlatformKind Platform) {
 
 static bool isPlatformActiveForTarget(PlatformKind Platform,
                                       const llvm::Triple &Target,
-                                      bool EnableAppExtensionRestrictions,
+                                      const LangOptions &LangOpts,
                                       bool ForRuntimeQuery) {
   if (Platform == PlatformKind::none)
     return true;
 
-  if (!EnableAppExtensionRestrictions &&
+  if (!LangOpts.EnableAppExtensionRestrictions &&
       isApplicationExtensionPlatform(Platform))
     return false;
 
   // FIXME: This is an awful way to get the current OS.
   switch (Platform) {
+    case PlatformKind::Swift:
+      return LangOpts.TargetSwiftRuntimeAvailability ==
+             SwiftRuntimeAvailability::Platform;
     case PlatformKind::macOS:
     case PlatformKind::macOSApplicationExtension:
       return Target.isMacOSX();
@@ -178,12 +182,11 @@ bool swift::isPlatformActive(PlatformKind Platform, const LangOptions &LangOpts,
   if (ForTargetVariant) {
     assert(LangOpts.TargetVariant && "Must have target variant triple");
     return isPlatformActiveForTarget(Platform, *LangOpts.TargetVariant,
-                                     LangOpts.EnableAppExtensionRestrictions,
-                                     ForRuntimeQuery);
+                                     LangOpts, ForRuntimeQuery);
   }
 
-  return isPlatformActiveForTarget(Platform, LangOpts.Target,
-                                   LangOpts.EnableAppExtensionRestrictions, ForRuntimeQuery);
+  return isPlatformActiveForTarget(Platform, LangOpts.Target, LangOpts,
+                                   ForRuntimeQuery);
 }
 
 static PlatformKind platformForTriple(const llvm::Triple &triple,
@@ -269,6 +272,10 @@ bool swift::inheritsAvailabilityFromPlatform(PlatformKind Child,
     }
   }
 
+  if (Parent == PlatformKind::Swift) {
+    // ALLANXXX
+  }
+
   return false;
 }
 
@@ -300,6 +307,7 @@ swift::tripleOSTypeForPlatform(PlatformKind platform) {
     return llvm::Triple::Win32;
   case PlatformKind::Android:
     return llvm::Triple::Linux;
+  case PlatformKind::Swift:
   case PlatformKind::none:
     return std::nullopt;
   }
@@ -336,6 +344,7 @@ bool swift::isPlatformSPI(PlatformKind Platform) {
   case PlatformKind::FreeBSD:
   case PlatformKind::Windows:
   case PlatformKind::Android:
+  case PlatformKind::Swift:
   case PlatformKind::none:
     return false;
   }

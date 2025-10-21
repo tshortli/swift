@@ -127,6 +127,18 @@ namespace swift {
     Complete,
   };
 
+  /// Describes how the `Swift` availability domain is interpreted in this
+  /// compilation.
+  enum class SwiftRuntimeAvailability : uint8_t {
+    /// `Swift` availability is ignored.
+    Ignored,
+    /// Platform availability can be inferred from `Swift` availability and
+    /// vice-versa.
+    Platform,
+    /// Platform availability and `Swift` availability are separate.
+    Standalone,
+  };
+
   /// A collection of options that affect the language dialect and
   /// provide compiler debugging facilities.
   class LangOptions final {
@@ -174,6 +186,10 @@ namespace swift {
     /// clients may need to interoperate with versions as far back as that
     /// deployment target.
     llvm::VersionTuple MinimumInliningTargetVersion;
+
+    /// Indicates how the `Swift` availability domain is interpreted in this
+    /// compilation.
+    SwiftRuntimeAvailability TargetSwiftRuntimeAvailability;
 
     /// The alternate name to use for the entry point instead of main.
     std::optional<std::string> entryPointFunctionName;

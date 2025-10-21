@@ -269,6 +269,7 @@ getFallbackVersionMapping(const ASTContext &Ctx,
 static std::optional<clang::VersionTuple>
 getRemappedIntroducedVersionForFallbackPlatform(
     const ASTContext &Ctx, const llvm::VersionTuple &Version) {
+  // ALLANXXX remap Swift version
   const auto *Mapping = getFallbackVersionMapping(
       Ctx, clang::DarwinSDKInfo::OSEnvPair(
                llvm::Triple::IOS, llvm::Triple::UnknownEnvironment,
@@ -281,6 +282,7 @@ getRemappedIntroducedVersionForFallbackPlatform(
 static std::optional<clang::VersionTuple>
 getRemappedDeprecatedObsoletedVersionForFallbackPlatform(
     const ASTContext &Ctx, const llvm::VersionTuple &Version) {
+  // ALLANXXX remap Swift version
   const auto *Mapping = getFallbackVersionMapping(
       Ctx, clang::DarwinSDKInfo::OSEnvPair(
                llvm::Triple::IOS, llvm::Triple::UnknownEnvironment,
@@ -863,8 +865,9 @@ SemanticAvailableAttrRequest::evaluate(swift::Evaluator &evaluator,
     break;
 
   case AvailabilityDomain::Kind::Platform:
-    // FIXME: [runtime availability] Diagnose Swift runtime platform, too.
-    break;
+    if (domain->getPlatformKind() != PlatformKind::Swift)
+      break;
+    LLVM_FALLTHROUGH;
 
   case AvailabilityDomain::Kind::SwiftLanguageMode:
   case AvailabilityDomain::Kind::StandaloneSwiftRuntime:

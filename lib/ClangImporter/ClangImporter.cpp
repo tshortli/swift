@@ -2582,6 +2582,9 @@ PlatformAvailability::PlatformAvailability(const LangOptions &langOpts)
 
   case PlatformKind::none:
     break;
+
+  case PlatformKind::Swift:
+    llvm_unreachable("Unexpected platform");
   }
 }
 
@@ -2633,6 +2636,9 @@ bool PlatformAvailability::isPlatformRelevant(StringRef name) const {
 
   case PlatformKind::none:
     return false;
+
+  case PlatformKind::Swift:
+    break; // Unexpected
   }
 
   llvm_unreachable("Unexpected platform");
@@ -2711,6 +2717,9 @@ bool PlatformAvailability::treatDeprecatedAsUnavailable(
   case PlatformKind::Android:
     // The minimum Android API level supported by Swift is 21
     return major <= 20;
+
+  case PlatformKind::Swift:
+    break; // Unexpected
   }
 
   llvm_unreachable("Unexpected platform");

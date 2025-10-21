@@ -1642,6 +1642,8 @@ static bool ParseLangArgs(LangOptions &Opts, ArgList &Args,
     Diags.diagnose(SourceLoc(), diag::error_unsupported_target_os, TargetArgOS);
   }
 
+  auto minAvailableOS = minimumAvailableOSVersionForTriple(Opts.Target);
+
   // First, set up default minimum inlining target versions.
   auto getDefaultMinimumInliningTargetVersion =
       [&](const llvm::Triple &triple) -> llvm::VersionTuple {
@@ -1649,7 +1651,7 @@ static bool ParseLangArgs(LangOptions &Opts, ArgList &Args,
 
     // In API modules, default to the version when Swift first became available.
     if (Opts.LibraryLevel == LibraryLevel::API) {
-      if (auto minVersion = minimumAvailableOSVersionForTriple(triple))
+      if (auto minVersion = minAvailableOS)
         return *minVersion;
     }
 
@@ -1662,6 +1664,19 @@ static bool ParseLangArgs(LangOptions &Opts, ArgList &Args,
 
   Opts.MinimumInliningTargetVersion =
       getDefaultMinimumInliningTargetVersion(Opts.Target);
+
+  // Determine TargetSwiftRuntimeAvailability.
+  if (Opts.hasFeature(Feature::StandaloneSwiftAvailability)) {
+    // When '-enable-experimental-feature StandaloneSwiftAvailability' is
+    // specified, the Swift runtime is always standalone.
+    Opts.TargetSwiftRuntimeAvailability = SwiftRuntimeAvailability::Standalone;
+  } else if (minAvailableOS.has_value()) {
+    // If the target platform has a minimum availability version, we can infer
+    // that it has a built-in Swift runtime.
+    Opts.TargetSwiftRuntimeAvailability = SwiftRuntimeAvailability::Platform;
+  } else {
+    Opts.TargetSwiftRuntimeAvailability = SwiftRuntimeAvailability::Ignored;
+  }
 
   // Parse OS version number arguments.
   auto parseVersionArg =
