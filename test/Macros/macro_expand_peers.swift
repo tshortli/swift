@@ -6,23 +6,23 @@
 
 // RUN: %empty-directory(%t)
 // RUN: %host-build-swift -swift-version 5 -emit-library -o %t/%target-library-name(MacroDefinition) -parse-as-library -module-name=MacroDefinition %S/Inputs/syntax_macro_definitions.swift -g -no-toolchain-stdlib-rpath
-// RUN: %target-typecheck-verify-swift -swift-version 5 -load-plugin-library %t/%target-library-name(MacroDefinition) -parse-as-library -disable-availability-checking -DTEST_DIAGNOSTICS
+// RUN: %target-typecheck-verify-swift -swift-version 5 -load-plugin-library %t/%target-library-name(MacroDefinition) -parse-as-library -DTEST_DIAGNOSTICS
 
 // Check with the imported macro library vs. the local declaration of the macro.
 // RUN: %target-swift-frontend -swift-version 5 -emit-module -o %t/macro_library.swiftmodule %S/Inputs/macro_library.swift -module-name macro_library -load-plugin-library %t/%target-library-name(MacroDefinition)
 
-// RUN: %target-typecheck-verify-swift -swift-version 5 -load-plugin-library %t/%target-library-name(MacroDefinition) -parse-as-library -disable-availability-checking -DIMPORT_MACRO_LIBRARY -I %t -DTEST_DIAGNOSTICS
+// RUN: %target-typecheck-verify-swift -swift-version 5 -load-plugin-library %t/%target-library-name(MacroDefinition) -parse-as-library -DIMPORT_MACRO_LIBRARY -I %t -DTEST_DIAGNOSTICS
 
 
-// RUN: %target-swift-frontend -swift-version 5 -typecheck -load-plugin-library %t/%target-library-name(MacroDefinition) -parse-as-library %s -disable-availability-checking -dump-macro-expansions > %t/expansions-dump.txt 2>&1
+// RUN: %target-swift-frontend -swift-version 5 -typecheck -load-plugin-library %t/%target-library-name(MacroDefinition) -parse-as-library %s -dump-macro-expansions > %t/expansions-dump.txt 2>&1
 // RUN: %FileCheck -check-prefix=CHECK-DUMP %s < %t/expansions-dump.txt
 
-// RUN: %target-build-swift -swift-version 5 -Xfrontend -disable-availability-checking -load-plugin-library %t/%target-library-name(MacroDefinition) -parse-as-library %s -o %t/main -module-name MacroUser -g
+// RUN: %target-build-swift -swift-version 5 -load-plugin-library %t/%target-library-name(MacroDefinition) -parse-as-library %s -o %t/main -module-name MacroUser -g
 // RUN: %target-codesign %t/main
 // RUN: %target-run %t/main | %FileCheck %s -check-prefix=CHECK-EXEC
 
 // Emit module while skipping function bodies
-// RUN: %target-swift-frontend -swift-version 5 -emit-module -load-plugin-library %t/%target-library-name(MacroDefinition) -parse-as-library %s -disable-availability-checking -o %t/macro_expand_peers.swiftmodule -experimental-skip-non-inlinable-function-bodies-without-types
+// RUN: %target-swift-frontend -swift-version 5 -emit-module -load-plugin-library %t/%target-library-name(MacroDefinition) -parse-as-library %s -o %t/macro_expand_peers.swiftmodule -experimental-skip-non-inlinable-function-bodies-without-types
 
 #if IMPORT_MACRO_LIBRARY
 import macro_library
@@ -53,9 +53,9 @@ struct S {
 
   // CHECK-DUMP: @__swiftmacro_18macro_expand_peers1SV1f20addCompletionHandlerfMp_.swift
   // CHECK-DUMP: func f(a: Int, for b: String, _ value: Double, completionHandler: @escaping (String) -> Void) {
-  // CHECK-DUMP:   Task {
-  // CHECK-DUMP:     completionHandler(await f(a: a, for: b, value))
-  // CHECK-DUMP:   }
+  // CHECK-DUMP: Task {
+  // CHECK-DUMP: completionHandler(await f(a: a, for: b, value))
+  // CHECK-DUMP: }
   // CHECK-DUMP: }
 
   func useOverload(_ body: @escaping (String) -> Void) {
@@ -73,9 +73,9 @@ extension S {
 
   // CHECK-DUMP: @__swiftmacro_18macro_expand_peers1SV1g20addCompletionHandlerfMp_.swift
   // CHECK-DUMP: func g(a: Int, for b: String, _ value: Double, completionHandler: @escaping (String) -> Void) {
-  // CHECK-DUMP:   Task {
-  // CHECK-DUMP:     completionHandler(await g(a: a, for: b, value))
-  // CHECK-DUMP:   }
+  // CHECK-DUMP: Task {
+  // CHECK-DUMP: completionHandler(await g(a: a, for: b, value))
+  // CHECK-DUMP: }
   // CHECK-DUMP: }
 
 }
@@ -115,9 +115,9 @@ func global(a: Int, b: String) {
 
 // CHECK-DUMP: @__swiftmacro_18macro_expand_peers6global10wrapInTypefMp_.swift
 // CHECK-DUMP: struct $s18macro_expand_peers6global10wrapInTypefMp_6globalfMu0_ {
-// CHECK-DUMP:   func $s18macro_expand_peers6global10wrapInTypefMp_6globalfMu_(a: Int, b: String)  {
-// CHECK-DUMP:     global(a: a, b: b)
-// CHECK-DUMP:   }
+// CHECK-DUMP: func $s18macro_expand_peers6global10wrapInTypefMp_6globalfMu_(a: Int, b: String) {
+// CHECK-DUMP: global(a: a, b: b)
+// CHECK-DUMP: }
 // CHECK-DUMP: }
 
 @main

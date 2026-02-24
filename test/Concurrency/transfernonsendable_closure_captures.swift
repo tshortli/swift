@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -emit-sil -strict-concurrency=complete -disable-availability-checking -verify %s -o /dev/null -swift-version 6
+// RUN: %target-swift-frontend -emit-sil -strict-concurrency=complete -verify %s -o /dev/null -swift-version 6
 
 ////////////////////////
 // MARK: Declarations //
@@ -452,7 +452,7 @@ func testMutableCopyableNonsendableClassWithNonescapingMainActorAsyncWeakCapture
 }
 
 ////////////////////////////////////////////
-// MARK: Advanced Weak Capture Patterns  //
+// MARK: Advanced Weak Capture Patterns //
 ////////////////////////////////////////////
 
 // Test: Chained closures with weak captures (single weak reference passed through chain)
@@ -716,18 +716,18 @@ func testChainedClosuresPartialWriteSendable() {
   let _ = { [weak readOnly1, weak writable, weak readOnly2] in
     // First level: modify writable, read others
     if let obj = readOnly1 { useValue(obj) }
-    writable = globalSendable  // Modify this one
+    writable = globalSendable // Modify this one
     if let obj = readOnly2 { useValue(obj) }
 
     // Second level: read all including the modified one
     let _ = {
       escapingAsyncUse { @MainActor in
-        if let obj = readOnly1 { useValue(obj) }  // Read-only throughout
+        if let obj = readOnly1 { useValue(obj) } // Read-only throughout
         if let obj = writable { // expected-error {{sending 'writable' risks causing data races}}
           // expected-note @-1 {{closure captures reference to mutable 'writable' which remains modifiable by code in the current task}}
           useValue(obj)
         }
-        if let obj = readOnly2 { useValue(obj) }  // Read-only throughout
+        if let obj = readOnly2 { useValue(obj) } // Read-only throughout
       }
     }
   }
@@ -807,7 +807,7 @@ func testEmptyClosureWeakCaptureSendable() {
 }
 
 ///////////////////////////////////////////////////
-// MARK: Protocol-Based Weak Capture Tests       //
+// MARK: Protocol-Based Weak Capture Tests //
 // (Tests with class-bound protocol constraints) //
 ///////////////////////////////////////////////////
 
@@ -1138,7 +1138,7 @@ func testMutableCopyableNonsendableClassWithNonescapingMainActorAsyncUnownedCapt
 }
 
 /////////////////////////////////////////
-// MARK: Generic Noncopyable Tests    //
+// MARK: Generic Noncopyable Tests //
 /////////////////////////////////////////
 
 func testGenericSendableWithEscapingMainActorAsync<T : ~Copyable>(_ value: consuming sending T,
@@ -1294,7 +1294,7 @@ func testGenericNoncopyableNonsendableLetWithEscapingMainActorAsync<T: ~Copyable
 }
 
 ///////////////////////////////////////////////
-// MARK: Nested Closure with Let Box Tests   //
+// MARK: Nested Closure with Let Box Tests //
 ///////////////////////////////////////////////
 
 // These tests verify that noncopyable Sendable types work correctly in deeply

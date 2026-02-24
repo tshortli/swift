@@ -1,11 +1,11 @@
 // RUN: %empty-directory(%t)
 // RUN: split-file %s %t
 
-// RUN: %target-swift-frontend %t/use-cxx-types.swift -module-name UseCxxTy -typecheck -verify -emit-clang-header-path %t/UseCxxTy.h -I %t -enable-experimental-cxx-interop -clang-header-expose-decls=all-public -disable-availability-checking
+// RUN: %target-swift-frontend %t/use-cxx-types.swift -module-name UseCxxTy -typecheck -verify -emit-clang-header-path %t/UseCxxTy.h -I %t -enable-experimental-cxx-interop -clang-header-expose-decls=all-public
 
 // RUN: %FileCheck %s --input-file %t/UseCxxTy.h
 
-// RUN: %target-swift-frontend %t/use-cxx-types.swift -module-name UseCxxTy -typecheck -verify -emit-clang-header-path %t/UseCxxTyExposeOnly.h -I %t -enable-experimental-cxx-interop -clang-header-expose-decls=has-expose-attr -disable-availability-checking
+// RUN: %target-swift-frontend %t/use-cxx-types.swift -module-name UseCxxTy -typecheck -verify -emit-clang-header-path %t/UseCxxTyExposeOnly.h -I %t -enable-experimental-cxx-interop -clang-header-expose-decls=has-expose-attr
 
 // RUN: %FileCheck %s --input-file %t/UseCxxTyExposeOnly.h
 
@@ -18,7 +18,7 @@
 // Check that the generated header can be
 // built with Clang modules enabled in C++.
 
-// RUN: %target-interop-build-clangxx -fsyntax-only -x c++-header %t/full-cxx-swift-cxx-bridging.h -std=gnu++17 -c -fmodules -fcxx-modules -I %t 
+// RUN: %target-interop-build-clangxx -fsyntax-only -x c++-header %t/full-cxx-swift-cxx-bridging.h -std=gnu++17 -c -fmodules -fcxx-modules -I %t
 // FIXME: test c++20 (rdar://117419434)
 
 //--- header.h
@@ -51,8 +51,8 @@ namespace ns {
         NonTrivialImplicitMove(const NonTrivialImplicitMove &other) : member(other.member) {}
     };
 
-    #define IMMORTAL_REF                                \
-         __attribute__((swift_attr("import_as_ref")))   \
+    #define IMMORTAL_REF \
+         __attribute__((swift_attr("import_as_ref"))) \
          __attribute__((swift_attr("retain:immortal"))) \
          __attribute__((swift_attr("release:immortal")))
     struct IMMORTAL_REF Immortal {
@@ -198,7 +198,7 @@ public struct Strct {
 // CHECK-NEXT: return UseCxxTy::_impl::$s8UseCxxTy11retImmortalSo2nsO0E0VyF();
 // CHECK-NEXT: }
 
-// CHECK:  ns::ImmortalTemplate<int> *_Nonnull retImmortalTemplate() noexcept SWIFT_SYMBOL({{.*}}) SWIFT_WARN_UNUSED_RESULT {
+// CHECK: ns::ImmortalTemplate<int> *_Nonnull retImmortalTemplate() noexcept SWIFT_SYMBOL({{.*}}) SWIFT_WARN_UNUSED_RESULT {
 // CHECK-NEXT: return UseCxxTy::_impl::$s8UseCxxTy19retImmortalTemplateSo2nsO0028ImmortalTemplateCInt_jBAGgnbVyF();
 // CHECK-NEXT: }
 // CHECK-EMPTY:
@@ -219,9 +219,9 @@ public struct Strct {
 // CHECK-NEXT: inline const constexpr bool isUsableInGenericContext<ns::NonTrivialTemplateInt> = true;
 // CHECK-NEXT: template<>
 // CHECK-NEXT: struct TypeMetadataTrait<ns::NonTrivialTemplateInt> {
-// CHECK-NEXT:   static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
-// CHECK-NEXT:     return UseCxxTy::_impl::$sSo2nsO0030NonTrivialTemplateCInt_hHAFhrbVMa(0)._0;
-// CHECK-NEXT:   }
+// CHECK-NEXT: static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
+// CHECK-NEXT: return UseCxxTy::_impl::$sSo2nsO0030NonTrivialTemplateCInt_hHAFhrbVMa(0)._0;
+// CHECK-NEXT: }
 // CHECK-NEXT: };
 // CHECK-NEXT: namespace _impl{
 // CHECK-NEXT: template<>
@@ -258,9 +258,9 @@ public struct Strct {
 // CHECK-NEXT: inline const constexpr bool isUsableInGenericContext<ns::NonTrivialTemplateTrivial> = true;
 // CHECK-NEXT: template<>
 // CHECK-NEXT: struct TypeMetadataTrait<ns::NonTrivialTemplateTrivial> {
-// CHECK-NEXT:   static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
-// CHECK-NEXT:     return UseCxxTy::_impl::$sSo2nsO0042NonTrivialTemplatensTrivialinNS_HlGFlenawcVMa(0)._0;
-// CHECK-NEXT:   }
+// CHECK-NEXT: static SWIFT_INLINE_PRIVATE_HELPER void * _Nonnull getTypeMetadata() {
+// CHECK-NEXT: return UseCxxTy::_impl::$sSo2nsO0042NonTrivialTemplatensTrivialinNS_HlGFlenawcVMa(0)._0;
+// CHECK-NEXT: }
 // CHECK-NEXT: };
 // CHECK-NEXT: namespace _impl{
 // CHECK-NEXT: template<>
@@ -308,21 +308,21 @@ public struct Strct {
 // CHECK-NEXT: }
 
 // CHECK: void takeImmortalTemplate(ns::ImmortalTemplate<int> *_Nonnull x) noexcept SWIFT_SYMBOL({{.*}}) {
-// CHECK-NEXT:   _impl::$s8UseCxxTy20takeImmortalTemplateyySo2nsO0028ImmortalTemplateCInt_jBAGgnbVF(x);
+// CHECK-NEXT: _impl::$s8UseCxxTy20takeImmortalTemplateyySo2nsO0028ImmortalTemplateCInt_jBAGgnbVF(x);
 // CHECK-NEXT: }
 
 // CHECK: SWIFT_INLINE_THUNK void takeNonTrivial2(const ns::NonTrivialTemplate<ns::TrivialinNS>& x) noexcept SWIFT_SYMBOL({{.*}}) {
-// CHECK-NEXT:   _impl::$s8UseCxxTy15takeNonTrivial2yySo2nsO0042NonTrivialTemplatensTrivialinNS_HlGFlenawcVF(swift::_impl::getOpaquePointer(x));
+// CHECK-NEXT: _impl::$s8UseCxxTy15takeNonTrivial2yySo2nsO0042NonTrivialTemplatensTrivialinNS_HlGFlenawcVF(swift::_impl::getOpaquePointer(x));
 // CHECK-NEXT: }
 
 // CHECK: SWIFT_INLINE_THUNK void takeSimpleScopedEnum(const SimpleScopedEnum& x) noexcept SWIFT_SYMBOL({{.*}}) {
 
 // CHECK: SWIFT_INLINE_THUNK void takeTrivial(const Trivial& x) noexcept SWIFT_SYMBOL({{.*}}) {
-// CHECK-NEXT:   _impl::$s8UseCxxTy11takeTrivialyySo0E0VF(UseCxxTy::_impl::swift_interop_passDirect_UseCxxTy_uint32_t_0_4(reinterpret_cast<const char *>(swift::_impl::getOpaquePointer(x))));
+// CHECK-NEXT: _impl::$s8UseCxxTy11takeTrivialyySo0E0VF(UseCxxTy::_impl::swift_interop_passDirect_UseCxxTy_uint32_t_0_4(reinterpret_cast<const char *>(swift::_impl::getOpaquePointer(x))));
 // CHECK-NEXT: }
 
 // CHECK: SWIFT_INLINE_THUNK void takeTrivialInout(Trivial& x) noexcept SWIFT_SYMBOL({{.*}}) {
-// CHECK-NEXT:   _impl::$s8UseCxxTy16takeTrivialInoutyySo0E0VzF(swift::_impl::getOpaquePointer(x));
+// CHECK-NEXT: _impl::$s8UseCxxTy16takeTrivialInoutyySo0E0VzF(swift::_impl::getOpaquePointer(x));
 // CHECK-NEXT: }
 
 // CHECK: SWIFT_INLINE_THUNK anonymousStruct Strct::getTransform() const {

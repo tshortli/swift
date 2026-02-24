@@ -1,8 +1,8 @@
 // RUN: %target-swift-frontend %s -emit-sil -O \
-// RUN:   -disable-availability-checking | %FileCheck %s --check-prefix=CHECK-SIL
+// RUN: | %FileCheck %s --check-prefix=CHECK-SIL
 
 // RUN: %target-swift-frontend %s -emit-ir -O \
-// RUN:   -disable-availability-checking | %FileCheck %s  --check-prefix=CHECK-IR
+// RUN: | %FileCheck %s --check-prefix=CHECK-IR
 
 // REQUIRES: swift_in_compiler
 // REQUIRES: swift_stdlib_no_asserts, optimized_stdlib

@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -verify-ignore-unrelated -disable-availability-checking
+// RUN: %target-typecheck-verify-swift -verify-ignore-unrelated
 // REQUIRES: synchronization
 
 import Synchronization

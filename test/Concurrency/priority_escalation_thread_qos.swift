@@ -1,6 +1,6 @@
 // RUN: %empty-directory(%t)
 
-// RUN: %target-build-swift %s -import-objc-header %S/Inputs/has-dispatch-private.h -Xfrontend -disable-availability-checking -o %t/priority_escalation_thread_qos
+// RUN: %target-build-swift %s -import-objc-header %S/Inputs/has-dispatch-private.h -o %t/priority_escalation_thread_qos
 // RUN: %target-codesign %t/priority_escalation_thread_qos
 // RUN: %target-run %t/priority_escalation_thread_qos
 

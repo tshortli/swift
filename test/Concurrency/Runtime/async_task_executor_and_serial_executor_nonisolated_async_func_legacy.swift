@@ -1,5 +1,5 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-build-swift -Xfrontend -disable-availability-checking %import-libdispatch -parse-as-library %s -o %t/a.out
+// RUN: %target-build-swift %import-libdispatch -parse-as-library %s -o %t/a.out
 // RUN: %target-codesign %t/a.out
 // RUN: env %env-SWIFT_IS_CURRENT_EXECUTOR_LEGACY_MODE_OVERRIDE=legacy %target-run %t/a.out
 
@@ -67,7 +67,7 @@ actor DefaultActor {
     // The following precondition would, we are isolated to the 'default actor',
     // and without calling 'checkIsolated' in this legacy mode,
     // we can't know that it's "actually the same queue"
-    //     expectedExecutor.preconditionIsolated()
+    // expectedExecutor.preconditionIsolated()
 
     // calling a nonisolated async func properly executes on the task-executor
     await nonisolatedFunc(expectedExecutor: expectedExecutor)
@@ -95,7 +95,7 @@ actor DefaultActor {
     // The following precondition would, we are isolated to the 'default actor',
     // and without calling 'checkIsolated' in this legacy mode,
     // we can't know that it's "actually the same queue"
-    //     expectedExecutor.preconditionIsolated()
+    // expectedExecutor.preconditionIsolated()
   }
 }
 

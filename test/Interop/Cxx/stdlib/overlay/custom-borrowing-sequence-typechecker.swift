@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -I %S/Inputs -enable-experimental-cxx-interop -enable-experimental-cxx-interop -I %swift_src_root/lib/ClangImporter/SwiftBridging -disable-availability-checking
+// RUN: %target-typecheck-verify-swift -I %S/Inputs -enable-experimental-cxx-interop -enable-experimental-cxx-interop -I %swift_src_root/lib/ClangImporter/SwiftBridging
 
 import CustomBorrowingSequence
 
@@ -7,7 +7,7 @@ func checkBorrowingSequence<S>(_ seq: borrowing S) where S: CxxBorrowingSequence
   var _ = seq.makeBorrowingIterator()
 }
 
-// NonReferenceDereferenceOperatorSequence doesn't conform to CxxBorrowingSequence because operator* 
+// NonReferenceDereferenceOperatorSequence doesn't conform to CxxBorrowingSequence because operator*
 // (the dereference operator) doesn't return a reference
-checkBorrowingSequence(NonReferenceDereferenceOperatorSequence()) 
+checkBorrowingSequence(NonReferenceDereferenceOperatorSequence())
 // expected-error@-1 {{global function 'checkBorrowingSequence' requires that 'NonReferenceDereferenceOperatorSequence' conform to 'CxxBorrowingSequence'}}

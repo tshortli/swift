@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -disable-availability-checking
+// RUN: %target-typecheck-verify-swift
 
 protocol Sequence<Element> { // expected-note {{'Sequence' declared here}}
   associatedtype Element

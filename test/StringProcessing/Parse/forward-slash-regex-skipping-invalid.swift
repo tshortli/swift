@@ -1,6 +1,6 @@
-// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -disable-availability-checking -experimental-skip-all-function-bodies
-// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -disable-availability-checking -experimental-skip-non-inlinable-function-bodies-without-types
-// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -disable-availability-checking -experimental-skip-non-inlinable-function-bodies
+// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -experimental-skip-all-function-bodies
+// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -experimental-skip-non-inlinable-function-bodies-without-types
+// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -experimental-skip-non-inlinable-function-bodies
 
 // REQUIRES: swift_swift_parser
 
@@ -17,36 +17,36 @@ func d() { _ = / x{*/ } // expected-error {{regex literal may not start with spa
 
 // Unterminated, and unbalanced `{}`.
 func e() {
-  _ = /         }
+  _ = / }
   // expected-error@-1 {{unterminated regex literal}}
   // expected-error@-2 {{regex literal may not start with space; add backslash to escape}}
 }
 func f() {
-  _ = /         {
+  _ = / {
   // expected-error@-1 {{unterminated regex literal}}
   // expected-error@-2 {{regex literal may not start with space; add backslash to escape}}
 }
 func g() {
-  _ = /x         }
+  _ = /x }
 } // expected-error {{extraneous '}' at top level}}
 func h() {
-  _ = /x         {
+  _ = /x {
   } // The above cannot a regex literal so we skip; this `}` is to balance things out.
 }
 func i() {
-  _ = /x "[abc]     {
+  _ = /x "[abc] {
   // expected-error@-1 {{unterminated string literal}}
 }
 func j() {
-  _ = /^ [abc]     {
+  _ = /^ [abc] {
   // expected-error@-1 {{unterminated regex literal}}
 }
 func k() {
-  _ = /^ "[abc]     {
+  _ = /^ "[abc] {
   // expected-error@-1 {{unterminated string literal}}
 }
 func l() {
-  _ = /^    } abc     {
+  _ = /^ } abc {
   // expected-error@-1 {{unterminated regex literal}}
 }
 func m() {

@@ -1,5 +1,5 @@
 // REQUIRES: executable_test
-// RUN: %target-run-simple-swift(-cxx-interoperability-mode=default -Xfrontend -disable-availability-checking -I %S/Inputs)
+// RUN: %target-run-simple-swift(-cxx-interoperability-mode=default -I %S/Inputs)
 
 import Inheritance
 import StdlibUnittest
@@ -19,16 +19,16 @@ InheritanceTestSuite.test("Templated cast to base") {
   expectFalse(s.isBase)
   let sc: BaseT = cast(s)
   expectFalse(sc.isBase)
-  let sx: BaseT = cxxCast(s)  // should instantiate I to SubT and O to BaseT
+  let sx: BaseT = cxxCast(s) // should instantiate I to SubT and O to BaseT
   expectFalse(sx.isBase)
-  let sy: BaseT = Foo.cxxCast(s)  // should instantiate I to SubT and O to BaseT
+  let sy: BaseT = Foo.cxxCast(s) // should instantiate I to SubT and O to BaseT
   expectFalse(sy.isBase)
 }
 
 InheritanceTestSuite.test("Templated cast to itself") {
   let b: BaseT = BaseT.getBaseT()
   expectTrue(b.isBase)
-  let bc: BaseT = cxxCast(b)  // should instantiate I and O both to BaseT
+  let bc: BaseT = cxxCast(b) // should instantiate I and O both to BaseT
   expectTrue(bc.isBase)
 }
 

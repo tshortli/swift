@@ -1,6 +1,6 @@
-// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -disable-availability-checking -experimental-skip-all-function-bodies
-// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -disable-availability-checking -experimental-skip-non-inlinable-function-bodies-without-types
-// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -disable-availability-checking -experimental-skip-non-inlinable-function-bodies
+// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -experimental-skip-all-function-bodies
+// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -experimental-skip-non-inlinable-function-bodies-without-types
+// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -experimental-skip-non-inlinable-function-bodies
 
 // REQUIRES: swift_swift_parser
 
@@ -49,7 +49,7 @@ func i() {
 func j() {
   _ = {
     0
-    /x}}}/ 
+    /x}}}/
     2
   }
 }

@@ -1,6 +1,6 @@
-// RUN: %target-typecheck-verify-swift -strict-concurrency=complete -disable-availability-checking -parse-as-library
-// RUN: %target-run-simple-swift( -Xfrontend -disable-availability-checking -parse-as-library)
-// RUN: %target-run-simple-swift( -Xfrontend -disable-availability-checking -parse-as-library -swift-version 5 -strict-concurrency=complete -enable-upcoming-feature NonisolatedNonsendingByDefault)
+// RUN: %target-typecheck-verify-swift -strict-concurrency=complete -parse-as-library
+// RUN: %target-run-simple-swift( -parse-as-library)
+// RUN: %target-run-simple-swift( -parse-as-library -swift-version 5 -strict-concurrency=complete -enable-upcoming-feature NonisolatedNonsendingByDefault)
 // REQUIRES: swift_feature_NonisolatedNonsendingByDefault
 
 // REQUIRES: concurrency
@@ -376,7 +376,7 @@ class NotSendable {}
             continuation.onTermination = { @Sendable _ in expectation.fulfilled = true }
           }
         }
-        
+
         scopedLifetime(expectation)
 
         expectTrue(expectation.fulfilled)
@@ -391,7 +391,7 @@ class NotSendable {}
             continuation.finish()
           }
         }
-        
+
         scopedLifetime(expectation)
 
         expectTrue(expectation.fulfilled)
@@ -411,7 +411,7 @@ class NotSendable {}
             }
           }
         }
-        
+
         scopedLifetime(expectation)
 
         expectTrue(expectation.fulfilled)
@@ -431,7 +431,7 @@ class NotSendable {}
             }
           }
         }
-        
+
         scopedLifetime(expectation)
 
         expectTrue(expectation.fulfilled)

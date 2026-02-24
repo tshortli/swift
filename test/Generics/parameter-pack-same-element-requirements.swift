@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -typecheck %s -debug-generic-signatures -enable-experimental-feature SameElementRequirements -disable-availability-checking 2>&1 | %FileCheck %s -dump-input=fail
+// RUN: %target-swift-frontend -typecheck %s -debug-generic-signatures -enable-experimental-feature SameElementRequirements 2>&1 | %FileCheck %s -dump-input=fail
 
 // REQUIRES: swift_feature_SameElementRequirements
 
@@ -16,7 +16,7 @@ protocol P {
 
 // FIXME: Implement concrete same-type requirements.
 //func sameElementConcrete<each T>(
-//  _: repeat each T
+// _: repeat each T
 //) where repeat each T == Int {}
 
 // CHECK-LABEL: sameElementGeneric
@@ -27,7 +27,7 @@ func sameElementGeneric<each T, U>(
 
 // FIXME: Implement concrete same-element requirements.
 //func dependentSameElementConcrete<each C: Collection>(
-//  _: repeat each C
+// _: repeat each C
 //) where repeat (each C).Element == Int {}
 
 // CHECK-LABEL: dependentSameElementGeneric

@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift(-I %swift_src_root/lib/ClangImporter/SwiftBridging -I %S/Inputs -cxx-interoperability-mode=default -Xfrontend -disable-availability-checking -O) | %FileCheck %s
+// RUN: %target-run-simple-swift(-I %swift_src_root/lib/ClangImporter/SwiftBridging -I %S/Inputs -cxx-interoperability-mode=default -O) | %FileCheck %s
 
 // REQUIRES: executable_test
 
@@ -18,7 +18,7 @@ func testRefIssues() {
 }
 testRefIssues()
 
-// CHECK:      RefCount: 1, message: Ctor
+// CHECK: RefCount: 1, message: Ctor
 // CHECK-NEXT: RefCount: 2, message: retain
 // CHECK-NEXT: RefCount: 1, message: release
 // CHECK-NEXT: Value is 0.

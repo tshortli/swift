@@ -1,6 +1,6 @@
 // RUN: %empty-directory(%t)
 
-// RUN: %target-build-swift -emit-executable %s -g -o %t/constrained_existentials -emit-module -Xfrontend -disable-availability-checking
+// RUN: %target-build-swift -emit-executable %s -g -o %t/constrained_existentials -emit-module
 // RUN: sed -ne '/\/\/ *DEMANGLE: /s/\/\/ *DEMANGLE: *//p' < %s > %t/input
 // RUN: %lldb-moduleimport-test %t/constrained_existentials -type-from-mangled=%t/input | %FileCheck %s --match-full-lines
 
@@ -54,6 +54,6 @@ do {
   let e1: any NCProto & ~Copyable = GenNC<String>()
 
   // FIXME: breaks the MoveChecker (rdar://129885532)
-//   blackHole_noncopyable(consume e0)
-//   blackHole_noncopyable(consume e1)
+// blackHole_noncopyable(consume e0)
+// blackHole_noncopyable(consume e1)
 }

@@ -1,5 +1,5 @@
-// RUN: %target-swift-frontend -primary-file %S/async.swift -enable-builtin-module -emit-ir  -disable-availability-checking | %FileCheck %s --check-prefix=NOTAIL
-// TODO(katei): %target-swift-frontend -primary-file %S/async.swift -enable-builtin-module -emit-ir  -disable-availability-checking -Xcc -mtail-call | %FileCheck %s --check-prefix=TAIL
+// RUN: %target-swift-frontend -primary-file %S/async.swift -enable-builtin-module -emit-ir | %FileCheck %s --check-prefix=NOTAIL
+// TODO(katei): %target-swift-frontend -primary-file %S/async.swift -enable-builtin-module -emit-ir -Xcc -mtail-call | %FileCheck %s --check-prefix=TAIL
 
 // REQUIRES: concurrency && CPU=wasm32
 

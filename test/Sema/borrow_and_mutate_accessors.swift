@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -disable-availability-checking -enable-experimental-feature BorrowAndMutateAccessors -enable-experimental-feature CoroutineAccessors
+// RUN: %target-typecheck-verify-swift -enable-experimental-feature BorrowAndMutateAccessors -enable-experimental-feature CoroutineAccessors
 
 // REQUIRES: swift_feature_BorrowAndMutateAccessors
 // REQUIRES: swift_feature_CoroutineAccessors
@@ -70,7 +70,7 @@ protocol P {
 enum OrderStatus: ~Copyable {
   case processing(trackingNumber: String)
   case cancelled(reason: String)
-  
+
   var description: String {
     borrow { // expected-error{{a 'borrow' accessor is supported only on a struct}}
       switch self {
@@ -110,7 +110,7 @@ struct S1 : Q {
 struct S2 : Q {
   var id: NonTrivial
 }
- 
+
 public struct S3 : Q { // expected-error{{type 'S3' does not conform to protocol 'Q'}} // expected-note{{add stubs for conformance}}
   public var _id: NonTrivial
 
@@ -144,7 +144,7 @@ struct S5 : Q {
 
 extension S5 {
   var id: NonTrivial {
-    borrow  {
+    borrow {
       return _id
     }
     mutate {

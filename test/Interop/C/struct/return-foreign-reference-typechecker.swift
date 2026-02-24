@@ -1,7 +1,7 @@
 // RUN: %target-typecheck-verify-swift -cxx-interoperability-mode=off \
-// RUN:   -disable-availability-checking \
-// RUN:   -I %S%{fs-sep}Inputs \
-// RUN:   -verify-additional-file %S%{fs-sep}Inputs%{fs-sep}return-foreign-reference.h
+// RUN: \
+// RUN: -I %S%{fs-sep}Inputs \
+// RUN: -verify-additional-file %S%{fs-sep}Inputs%{fs-sep}return-foreign-reference.h
 
 import ReturnForeignReference
 

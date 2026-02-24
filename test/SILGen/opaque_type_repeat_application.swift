@@ -1,4 +1,4 @@
-// RUN: %target-swift-emit-sil -disable-availability-checking -verify %s
+// RUN: %target-swift-emit-sil -verify %s
 
 // rdar://88120984
 

@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -verify-ignore-unrelated -disable-availability-checking
+// RUN: %target-typecheck-verify-swift -verify-ignore-unrelated
 
 // MARK: Functions
 
@@ -369,9 +369,9 @@ let a = if .random() {
   1
 }
 
-let b = (if .random() { 1 } else { 2 })  // expected-error {{'if' may only be used as expression in return, throw, or as the source of an assignment}}
+let b = (if .random() { 1 } else { 2 }) // expected-error {{'if' may only be used as expression in return, throw, or as the source of an assignment}}
 
-let c = (if .random() { 1 } else { 2 }, k: if .random() { 1 } else { 2 })  // expected-error 2{{'if' may only be used as expression in return, throw, or as the source of an assignment}}
+let c = (if .random() { 1 } else { 2 }, k: if .random() { 1 } else { 2 }) // expected-error 2{{'if' may only be used as expression in return, throw, or as the source of an assignment}}
 
 var d = if .random() { if .random() { 1 } else { 2 } } else { 3 }
 
@@ -410,7 +410,7 @@ let k = [if .random() { 1 } else { 2 } :if .random() { "a" } else { "b" }]
 
 let l = if .random() { 1 } else { 2 } as Any
 
-let _ = type(of: if .random() { 1 } else { 2 })  // expected-error {{'if' may only be used as expression in return, throw, or as the source of an assignment}}
+let _ = type(of: if .random() { 1 } else { 2 }) // expected-error {{'if' may only be used as expression in return, throw, or as the source of an assignment}}
 
 let _ = (if .random() { () } else { () }) // expected-error {{'if' may only be used as expression in return, throw, or as the source of an assignment}}
 
@@ -460,7 +460,7 @@ func testConditionalBinding2(_ x: Int?) -> Int {
 
 // MARK: Operators
 
-let o = !if .random() { true } else { false }  // expected-error {{'if' may only be used as expression in return, throw, or as the source of an assignment}}
+let o = !if .random() { true } else { false } // expected-error {{'if' may only be used as expression in return, throw, or as the source of an assignment}}
 
 // FIXME: Shouldn't be ambiguous
 let p = if .random() { 1 } else { 2 } + // expected-error {{ambiguous use of operator '+'}}
@@ -470,7 +470,7 @@ let p = if .random() { 1 } else { 2 } + // expected-error {{ambiguous use of ope
 // expected-error@-3 {{'if' may only be used as expression in return, throw, or as the source of an assignment}}
 // expected-error@-3 {{'if' may only be used as expression in return, throw, or as the source of an assignment}}
 
-let p1 = if .random() { 1 } else { 2 } +  5
+let p1 = if .random() { 1 } else { 2 } + 5
 // expected-error@-1 {{'if' may only be used as expression in return, throw, or as the source of an assignment}}
 
 let q = .random() ? if .random() { 1 } else { 2 }
@@ -724,7 +724,7 @@ func returnBranches6PoundIf2() -> Int {
 func returnBranches7() -> Int {
   let i = if .random() {
     print("hello")
-    return 0  // expected-error {{cannot use 'return' to transfer control out of 'if' expression}}
+    return 0 // expected-error {{cannot use 'return' to transfer control out of 'if' expression}}
   } else {
     1
   }
@@ -732,7 +732,7 @@ func returnBranches7() -> Int {
 }
 
 func returnBranches8() -> Int {
-  let i = if .random() { return 1 } else { 0 }  // expected-error {{cannot use 'return' to transfer control out of 'if' expression}}
+  let i = if .random() { return 1 } else { 0 } // expected-error {{cannot use 'return' to transfer control out of 'if' expression}}
   return i
 }
 
@@ -1281,7 +1281,7 @@ func tryIf27(_ fn: () throws -> Int) rethrows -> Int {
     let x = if .random() { try fn() } else { try tryIf4() }
     return x
   } catch {
-    throw error  // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
+    throw error // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
   }
 }
 
@@ -1290,7 +1290,7 @@ func tryIf28(_ fn: () throws -> Int) rethrows -> Int {
     let x = if .random() { try fn() } else { throw Err() }
     return x
   } catch {
-    throw error  // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
+    throw error // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
   }
 }
 
@@ -1551,7 +1551,7 @@ func tryAwaitIf13(_ fn: () async throws -> Int) async rethrows -> Int {
     let x = if .random() { try await fn() } else { try await tryAwaitIf4() }
     return x
   } catch {
-    throw error  // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
+    throw error // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
   }
 }
 
@@ -1560,7 +1560,7 @@ func tryAwaitIf14(_ fn: () async throws -> Int) async rethrows -> Int {
     let x = if .random() { try await fn() } else { throw Err() }
     return x
   } catch {
-    throw error  // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
+    throw error // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
   }
 }
 

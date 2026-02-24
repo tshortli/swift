@@ -1,9 +1,9 @@
 // RUN: %empty-directory(%t)
 
 // RUN: %target-swift-frontend -emit-module -emit-module-path %t/other_global_actor_inference.swiftmodule -module-name other_global_actor_inference -strict-concurrency=complete %S/Inputs/other_global_actor_inference.swift -enable-upcoming-feature GlobalActorIsolatedTypesUsability
-// RUN: %target-swift-frontend -I %t -disable-availability-checking %s -emit-sil -o /dev/null -verify -verify-additional-prefix minimal-targeted- -enable-upcoming-feature GlobalActorIsolatedTypesUsability
-// RUN: %target-swift-frontend -I %t -disable-availability-checking %s -emit-sil -o /dev/null -verify -strict-concurrency=targeted -verify-additional-prefix minimal-targeted- -enable-upcoming-feature GlobalActorIsolatedTypesUsability
-// RUN: %target-swift-frontend -I %t -disable-availability-checking %s -emit-sil -o /dev/null -verify -strict-concurrency=complete -verify-additional-prefix complete- -enable-upcoming-feature GlobalActorIsolatedTypesUsability
+// RUN: %target-swift-frontend -I %t %s -emit-sil -o /dev/null -verify -verify-additional-prefix minimal-targeted- -enable-upcoming-feature GlobalActorIsolatedTypesUsability
+// RUN: %target-swift-frontend -I %t %s -emit-sil -o /dev/null -verify -strict-concurrency=targeted -verify-additional-prefix minimal-targeted- -enable-upcoming-feature GlobalActorIsolatedTypesUsability
+// RUN: %target-swift-frontend -I %t %s -emit-sil -o /dev/null -verify -strict-concurrency=complete -verify-additional-prefix complete- -enable-upcoming-feature GlobalActorIsolatedTypesUsability
 
 // REQUIRES: concurrency
 // REQUIRES: swift_feature_GlobalActorIsolatedTypesUsability
@@ -76,7 +76,7 @@ class C1: P1 {
 }
 
 class C2: P2 {
-  func method1() { }  // expected-note {{calls to instance method 'method1()' from outside of its actor context are implicitly asynchronous}}
+  func method1() { } // expected-note {{calls to instance method 'method1()' from outside of its actor context are implicitly asynchronous}}
   // expected-note@-1 {{global actor 'SomeGlobalActor' isolation inferred from conformance to protocol 'P2'}}
 
   func method2() { }
@@ -135,20 +135,20 @@ class Object: Interface {
 // Global actor inference for classes and extensions
 // ----------------------------------------------------------------------
 @SomeGlobalActor class C3 {
-  func method1() { }  // expected-note {{calls to instance method 'method1()' from outside of its actor context are implicitly asynchronous}}
+  func method1() { } // expected-note {{calls to instance method 'method1()' from outside of its actor context are implicitly asynchronous}}
 }
 
 extension C3 {
-  func method2() { }  // expected-note {{calls to instance method 'method2()' from outside of its actor context are implicitly asynchronous}}
+  func method2() { } // expected-note {{calls to instance method 'method2()' from outside of its actor context are implicitly asynchronous}}
 }
 
 class C4: C3 {
-  func method3() { }  // expected-note {{calls to instance method 'method3()' from outside of its actor context are implicitly asynchronous}}
+  func method3() { } // expected-note {{calls to instance method 'method3()' from outside of its actor context are implicitly asynchronous}}
   // expected-note@-1 {{global actor 'SomeGlobalActor' isolation inferred from inheritance from class 'C3'}}
 }
 
 extension C4 {
-  func method4() { }  // expected-note {{calls to instance method 'method4()' from outside of its actor context are implicitly asynchronous}}
+  func method4() { } // expected-note {{calls to instance method 'method4()' from outside of its actor context are implicitly asynchronous}}
   // expected-note@-1 {{global actor 'SomeGlobalActor' isolation inferred from inheritance from class 'C3'}}
 }
 
@@ -157,14 +157,14 @@ class C5 {
 }
 
 @SomeGlobalActor extension C5 {
-  func method2() { }  // expected-note {{calls to instance method 'method2()' from outside of its actor context are implicitly asynchronous}}
+  func method2() { } // expected-note {{calls to instance method 'method2()' from outside of its actor context are implicitly asynchronous}}
 }
 
 @OtherGlobalActor func testGlobalActorInference(c3: C3, c4: C4, c5: C5) {
   // Propagation via class annotation
   c3.method1() // expected-error{{call to global actor 'SomeGlobalActor'-isolated instance method 'method1()' in a synchronous global actor 'OtherGlobalActor'-isolated context}}
   c3.method2() // expected-error{{call to global actor 'SomeGlobalActor'-isolated instance method 'method2()' in a synchronous global actor 'OtherGlobalActor'-isolated context}}
-  
+
   _ = c3.method1
   _ = c3.method2
 
@@ -179,7 +179,7 @@ class C5 {
   c5.method1() // OK: no propagation
   c5.method2() // expected-error{{call to global actor 'SomeGlobalActor'-isolated instance method 'method2()' in a synchronous global actor 'OtherGlobalActor'-isolated context}}
 
-  _ = c5.method1  // OK
+  _ = c5.method1 // OK
   _ = c5.method2
 }
 
@@ -213,7 +213,7 @@ actor GenericSuper<T> {
 }
 
 actor GenericSub<T> : GenericSuper<[T]> { // expected-error{{actor types do not support inheritance}}
-  override func method() { }  // expected-note {{calls to instance method 'method()' from outside of its actor context are implicitly asynchronous}}
+  override func method() { } // expected-note {{calls to instance method 'method()' from outside of its actor context are implicitly asynchronous}}
   // expected-error@-1{{instance method overrides a 'final' instance method}}
 
   @GenericGlobalActor<T> override func method2() { } // expected-error{{instance method overrides a 'final' instance method}}
@@ -324,7 +324,7 @@ struct WrapperOnActor<Wrapped: Sendable> {
   }
 
   @SomeGlobalActor var projectedValue: Wrapped {
-    get {  }
+    get { }
     set { }
   }
 }
@@ -333,7 +333,7 @@ struct WrapperOnActor<Wrapped: Sendable> {
 @propertyWrapper
 public struct WrapperOnMainActor<Wrapped> {
   // Make sure inference of @MainActor on wrappedValue doesn't crash.
-  
+
   // expected-note@+1 {{mutation of this property is only permitted within the actor}}
   public var wrappedValue: Wrapped
 
@@ -437,8 +437,8 @@ actor WrapperActorBad2<Wrapped: Sendable> {
   }
 
   var projectedValue: Wrapped { // expected-error{{'projectedValue' property in property wrapper type 'WrapperActorBad2' cannot be isolated to the actor instance; consider 'nonisolated'}}
-    get {  }
-    set {  }
+    get { }
+    set { }
   }
 }
 
@@ -490,7 +490,7 @@ func testInferredFromWrapper(x: InferredFromPropertyWrapper) { // expected-note{
   _ = x.test() // expected-error{{call to global actor 'SomeGlobalActor'-isolated instance method 'test()' in a synchronous nonisolated context}}
 }
 
-@propertyWrapper 
+@propertyWrapper
 struct SimplePropertyWrapper {
   var wrappedValue: Int { .zero }
   var projectedValue: Int { .max }

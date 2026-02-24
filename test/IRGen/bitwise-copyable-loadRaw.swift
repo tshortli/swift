@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift(-Xfrontend -sil-verify-all -enable-experimental-feature BuiltinModule -Xfrontend -disable-availability-checking) | %FileCheck %s
+// RUN: %target-run-simple-swift(-Xfrontend -sil-verify-all -enable-experimental-feature BuiltinModule ) | %FileCheck %s
 
 // REQUIRES: executable_test
 // REQUIRES: swift_feature_BuiltinModule
@@ -25,5 +25,5 @@ doit()
 @inline(never)
 @_semantics("optimize.sil.specialize.generic.never")
 func blackhole<T>(_ t: T) {
-  print(t) 
+  print(t)
 }

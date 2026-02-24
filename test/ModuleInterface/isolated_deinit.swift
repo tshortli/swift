@@ -1,9 +1,9 @@
 // RUN: %target-swift-frontend -emit-module %s \
 // RUN:   -module-name A -swift-version 5 \
-// RUN:   -disable-availability-checking \
-// RUN:   -enable-library-evolution \
-// RUN:     -emit-module-path %t/A.swiftmodule \
-// RUN:     -emit-module-interface-path %t/A.swiftinterface
+// RUN: \
+// RUN: -enable-library-evolution \
+// RUN: -emit-module-path %t/A.swiftmodule \
+// RUN: -emit-module-interface-path %t/A.swiftinterface
 
 // RUN: %FileCheck %s < %t/A.swiftinterface
 
@@ -12,7 +12,7 @@
 // REQUIRES: concurrency
 
 // CHECK: @_Concurrency::MainActor @preconcurrency public class C1 {
-// CHECK:   {{(@objc )?}} isolated deinit
+// CHECK: {{(@objc )?}} isolated deinit
 // CHECK: }
 
 @MainActor
@@ -23,7 +23,7 @@ public class C1 {
 }
 
 // CHECK: @preconcurrency public class C2 {
-// CHECK:   {{(@objc )?}} @_Concurrency::MainActor deinit
+// CHECK: {{(@objc )?}} @_Concurrency::MainActor deinit
 // CHECK: }
 
 @preconcurrency

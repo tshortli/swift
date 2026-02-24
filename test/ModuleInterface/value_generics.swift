@@ -1,15 +1,15 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-swift-emit-module-interface(%t.swiftinterface) %s -module-name ValueGeneric -disable-availability-checking
-// RUN: %target-swift-typecheck-module-from-interface(%t.swiftinterface) -module-name ValueGeneric -disable-availability-checking
+// RUN: %target-swift-emit-module-interface(%t.swiftinterface) %s -module-name ValueGeneric
+// RUN: %target-swift-typecheck-module-from-interface(%t.swiftinterface) -module-name ValueGeneric
 // RUN: %FileCheck --implicit-check-not=ValueGenericsNameLookup %s < %t.swiftinterface
 
 // CHECK: public struct Slab<Element, let N : Swift::Int>
 public struct Slab<Element, let N: Int> {
   // CHECK-LABEL: public var count: Swift::Int {
-  // CHECK-NEXT:    get {
-  // CHECK-NEXT:      N
-  // CHECK-NEXT:    }
-  // CHECK-NEXT:  }
+  // CHECK-NEXT: get {
+  // CHECK-NEXT: N
+  // CHECK-NEXT: }
+  // CHECK-NEXT: }
   @inlinable
   public var count: Int {
     N

@@ -10,7 +10,7 @@
 
 // RUN: not %target-swift-frontend -emit-module-path %t/Bar.swiftmodule -enable-library-evolution -enable-objc-interop -disable-objc-attr-requires-foundation-module -module-name Bar %s -I %t/inputs -target x86_64-apple-macos10.9 -module-cache-path %t/modulecache
 
-// RUN: %target-swift-frontend -emit-module-path %t/Bar.swiftmodule -enable-library-evolution -enable-objc-interop -disable-objc-attr-requires-foundation-module -module-name Bar %s -I %t/inputs -target x86_64-apple-macos10.9 -disable-availability-checking -module-cache-path %t/modulecache
+// RUN: %target-swift-frontend -emit-module-path %t/Bar.swiftmodule -enable-library-evolution -enable-objc-interop -disable-objc-attr-requires-foundation-module -module-name Bar %s -I %t/inputs -target x86_64-apple-macos10.9 -module-cache-path %t/modulecache
 
 import Foo
 

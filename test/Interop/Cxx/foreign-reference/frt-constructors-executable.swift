@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift(-I %S/Inputs -cxx-interoperability-mode=default -Xfrontend -disable-availability-checking)
+// RUN: %target-run-simple-swift(-I %S/Inputs -cxx-interoperability-mode=default )
 // REQUIRES: executable_test
 
 import FRTConstructors

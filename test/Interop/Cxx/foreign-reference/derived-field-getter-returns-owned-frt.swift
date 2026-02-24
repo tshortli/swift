@@ -1,5 +1,5 @@
-// RUN: %target-run-simple-swift(-I %S/Inputs/ -Xfrontend -enable-experimental-cxx-interop -Xcc -fignore-exceptions -Xfrontend -disable-availability-checking -O)
-// RUN: %target-run-simple-swift(-I %S/Inputs/ -Xfrontend -enable-experimental-cxx-interop -Xcc -fignore-exceptions -Xfrontend -disable-availability-checking)
+// RUN: %target-run-simple-swift(-I %S/Inputs/ -Xfrontend -enable-experimental-cxx-interop -Xcc -fignore-exceptions -O)
+// RUN: %target-run-simple-swift(-I %S/Inputs/ -Xfrontend -enable-experimental-cxx-interop -Xcc -fignore-exceptions )
 //
 // REQUIRES: executable_test
 

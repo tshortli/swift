@@ -1,4 +1,4 @@
-// RUN: not %target-swift-frontend -typecheck %s -I %S/Inputs -disable-availability-checking -diagnostic-style llvm 2>&1 | %FileCheck %s
+// RUN: not %target-swift-frontend -typecheck %s -I %S/Inputs -diagnostic-style llvm 2>&1 | %FileCheck %s
 
 import ForeignReferenceInvalid
 

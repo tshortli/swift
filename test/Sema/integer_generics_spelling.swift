@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -disable-availability-checking -typecheck -verify %s
+// RUN: %target-swift-frontend -typecheck -verify %s
 
 struct Foo<let n: Int> {}
 

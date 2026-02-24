@@ -1,5 +1,5 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-build-swift %import-libdispatch -Xfrontend -disable-availability-checking -parse-as-library %s -o %t/a.out
+// RUN: %target-build-swift %import-libdispatch -parse-as-library %s -o %t/a.out
 // RUN: %target-codesign %t/a.out
 // RUN: %target-run %t/a.out | %FileCheck %s
 

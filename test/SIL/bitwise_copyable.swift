@@ -3,8 +3,8 @@
 // RUN:     -emit-sil                                  \
 // RUN:     -enable-experimental-feature ValueGenerics \
 // RUN:     -enable-builtin-module \
-// RUN:     -disable-availability-checking \
-// RUN:     -O
+// RUN: \
+// RUN: -O
 
 // REQUIRES: swift_feature_ValueGenerics
 

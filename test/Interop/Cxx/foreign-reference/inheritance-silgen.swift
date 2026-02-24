@@ -1,4 +1,4 @@
-// RUN: %target-swift-emit-sil %s -I %S/Inputs -cxx-interoperability-mode=default -disable-availability-checking | %FileCheck %s
+// RUN: %target-swift-emit-sil %s -I %S/Inputs -cxx-interoperability-mode=default | %FileCheck %s
 
 import Inheritance
 

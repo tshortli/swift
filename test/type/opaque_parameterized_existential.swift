@@ -1,5 +1,5 @@
-// RUN: %target-swift-frontend -disable-availability-checking -typecheck -verify %s
-// RUN: %target-swift-frontend -disable-availability-checking -enable-experimental-feature ImplicitSome -typecheck -verify %s
+// RUN: %target-swift-frontend -typecheck -verify %s
+// RUN: %target-swift-frontend -enable-experimental-feature ImplicitSome -typecheck -verify %s
 
 // REQUIRES: swift_feature_ImplicitSome
 

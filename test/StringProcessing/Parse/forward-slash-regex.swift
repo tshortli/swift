@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -verify-ignore-unrelated -enable-bare-slash-regex -disable-availability-checking -typo-correction-limit 0
+// RUN: %target-typecheck-verify-swift -verify-ignore-unrelated -enable-bare-slash-regex -typo-correction-limit 0
 // REQUIRES: swift_swift_parser
 // REQUIRES: concurrency
 
@@ -407,7 +407,7 @@ _ = /\()/
 // expected-error@-1 {{'/' is not a prefix unary operator}}
 // expected-error@-2 {{'/' is not a postfix unary operator}}
 // expected-error@-3 {{invalid component of Swift key path}}
-  
+
 do {
   let _: Regex = (/whatever\)/
   // expected-note@-1 {{to match this opening '('}}
@@ -457,20 +457,20 @@ _ = /./
 // You need to escape if you want a regex literal to start with these characters.
 _ = /\ /
 _ = / / // expected-error {{regex literal may not start with space; add backslash to escape}} {{6-6=\}}
-_ = /  /
+_ = / /
 // expected-error@-1 {{regex literal may not start with space; add backslash to escape}} {{6-6=\}}
 // expected-error@-2 {{regex literal may not end with space; use extended literal instead}} {{5-5=#}} {{9-9=#}}
-_ = #/  /#
+_ = #/ /#
 _ = /x\ /
 _ = /\ \ /
 
 // There are intentionally trailing spaces here
-_ = /      
+_ = /
 // expected-error@-1 {{unterminated regex literal}}
 // expected-error@-2 {{regex literal may not start with space; add backslash to escape}} {{6-6=\}}
 
 // There are intentionally trailing spaces here
-_ = /^        
+_ = /^
 // expected-error@-1 {{unterminated regex literal}}
 
 _ = /\)/

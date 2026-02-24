@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -verify-ignore-unrelated -disable-availability-checking
+// RUN: %target-typecheck-verify-swift -verify-ignore-unrelated
 
 // MARK: Functions
 
@@ -630,7 +630,7 @@ let n = switch Bool.random() { case true: 1 case false: 2 } + // expected-error 
 // expected-error@-3 {{'switch' may only be used as expression in return, throw, or as the source of an assignment}}
 // expected-error@-3 {{'switch' may only be used as expression in return, throw, or as the source of an assignment}}
 
-let n1 = switch Bool.random() { case true: 1 case false: 2 } +  5
+let n1 = switch Bool.random() { case true: 1 case false: 2 } + 5
 // expected-error@-1 {{'switch' may only be used as expression in return, throw, or as the source of an assignment}}
 
 let p = .random() ? switch Bool.random() { case true: 1 case false: 2 }
@@ -1306,7 +1306,7 @@ func continueToInner() -> Int {
     }
     return 0
   case false:
-    1  // expected-warning {{integer literal is unused}}
+    1 // expected-warning {{integer literal is unused}}
   }
 }
 
@@ -1528,7 +1528,7 @@ func trySwitch27(_ fn: () throws -> Int) rethrows -> Int {
     let x = switch Bool.random() { case true: try fn() case false: try trySwitch4() }
     return x
   } catch {
-    throw error  // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
+    throw error // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
   }
 }
 
@@ -1537,7 +1537,7 @@ func trySwitch28(_ fn: () throws -> Int) rethrows -> Int {
     let x = switch Bool.random() { case true: try fn() case false: throw Err() }
     return x
   } catch {
-    throw error  // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
+    throw error // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
   }
 }
 
@@ -1799,7 +1799,7 @@ func tryAwaitSwitch13(_ fn: () async throws -> Int) async rethrows -> Int {
     let x = switch Bool.random() { case true: try await fn() case false: try await tryAwaitSwitch4() }
     return x
   } catch {
-    throw error  // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
+    throw error // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
   }
 }
 
@@ -1808,7 +1808,7 @@ func tryAwaitSwitch14(_ fn: () async throws -> Int) async rethrows -> Int {
     let x = switch Bool.random() { case true: try await fn() case false: throw Err() }
     return x
   } catch {
-    throw error  // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
+    throw error // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
   }
 }
 

@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift(-I %S/Inputs/ -Xfrontend -cxx-interoperability-mode=default -Xfrontend -disable-availability-checking -Onone) | %FileCheck %s
+// RUN: %target-run-simple-swift(-I %S/Inputs/ -Xfrontend -cxx-interoperability-mode=default -Onone) | %FileCheck %s
 // REQUIRES: executable_test
 
 import ReferenceCounted

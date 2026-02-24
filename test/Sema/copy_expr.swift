@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -disable-availability-checking -enable-experimental-feature NoImplicitCopy
+// RUN: %target-typecheck-verify-swift -enable-experimental-feature NoImplicitCopy
 
 // REQUIRES: swift_feature_NoImplicitCopy
 
@@ -52,7 +52,7 @@ func testLetStructAccessField() {
 
 func testLetStructAccessComputedField() {
     let t = StructWithField()
-    let _ = copy t.computedK  // expected-error {{'copy' can only be applied to a local binding ('let', 'var', or parameter)}}
+    let _ = copy t.computedK // expected-error {{'copy' can only be applied to a local binding ('let', 'var', or parameter)}}
 }
 
 func testVarStructAccessField() {
@@ -63,7 +63,7 @@ func testVarStructAccessField() {
 
 func testLetClassAccessField() {
     let t = Klass()
-    let _ = copy t.k  // expected-error {{'copy' can only be applied to a local binding ('let', 'var', or parameter)}}
+    let _ = copy t.k // expected-error {{'copy' can only be applied to a local binding ('let', 'var', or parameter)}}
 }
 
 func testVarClassAccessField() {

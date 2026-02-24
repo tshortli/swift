@@ -1,8 +1,8 @@
 // Ban these words past the first 2 lines to ensure we dont' accidentally rely on the stdlib versions
 // RUN: cat %s | tail -n +3 | not grep -E 'Sequence|IteratorProtocol'
 
-// RUN: %target-run-simple-swift(-parse-as-library -Xfrontend -disable-availability-checking -Xfrontend -sil-verify-all -enable-experimental-feature SuppressedAssociatedTypesWithDefaults -enable-experimental-feature Lifetimes) \
-// RUN:   | %FileCheck %s
+// RUN: %target-run-simple-swift(-parse-as-library -Xfrontend -sil-verify-all -enable-experimental-feature SuppressedAssociatedTypesWithDefaults -enable-experimental-feature Lifetimes) \
+// RUN: | %FileCheck %s
 
 // REQUIRES: executable_test
 // REQUIRES: swift_feature_SuppressedAssociatedTypesWithDefaults
@@ -74,7 +74,7 @@ public struct OldIteratorAdapter<Iter: IterProto>: BorrowingIterProto where Iter
 
 /// MARK: Seq
 public protocol Seq<Element>: ~Copyable {
-	associatedtype Element: ~Copyable 
+	associatedtype Element: ~Copyable
 
   // NOTE: Iterator remains Copyable
 	associatedtype Iterator: IterProto
@@ -96,26 +96,26 @@ public protocol Seq<Element>: ~Copyable {
   @available(*, unavailable, renamed: "Iterator")
   typealias Generator = Iterator
 
-//   var underestimatedCount: Int { get }
+// var underestimatedCount: Int { get }
 
-//   func _customContainsEquatableElement(
-//     _ element: borrowing Element    // new: added 'borrowing'
-//   ) -> Bool?
+// func _customContainsEquatableElement(
+// _ element: borrowing Element // new: added 'borrowing'
+// ) -> Bool?
 
 // FIXME: how can these be provided as requirements for noncopyable elements
 // other than to consume the elements, rather than copy?
 //
-//   __consuming func _copyToContiguousArray() -> ContiguousArray<Element>
+// __consuming func _copyToContiguousArray() -> ContiguousArray<Element>
 //
-//   __consuming func _copyContents(
-//     initializing ptr: UnsafeMutableBufferPointer<Element>
-//   ) -> (Iterator,UnsafeMutableBufferPointer<Element>.Index)
+// __consuming func _copyContents(
+// initializing ptr: UnsafeMutableBufferPointer<Element>
+// ) -> (Iterator,UnsafeMutableBufferPointer<Element>.Index)
 
 
-//   @safe
-//   func withContiguousStorageIfAvailable<R>(
-//     _ body: (_ buffer: UnsafeBufferPointer<Element>) throws -> R
-//   ) rethrows -> R?
+// @safe
+// func withContiguousStorageIfAvailable<R>(
+// _ body: (_ buffer: UnsafeBufferPointer<Element>) throws -> R
+// ) rethrows -> R?
 }
 
 // FIXME: the below extension runs into a problem when trying to get Array: Seq,
@@ -124,35 +124,35 @@ public protocol Seq<Element>: ~Copyable {
 //
 // note: multiple matching properties named 'underestimatedCount' with type 'Int
 //
-//     88 | extension Seq where Self: ~Copyable, Self.Element: ~Copyable {
-//     89 |   public var underestimatedCount: Int {
-//        |              `- note: candidate exactly matches [with Element = Array<Element>.Element, BorrowingIterator = OldIteratorAdapter<Array<Element>.Iterator>]
+// 88 | extension Seq where Self: ~Copyable, Self.Element: ~Copyable {
+// 89 | public var underestimatedCount: Int {
+// | `- note: candidate exactly matches [with Element = Array<Element>.Element, BorrowingIterator = OldIteratorAdapter<Array<Element>.Iterator>]
 //
 //
-//      1 | protocol Se@uence {
-//      2 | @inlinable public var underestimatedCount: Int { get }}
-//        |                       `- note: candidate exactly matches [with Element = Array<Element>.Element, BorrowingIterator = OldIteratorAdapter<Array<Element>.Iterator>]
+// 1 | protocol Se@uence {
+// 2 | @inlinable public var underestimatedCount: Int { get }}
+// | `- note: candidate exactly matches [with Element = Array<Element>.Element, BorrowingIterator = OldIteratorAdapter<Array<Element>.Iterator>]
 //
 //
 // Provide defaults for some of the less common requirements,
 // regardless of the kind of Seq.
 // extension Seq where Self: ~Copyable, Self.Element: ~Copyable {
-//   public var underestimatedCount: Int {
-//     return 0
-//   }
+// public var underestimatedCount: Int {
+// return 0
+// }
 //
-//   public func _customContainsEquatableElement(
-//     _ element: borrowing Iterator.Element  // new: added 'borrowing'
-//   ) -> Bool? {
-//     return nil
-//   }
+// public func _customContainsEquatableElement(
+// _ element: borrowing Iterator.Element // new: added 'borrowing'
+// ) -> Bool? {
+// return nil
+// }
 //
-//   @safe
-//   public func withContiguousStorageIfAvailable<R>(
-//     _ body: (UnsafeBufferPointer<Element>) throws -> R
-//   ) rethrows -> R? {
-//     return nil
-//   }
+// @safe
+// public func withContiguousStorageIfAvailable<R>(
+// _ body: (UnsafeBufferPointer<Element>) throws -> R
+// ) rethrows -> R? {
+// return nil
+// }
 // }
 
 
@@ -174,16 +174,16 @@ extension Seq where Self.Iterator == Self, Self.Element: ~Copyable {
 
 // FIXME: There's a few protocol design issues here in providing the following extension...
 // 1. Seq requires Escapable, so it cannot be == Self.BorrowingIterator, which is ~Escapable, so
-//    we can't provide this convenience unless `Seq` doesn't require Escapable too.
+// we can't provide this convenience unless `Seq` doesn't require Escapable too.
 //
 // 2. When trying to provide this when Self: Escapable, we get an error about copying Self when
-//    returning. We need a borrowed return version of this method to avoid that copy!
+// returning. We need a borrowed return version of this method to avoid that copy!
 //
 // extension Seq where Self.BorrowingIterator == Self, Self: ~Copyable, Self.Element: ~Copyable {
-//   /// Returns a borrowing iterator over the elements of this seq.
-//   borrowing func makeBorrowingIterator() -> Self {
-//     return self
-//   }
+// /// Returns a borrowing iterator over the elements of this seq.
+// borrowing func makeBorrowingIterator() -> Self {
+// return self
+// }
 // }
 
 // We can provide a `makeBorrowingIterator` if they're using `OldIteratorAdapter`

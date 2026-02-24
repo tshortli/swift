@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -disable-availability-checking -enable-experimental-feature ImplicitSome
+// RUN: %target-typecheck-verify-swift -enable-experimental-feature ImplicitSome
 
 // REQUIRES: swift_feature_ImplicitSome
 
@@ -20,7 +20,7 @@ protocol Cafe {
 
 class SeasonalMenu : Cafe {
   func breakfast() {}
-  func treats()  {}
+  func treats() {}
 }
 
 func getCurrentMenu() -> some Cafe {
@@ -84,7 +84,7 @@ func search() -> Shop & Cafe { } // expected-error {{function declares an opaque
 protocol Basket {
   associatedtype Fruit
   associatedtype MiniBasket: Basket where MiniBasket.Fruit == Fruit
-  
+
   var fruit: [Fruit] { get set }
   var minifruitbasket: [MiniBasket] { get set }
 }

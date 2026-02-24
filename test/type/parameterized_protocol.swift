@@ -1,6 +1,6 @@
-// RUN: %target-typecheck-verify-swift -disable-availability-checking
+// RUN: %target-typecheck-verify-swift
 
-// RUN: not %target-swift-frontend -typecheck %s -debug-generic-signatures -disable-availability-checking >%t.output 2>&1
+// RUN: not %target-swift-frontend -typecheck %s -debug-generic-signatures >%t.output 2>&1
 // RUN: %FileCheck --input-file %t.output %s
 
 /// Test some invalid syntax first

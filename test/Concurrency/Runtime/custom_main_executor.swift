@@ -1,10 +1,10 @@
-// RUN: %target-run-simple-swift(-DTOPLEVEL_FACTORY -Xfrontend -disable-availability-checking -g %import-libdispatch -parse-as-library) | %FileCheck %s
-// RUN: %target-run-simple-swift(-DPROTOCOL_FACTORY -Xfrontend -disable-availability-checking -g %import-libdispatch -parse-as-library) | %FileCheck %s
-// RUN: %target-run-simple-swift(-DPROTOCOL_FACTORY_OVERRIDDEN -Xfrontend -disable-availability-checking -g %import-libdispatch -parse-as-library) | %FileCheck %s
-// RUN: %target-run-simple-swift(-DPROTOCOL_FACTORY_DEFAULT -Xfrontend -disable-availability-checking -g %import-libdispatch -parse-as-library) | %FileCheck %s
-// RUN: %target-run-simple-swift(-DPROTOCOL_FACTORY_DEFAULT2 -Xfrontend -disable-availability-checking -g %import-libdispatch -parse-as-library) | %FileCheck %s
-// RUN: %target-run-simple-swift(-Xfrontend -disable-availability-checking -g %import-libdispatch -parse-as-library) | %FileCheck %s
-// RUN: %target-run-simple-swift(-Xfrontend -disable-availability-checking -g %import-libdispatch -parse-as-library -swift-version 5 -strict-concurrency=complete -enable-upcoming-feature NonisolatedNonsendingByDefault)  | %FileCheck %s
+// RUN: %target-run-simple-swift(-DTOPLEVEL_FACTORY -g %import-libdispatch -parse-as-library) | %FileCheck %s
+// RUN: %target-run-simple-swift(-DPROTOCOL_FACTORY -g %import-libdispatch -parse-as-library) | %FileCheck %s
+// RUN: %target-run-simple-swift(-DPROTOCOL_FACTORY_OVERRIDDEN -g %import-libdispatch -parse-as-library) | %FileCheck %s
+// RUN: %target-run-simple-swift(-DPROTOCOL_FACTORY_DEFAULT -g %import-libdispatch -parse-as-library) | %FileCheck %s
+// RUN: %target-run-simple-swift(-DPROTOCOL_FACTORY_DEFAULT2 -g %import-libdispatch -parse-as-library) | %FileCheck %s
+// RUN: %target-run-simple-swift( -g %import-libdispatch -parse-as-library) | %FileCheck %s
+// RUN: %target-run-simple-swift( -g %import-libdispatch -parse-as-library -swift-version 5 -strict-concurrency=complete -enable-upcoming-feature NonisolatedNonsendingByDefault) | %FileCheck %s
 // REQUIRES: swift_feature_NonisolatedNonsendingByDefault
 
 // REQUIRES: concurrency

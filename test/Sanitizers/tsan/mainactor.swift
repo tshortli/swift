@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift(-parse-as-library  -Xfrontend -disable-availability-checking %import-libdispatch -sanitize=thread) | %FileCheck %s
+// RUN: %target-run-simple-swift(-parse-as-library %import-libdispatch -sanitize=thread) | %FileCheck %s
 
 // REQUIRES: executable_test
 // REQUIRES: concurrency
@@ -20,7 +20,7 @@ import Dispatch
 /// false or just crash the program with non-zero exit code, depending on SDK.
 func checkIfMainQueue(expectedAnswer expected: Bool) -> Bool {
   if #available(macOS 10.12, iOS 10, tvOS 10, watchOS 3, *) {
-    dispatchPrecondition(condition: expected ? .onQueue(DispatchQueue.main) 
+    dispatchPrecondition(condition: expected ? .onQueue(DispatchQueue.main)
                                              : .notOnQueue(DispatchQueue.main))
   }
   return true

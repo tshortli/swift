@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -disable-availability-checking -emit-ir %s
+// RUN: %target-swift-frontend -emit-ir %s
 // REQUIRES: objc_interop
 //
 // Ensures this does not cause a crash, as @objc protocols are a special case
@@ -11,6 +11,6 @@ public protocol MyProtocol {}
 
 extension NSIndexSet: MyProtocol {}
 
-public func toSomeMyProtocol() -> some MyProtocol { 
+public func toSomeMyProtocol() -> some MyProtocol {
     return NSIndexSet(index: 7)
 }

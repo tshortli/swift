@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -emit-ir %s -disable-availability-checking
+// RUN: %target-swift-frontend -emit-ir %s
 
 struct ZipCollection<each C: Collection> {
   let c: (repeat each C)

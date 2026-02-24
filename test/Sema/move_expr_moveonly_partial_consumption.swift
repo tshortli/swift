@@ -1,7 +1,7 @@
 // RUN: %target-typecheck-verify-swift                              \
-// RUN:     -disable-availability-checking                          \
-// RUN:     -enable-experimental-feature NoImplicitCopy             \
-// RUN:     -debug-diagnostic-names
+// RUN: \
+// RUN: -enable-experimental-feature NoImplicitCopy \
+// RUN: -debug-diagnostic-names
 
 // REQUIRES: swift_feature_NoImplicitCopy
 

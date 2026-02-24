@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend %s -emit-silgen -disable-availability-checking -import-objc-header %S/Inputs/rdar79383990.h
+// RUN: %target-swift-frontend %s -emit-silgen -import-objc-header %S/Inputs/rdar79383990.h
 // REQUIRES: objc_interop
 
 import Foundation

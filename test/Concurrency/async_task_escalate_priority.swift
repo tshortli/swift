@@ -1,6 +1,6 @@
 // RUN: %empty-directory(%t)
 
-// RUN: %target-build-swift %s -Xfrontend -disable-availability-checking -parse-as-library -o %t/async_task_escalate_priority
+// RUN: %target-build-swift %s -parse-as-library -o %t/async_task_escalate_priority
 // RUN: %target-codesign %t/async_task_escalate_priority
 // RUN: %target-run %t/async_task_escalate_priority
 

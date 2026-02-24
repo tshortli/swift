@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift(-Xfrontend -disable-availability-checking)
+// RUN: %target-run-simple-swift()
 // REQUIRES: executable_test
 
 // UNSUPPORTED: CPU=arm64e

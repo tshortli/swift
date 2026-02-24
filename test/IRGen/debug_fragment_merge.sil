@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -disable-availability-checking -primary-file %s -emit-ir -disable-llvm-optzns -O -g | %FileCheck %s
+// RUN: %target-swift-frontend -primary-file %s -emit-ir -disable-llvm-optzns -O -g | %FileCheck %s
 
 // Checking the below on 32 bit architectures would be cumbersome: each
 // fragment is 32 bits long, which changes the number of checks as well as the
@@ -46,7 +46,7 @@ sil hidden @$s20debug_fragment_merge4test4cond8externalySi_AA8External_ptYaF : $
 bb0(%0 : $Int, %1 : $*any External):
   br bb1 // cond_br %cond, bb1, bb2
 
-bb1:                                              // Preds: bb0
+bb1: // Preds: bb0
   %10 = open_existential_addr immutable_access %1 : $*any External to $*@opened("EDD72648-0EA0-11EE-9925-E91C6F300971", any External) Self, loc "debug_fragment_merge.swift":19:28, scope 12 // users: %14, %14, %13
   %11 = alloc_stack $Data, loc * "debug_fragment_merge.swift":19:28, scope 13 // users: %17, %15, %21, %14
   %12 = metatype $@thick Data.Type, loc "debug_fragment_merge.swift":19:35, scope 13 // user: %14
@@ -61,7 +61,7 @@ bb1:                                              // Preds: bb0
   dealloc_stack %11 : $*Data, loc "debug_fragment_merge.swift":19:44, scope 13 // id: %21
   br bb3(%18 : $String, %16 : $String), loc * "debug_fragment_merge.swift":19:44, scope 13 // id: %22
 
-bb3(%36 : $String, %37 : $String):                // Preds: bb2 bb1
+bb3(%36 : $String, %37 : $String): // Preds: bb2 bb1
   %side_effect_ref = function_ref @$side_effect : $@convention(thin) (@owned String) -> ()
   apply %side_effect_ref(%36) : $@convention(thin) (@owned String) -> ()
   apply %side_effect_ref(%37) : $@convention(thin) (@owned String) -> ()

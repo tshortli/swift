@@ -1,9 +1,9 @@
 // RUN: %target-typecheck-verify-swift -verify-ignore-unrelated                       \
-// RUN:     -disable-availability-checking                   \
-// RUN:     -enable-experimental-feature Sensitive           \
-// RUN:     -enable-experimental-feature LifetimeDependence  \
-// RUN:     -enable-builtin-module                           \
-// RUN:     -debug-diagnostic-names
+// RUN: \
+// RUN: -enable-experimental-feature Sensitive \
+// RUN: -enable-experimental-feature LifetimeDependence \
+// RUN: -enable-builtin-module \
+// RUN: -debug-diagnostic-names
 
 // REQUIRES: swift_feature_Sensitive
 // REQUIRES: swift_feature_LifetimeDependence
@@ -16,7 +16,7 @@ func take1<T : BitwiseCopyable>(_ t: T) {}
 
 class C_Implicit {}
 
-func passC_Implicit(_ c: C_Implicit) { take1(c) } // expected-error   {{type_does_not_conform_decl_owner}}
+func passC_Implicit(_ c: C_Implicit) { take1(c) } // expected-error {{type_does_not_conform_decl_owner}}
                                                   // expected-note@-5 {{where_requirement_failure_one_subst}}
 
 class C_Explicit : BitwiseCopyable {} // expected-error {{non_bitwise_copyable_type_class}}
@@ -31,8 +31,8 @@ struct S_Implicit_With_C_Implicit {
   var guts: C_Implicit
 }
 
-func passS_Implicit_With_C_Implicit(_ s: S_Implicit_With_C_Implicit) { 
-  take1(s) // expected-error    {{type_does_not_conform_decl_owner}}
+func passS_Implicit_With_C_Implicit(_ s: S_Implicit_With_C_Implicit) {
+  take1(s) // expected-error {{type_does_not_conform_decl_owner}}
            // expected-note@-21 {{where_requirement_failure_one_subst}}
 }
 
@@ -42,12 +42,12 @@ struct S_Explicit_With_C_Implicit : BitwiseCopyable {
 }
 
 struct S_Explicit_With_Function_Swift : BitwiseCopyable {
-  var f: @convention(swift) () -> () // expected-error   {{non_bitwise_copyable_type_member}}
+  var f: @convention(swift) () -> () // expected-error {{non_bitwise_copyable_type_member}}
                                      // expected-note@-1 {{non_bitwise_copyable_function_type}}
 }
 
 struct S_Explicit_With_Function_Block : BitwiseCopyable {
-  var f: @convention(block) () -> () // expected-error   {{non_bitwise_copyable_type_member}}
+  var f: @convention(block) () -> () // expected-error {{non_bitwise_copyable_type_member}}
                                      // expected-note@-1 {{non_bitwise_copyable_function_type}}
 }
 
@@ -62,12 +62,12 @@ struct S_Explicit_With_Function_C : BitwiseCopyable {
 public struct S_Public {}
 
 struct S_Explicit_With_S_Public : BitwiseCopyable {
-  var s: S_Public // expected-error   {{non_bitwise_copyable_type_member}}
+  var s: S_Public // expected-error {{non_bitwise_copyable_type_member}}
                   // expected-note@-4 {{add_nominal_bitwise_copyable_conformance}}
 }
 
 struct S_Explicit_With_Generic<T> : BitwiseCopyable {
-  var t: T // expected-error   {{non_bitwise_copyable_type_member}}
+  var t: T // expected-error {{non_bitwise_copyable_type_member}}
            // expected-note@-2 {{add_generic_parameter_non_bitwise_copyable_conformance}}
 }
 
@@ -76,7 +76,7 @@ protocol Derived : BitwiseCopyable {}
 class C_Explicit_Derived : Derived {} // expected-error {{non_bitwise_copyable_type_class}}
 
 struct S_Explicit_Derived_With_C_Implicit : Derived {
-  var c: C_Implicit // expected-error   {{non_bitwise_copyable_type_member}}
+  var c: C_Implicit // expected-error {{non_bitwise_copyable_type_member}}
                     // expected-note@-63 {{non_bitwise_copyable_nominal}}
 }
 
@@ -105,7 +105,7 @@ struct S_Implicit_Sensitive {
 }
 
 func passS_Implicit_Sensitive(_ s: S_Implicit_Sensitive) {
-  take1(s) // expected-error   {{type_does_not_conform_decl_owner}}
+  take1(s) // expected-error {{type_does_not_conform_decl_owner}}
            // expected-note@-94 {{where_requirement_failure_one_subst}}
 }
 
@@ -181,7 +181,7 @@ func passAny(_ a: Any) { take3(a) } // expected-error {{type_does_not_conform_de
 
 func passAnyAny(_ a: any Any) { take3(a) } // expected-error {{type_does_not_conform_decl_owner}}
 
-func passString(_ s: String) { take3(s) } // expected-error    {{type_does_not_conform_decl_owner}}
+func passString(_ s: String) { take3(s) } // expected-error {{type_does_not_conform_decl_owner}}
                                           // expected-note@-19 {{where_requirement_failure_one_subst}}
 
 extension Optional where Wrapped : Copyable & Escapable {
@@ -231,25 +231,25 @@ struct S_Explicit_With_Unmanaged<T : AnyObject> : BitwiseCopyable {
 
 func passUnsafePointer<T>(_ p: UnsafePointer<T>) { take3(p) }
 
-struct S_Explicit_With_UnsafePointer<T> : BitwiseCopyable  {
+struct S_Explicit_With_UnsafePointer<T> : BitwiseCopyable {
   var ptr: UnsafePointer<T>
 }
 
 func passUnsafeMutablePointer<T>(_ p: UnsafeMutablePointer<T>) { take3(p) }
 
-struct S_Explicit_With_UnsafeMutablePointer<T> : BitwiseCopyable  {
+struct S_Explicit_With_UnsafeMutablePointer<T> : BitwiseCopyable {
   var ptr: UnsafeMutablePointer<T>
 }
 
 func passUnsafeBufferPointer<T>(_ p: UnsafeBufferPointer<T>) { take3(p) }
 
-struct S_Explicit_With_UnsafeBufferPointer<T> : BitwiseCopyable  {
+struct S_Explicit_With_UnsafeBufferPointer<T> : BitwiseCopyable {
   var ptr: UnsafeBufferPointer<T>
 }
 
 func passUnsafeMutableBufferPointer<T>(_ p: UnsafeMutableBufferPointer<T>) { take3(p) }
 
-struct S_Explicit_With_UnsafeMutableBufferPointer<T> : BitwiseCopyable  {
+struct S_Explicit_With_UnsafeMutableBufferPointer<T> : BitwiseCopyable {
   var ptr: UnsafeMutableBufferPointer<T>
 }
 

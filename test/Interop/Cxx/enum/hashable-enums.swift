@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift(-cxx-interoperability-mode=default -Xfrontend -disable-availability-checking -I %S/Inputs)
+// RUN: %target-run-simple-swift(-cxx-interoperability-mode=default -I %S/Inputs)
 // REQUIRES: executable_test
 
 import StdlibUnittest

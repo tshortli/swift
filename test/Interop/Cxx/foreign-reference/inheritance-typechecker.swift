@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -cxx-interoperability-mode=default -disable-availability-checking -I %S/Inputs
+// RUN: %target-typecheck-verify-swift -cxx-interoperability-mode=default -I %S/Inputs
 
 import Inheritance
 
@@ -14,12 +14,12 @@ let s: SubT = SubT.getSubT()
 assert(!s.isBase)
 let sc: BaseT = cast(s)
 assert(!sc.isBase)
-let sx: BaseT = cxxCast(s)      // should instantiate I to SubT and O to BaseT
+let sx: BaseT = cxxCast(s) // should instantiate I to SubT and O to BaseT
 assert(!sc.isBase)
 
 let b: BaseT = BaseT.getBaseT()
 assert(b.isBase)
-let bc: BaseT = cxxCast(b)      // should instantiate I and O both to BaseT
+let bc: BaseT = cxxCast(b) // should instantiate I and O both to BaseT
 assert(bc.isBase)
 
 let d = DerivedOutOfOrder.getInstance()

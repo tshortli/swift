@@ -1,5 +1,5 @@
-// RUN: %target-run-simple-swift( -Xfrontend -disable-availability-checking %import-libdispatch -parse-as-library) | %FileCheck %s --dump-input=always
-// RUN: %target-run-simple-swift( -Xfrontend -disable-availability-checking %import-libdispatch -parse-as-library -swift-version 5 -strict-concurrency=complete -enable-upcoming-feature NonisolatedNonsendingByDefault)  | %FileCheck %s --dump-input=always
+// RUN: %target-run-simple-swift( %import-libdispatch -parse-as-library) | %FileCheck %s --dump-input=always
+// RUN: %target-run-simple-swift( %import-libdispatch -parse-as-library -swift-version 5 -strict-concurrency=complete -enable-upcoming-feature NonisolatedNonsendingByDefault) | %FileCheck %s --dump-input=always
 // REQUIRES: swift_feature_NonisolatedNonsendingByDefault
 
 // REQUIRES: concurrency
@@ -49,7 +49,7 @@ actor Custom {
   }
 }
 
-// CHECK:      begin
+// CHECK: begin
 // CHECK-NEXT: custom unownedExecutor
 // CHECK-NEXT: main.InlineExecutor: enqueue (priority: TaskPriority.high)
 // CHECK-NEXT: custom.count == 0

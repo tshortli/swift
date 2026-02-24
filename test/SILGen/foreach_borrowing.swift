@@ -1,8 +1,8 @@
 // RUN: %target-swift-emit-silgen -Xllvm -sil-print-types \
 // RUN:     -g -Xllvm -sil-print-debuginfo-verbose \
 // RUN:     -enable-experimental-feature BorrowingForLoop \
-// RUN:     -disable-availability-checking \
-// RUN:     %s | %FileCheck %s
+// RUN: \
+// RUN: %s | %FileCheck %s
 
 // REQUIRES: swift_feature_BorrowingForLoop
 
@@ -122,19 +122,19 @@ func testBreakTargetBorrowingSequence() {
 func testForEachLocations(seq: borrowing Span<Int>, val: Int) {
   // Test that synthesized code has correct source locations for the borrowing foreach loop.
   // The borrowing foreach desugars to:
-  //   let $x$generator = seq._makeBorrowingIterator()
-  //   while case let $span = $x$generator._nextSpan(maximumCount: Int.max),
-  //      !$span.isEmpty {
-  //       let $i = 0
-  //       let $count = $span.count
-  //       while $i < $count, case let x = $span[$i] {
-  //         $i = $i + 1
-  //         if x == val {
-  //           // body
-  //         }
-  //       }
-  //     }
-  //   }
+  // let $x$generator = seq._makeBorrowingIterator()
+  // while case let $span = $x$generator._nextSpan(maximumCount: Int.max),
+  // !$span.isEmpty {
+  // let $i = 0
+  // let $count = $span.count
+  // while $i < $count, case let x = $span[$i] {
+  // $i = $i + 1
+  // if x == val {
+  // // body
+  // }
+  // }
+  // }
+  // }
 
   // _makeBorrowingIterator() function_ref should be at "for" keyword location (172:3)
   // CHECK: [[MAKE_BORROWING_IT:%.*]] = function_ref @$ss4SpanVsRi_zrlE22_makeBorrowingIteratorAByxGyF {{.*}}, loc "{{.*}}":[[@LINE+31]]:3
@@ -153,7 +153,7 @@ func testForEachLocations(seq: borrowing Span<Int>, val: Int) {
   // CHECK: cond_br {{.*}}, loc "{{.*}}":[[@LINE+18]]:3
 
   // Inner loop condition ($i < $count)
-  // CHECK: function_ref @$sSi1loiySbSi_SitFZ  {{.*}}, loc "{{.*}}":[[@LINE+15]]:3
+  // CHECK: function_ref @$sSi1loiySbSi_SitFZ {{.*}}, loc "{{.*}}":[[@LINE+15]]:3
   // CHECK: cond_br {{.*}}, loc "{{.*}}":[[@LINE+14]]:3
 
   // Pattern variable "x" should be at its declaration location

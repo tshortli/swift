@@ -1,8 +1,8 @@
-// RUN: %target-swift-frontend -primary-file %s -emit-ir -disable-availability-checking -runtime-compatibility-version none -target %module-target-future | %FileCheck %s --check-prefix=CHECK-MANGLE
+// RUN: %target-swift-frontend -primary-file %s -emit-ir -runtime-compatibility-version none -target %module-target-future | %FileCheck %s --check-prefix=CHECK-MANGLE
 
-// RUN: %target-swift-frontend -primary-file %s -emit-ir -disable-availability-checking -runtime-compatibility-version 5.8 -disable-concrete-type-metadata-mangled-name-accessors | %FileCheck %s --check-prefix=CHECK-NOMANGLE
+// RUN: %target-swift-frontend -primary-file %s -emit-ir -runtime-compatibility-version 5.8 -disable-concrete-type-metadata-mangled-name-accessors | %FileCheck %s --check-prefix=CHECK-NOMANGLE
 
-// RUN: %target-swift-frontend -primary-file %s -emit-ir  | %FileCheck %s --check-prefix=CHECK
+// RUN: %target-swift-frontend -primary-file %s -emit-ir | %FileCheck %s --check-prefix=CHECK
 
 // RUN: %target-swift-frontend -primary-file %s -emit-ir -enable-library-evolution
 
@@ -107,10 +107,10 @@ func throwsSmallError() throws(SmallError) -> (Float, Int) {
 }
 
 // CHECK: define hidden swiftcc i64 @"$s12typed_throws17catchesSmallErrorSiyF"()
-// CHECK:   [[RES:%.*]] = call swiftcc { float, i64 } @"$s12typed_throws0B10SmallErrorSf_SityAA0cD0VYKF"(ptr swiftself undef, ptr noalias swifterror captures(none) dereferenceable(8) %swifterror)
-// CHECK:   [[R0:%.*]] = extractvalue { float, i64 } [[RES]], 0
-// CHECK:   [[R1:%.*]] = extractvalue { float, i64 } [[RES]], 1
-// CHECK:   phi i64 [ [[R1]], %typed.error.load ]
+// CHECK: [[RES:%.*]] = call swiftcc { float, i64 } @"$s12typed_throws0B10SmallErrorSf_SityAA0cD0VYKF"(ptr swiftself undef, ptr noalias swifterror captures(none) dereferenceable(8) %swifterror)
+// CHECK: [[R0:%.*]] = extractvalue { float, i64 } [[RES]], 0
+// CHECK: [[R1:%.*]] = extractvalue { float, i64 } [[RES]], 1
+// CHECK: phi i64 [ [[R1]], %typed.error.load ]
 // CHECK: }
 func catchesSmallError() -> Int {
   do {
@@ -125,8 +125,8 @@ struct MyError: Error {
 }
 
 // CHECK: define hidden swiftcc { float, i64, float } @"$s12typed_throws8mayThrow1x1ySf_s5Int32VSftSb_yXltAA7MyErrorVYKF"
-// CHECK:   [[CONVERTED:%.*]] = ptrtoint ptr {{%.*}} to i64
-// CHECK:   insertvalue { float, i64, float } undef, i64 [[CONVERTED]], 1
+// CHECK: [[CONVERTED:%.*]] = ptrtoint ptr {{%.*}} to i64
+// CHECK: insertvalue { float, i64, float } undef, i64 [[CONVERTED]], 1
 // CHECK: }
 @inline(never)
 func mayThrow(x: Bool, y: AnyObject) throws(MyError) -> (Float, Int32, Float) {
@@ -137,9 +137,9 @@ func mayThrow(x: Bool, y: AnyObject) throws(MyError) -> (Float, Int32, Float) {
 }
 
 // CHECK: define hidden swiftcc { i64, i64 } @"$s12typed_throws25directErrorMergePtrAndInt1x1yyXl_SitSb_yXltAA05SmallD0VYKF"
-// CHECK:   [[RES:%.*]] = call swiftcc { i64, i64 } @"$s12typed_throws25directErrorMergePtrAndInt1x1yyXl_SitSb_yXltAA05SmallD0VYKF"
-// CHECK:   [[R0:%.*]] = extractvalue { i64, i64 } [[RES]], 0
-// CHECK:   inttoptr i64 [[R0]] to ptr
+// CHECK: [[RES:%.*]] = call swiftcc { i64, i64 } @"$s12typed_throws25directErrorMergePtrAndInt1x1yyXl_SitSb_yXltAA05SmallD0VYKF"
+// CHECK: [[R0:%.*]] = extractvalue { i64, i64 } [[RES]], 0
+// CHECK: inttoptr i64 [[R0]] to ptr
 // CHECK: }
 func directErrorMergePtrAndInt(x: Bool, y: AnyObject) throws(SmallError) -> (AnyObject, Int) {
   guard x else {
@@ -302,8 +302,8 @@ protocol AsyncGenProto<A> {
 }
 
 // CHECK: define internal swifttailcc void @"$s12typed_throws23callAsyncIndirectResult1p1xxAA0D8GenProto_px1ARts_XP_SitYaAA10SmallErrorVYKlFTY0_"(ptr swiftasync %0)
-// CHECK:   musttail call swifttailcc void {{%.*}}(ptr noalias {{%.*}}, ptr swiftasync {{%.*}}, i64 {{%.*}}, ptr noalias swiftself {{%.*}}, ptr %swifterror, ptr {{%.*}}, ptr {{%.*}})
-// CHECK:   ret void
+// CHECK: musttail call swifttailcc void {{%.*}}(ptr noalias {{%.*}}, ptr swiftasync {{%.*}}, i64 {{%.*}}, ptr noalias swiftself {{%.*}}, ptr %swifterror, ptr {{%.*}}, ptr {{%.*}})
+// CHECK: ret void
 // CHECK: }
 @inline(never)
 func callAsyncIndirectResult<A>(p: any AsyncGenProto<A>, x: Int) async throws(SmallError) -> A {
@@ -315,11 +315,11 @@ func smallResultLargerError() throws(SmallError) -> Int8? {
   return 10
 }
 
-// CHECK:  [[COERCED:%.*]] = alloca { i16 }, align 2
-// CHECK:  [[RES:%.*]] = call swiftcc i64 @"$s12typed_throws22smallResultLargerErrors4Int8VSgyAA05SmallF0VYKF"(ptr swiftself undef, ptr noalias swifterror captures(none) dereferenceable(8) %swifterror)
-// CHECK:  [[TRUNC:%.*]] = trunc i64 [[RES]] to i16
-// CHECK:  [[COERCED_PTR:%.*]] = getelementptr inbounds{{.*}} { i16 }, ptr [[COERCED]], i32 0, i32 0
-// CHECK:  store i16 [[TRUNC]], ptr [[COERCED_PTR]], align 2
+// CHECK: [[COERCED:%.*]] = alloca { i16 }, align 2
+// CHECK: [[RES:%.*]] = call swiftcc i64 @"$s12typed_throws22smallResultLargerErrors4Int8VSgyAA05SmallF0VYKF"(ptr swiftself undef, ptr noalias swifterror captures(none) dereferenceable(8) %swifterror)
+// CHECK: [[TRUNC:%.*]] = trunc i64 [[RES]] to i16
+// CHECK: [[COERCED_PTR:%.*]] = getelementptr inbounds{{.*}} { i16 }, ptr [[COERCED]], i32 0, i32 0
+// CHECK: store i16 [[TRUNC]], ptr [[COERCED_PTR]], align 2
 func callSmallResultLargerError() {
   let res = try! smallResultLargerError()
   precondition(res! == 10)
@@ -334,11 +334,11 @@ func smallErrorLargerResult() throws(UInt8OptSingletonError) -> Int {
   throw .a(10)
 }
 
-// CHECK:  [[COERCED:%.*]] = alloca { i16 }, align 2
-// CHECK:  [[RES:%.*]] = call swiftcc i64 @"$s12typed_throws22smallErrorLargerResultSiyAA017UInt8OptSingletonD0OYKF"(ptr swiftself undef, ptr noalias swifterror captures(none) dereferenceable(8) %swifterror)
-// CHECK:  [[TRUNC:%.*]] = trunc i64 [[RES]] to i16
-// CHECK:  [[COERCED_PTR:%.*]] = getelementptr inbounds{{.*}} { i16 }, ptr [[COERCED]], i32 0, i32 0
-// CHECK:  store i16 [[TRUNC]], ptr [[COERCED_PTR]], align 2
+// CHECK: [[COERCED:%.*]] = alloca { i16 }, align 2
+// CHECK: [[RES:%.*]] = call swiftcc i64 @"$s12typed_throws22smallErrorLargerResultSiyAA017UInt8OptSingletonD0OYKF"(ptr swiftself undef, ptr noalias swifterror captures(none) dereferenceable(8) %swifterror)
+// CHECK: [[TRUNC:%.*]] = trunc i64 [[RES]] to i16
+// CHECK: [[COERCED_PTR:%.*]] = getelementptr inbounds{{.*}} { i16 }, ptr [[COERCED]], i32 0, i32 0
+// CHECK: store i16 [[TRUNC]], ptr [[COERCED_PTR]], align 2
 func callSmallErrorLargerResult() {
   do {
     _ = try smallErrorLargerResult()

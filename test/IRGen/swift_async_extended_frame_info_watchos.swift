@@ -1,8 +1,8 @@
-// RUN: %target-swift-frontend -disable-availability-checking -target arm64_32-apple-watchos7 %s -S | %FileCheck  -check-prefix=NEVER %s
-// RUN: %target-swift-frontend -disable-availability-checking -target arm64_32-apple-watchos8 %s -S | %FileCheck  -check-prefix=ALWAYS %s
-// RUN: %target-swift-frontend -disable-availability-checking -target arm64_32-apple-watchos7  -swift-async-frame-pointer=always %s -S | %FileCheck  -check-prefix=ALWAYS %s
-// RUN: %target-swift-frontend -disable-availability-checking -target arm64_32-apple-watchos7  -swift-async-frame-pointer=never %s -S | %FileCheck  -check-prefix=NEVER %s
-// RUN: %target-swift-frontend -disable-availability-checking -target arm64_32-apple-watchos7  -swift-async-frame-pointer=auto %s -S | %FileCheck  -check-prefix=AUTO %s
+// RUN: %target-swift-frontend -target arm64_32-apple-watchos7 %s -S | %FileCheck -check-prefix=NEVER %s
+// RUN: %target-swift-frontend -target arm64_32-apple-watchos8 %s -S | %FileCheck -check-prefix=ALWAYS %s
+// RUN: %target-swift-frontend -target arm64_32-apple-watchos7 -swift-async-frame-pointer=always %s -S | %FileCheck -check-prefix=ALWAYS %s
+// RUN: %target-swift-frontend -target arm64_32-apple-watchos7 -swift-async-frame-pointer=never %s -S | %FileCheck -check-prefix=NEVER %s
+// RUN: %target-swift-frontend -target arm64_32-apple-watchos7 -swift-async-frame-pointer=auto %s -S | %FileCheck -check-prefix=AUTO %s
 
 // REQUIRES: OS=watchos || OS=watchossimulator
 // REQUIRES: CODEGENERATOR=AArch64

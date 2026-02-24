@@ -1,6 +1,6 @@
 // %target-swift-frontend %s  -Xllvm -sil-print-after=loadable-address -import-objc-header %S/Inputs/large_c.h -c -o %t/t.o 2>&1 | %FileCheck %s
 
-// RUN: %target-swift-frontend %s -disable-availability-checking -enable-experimental-feature BuiltinModule  -Xllvm -sil-print-types -Xllvm -sil-print-after=loadable-address -c -o %t/t.o 2>&1 | %FileCheck %s
+// RUN: %target-swift-frontend %s -enable-experimental-feature BuiltinModule -Xllvm -sil-print-types -Xllvm -sil-print-after=loadable-address -c -o %t/t.o 2>&1 | %FileCheck %s
 
 // REQUIRES: swift_feature_BuiltinModule
 
@@ -13,10 +13,10 @@ sil_stage canonical
 // CHECK: sil @test1 : $@convention(thin) (@in_guaranteed Builtin.FixedArray<16, Builtin.Int64>) -> () {
 // CHECK-NOT: load
 // CHECK-NOT: store
-// CHECK:   alloc_stack $Builtin.FixedArray<16, Builtin.Int64>
+// CHECK: alloc_stack $Builtin.FixedArray<16, Builtin.Int64>
 // CHECK-NOT: load
 // CHECK-NOT: store
-// CHECK:   copy_addr [take] {{.*}} to [init] {{.*}} : $*Builtin.FixedArray<16, Builtin.Int64>
+// CHECK: copy_addr [take] {{.*}} to [init] {{.*}} : $*Builtin.FixedArray<16, Builtin.Int64>
 // CHECK-NOT: load
 // CHECK-NOT: store
 // CHECK: } // end sil function 'test1'

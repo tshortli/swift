@@ -1,8 +1,8 @@
 // RUN: %target-typecheck-verify-swift                   \
 // RUN:     -parse-stdlib                                \
 // RUN:     -module-name Swift                           \
-// RUN:     -disable-availability-checking               \
-// RUN:     -debug-diagnostic-names
+// RUN: \
+// RUN: -debug-diagnostic-names
 
 public protocol BitwiseCopyable {}
 

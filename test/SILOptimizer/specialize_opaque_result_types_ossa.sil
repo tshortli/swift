@@ -1,5 +1,5 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-swift-frontend -disable-availability-checking %S/Inputs/opaque_result_types.swift -module-name External -emit-module -emit-module-path %t/External.swiftmodule
+// RUN: %target-swift-frontend %S/Inputs/opaque_result_types.swift -module-name External -emit-module -emit-module-path %t/External.swiftmodule
 // RUN: %target-sil-opt -sil-print-types -I %t -enable-sil-verify-all %s -generic-specializer | %FileCheck %s
 
 // REQUIRES: PTRSIZE=64
@@ -35,9 +35,9 @@ bb0(%0 : @owned $Test):
 // CHECK-LABEL: sil shared [ossa] @$s4next8External4TestV_Tg5 : $@convention(witness_method: IteratorProtocol) (@inout IndexingIterator<Test>) -> Optional<Int64>
 // CHECK: bb0(%0 : $*IndexingIterator<Test>):
 // CHECK: alloc_stack $Optional<Int64>
-// CHECK:  ([[RES:%.*]], %{{.*}}) = begin_apply {{.*}}<Test>({{.*}}) : $@yield_once @convention(witness_method: Collection) <τ_0_0 where τ_0_0 : Collection> (@in_guaranteed τ_0_0.Index, @in_guaranteed τ_0_0) -> @yields @in_guaranteed τ_0_0.Element
-// CHECK:  [[DEST:%.*]] = init_enum_data_addr %1 : $*Optional<Int64>, #Optional.some!enumelt
-// CHECK:  copy_addr [[RES]] to [init] {{.*}} : $*Int64
+// CHECK: ([[RES:%.*]], %{{.*}}) = begin_apply {{.*}}<Test>({{.*}}) : $@yield_once @convention(witness_method: Collection) <τ_0_0 where τ_0_0 : Collection> (@in_guaranteed τ_0_0.Index, @in_guaranteed τ_0_0) -> @yields @in_guaranteed τ_0_0.Element
+// CHECK: [[DEST:%.*]] = init_enum_data_addr %1 : $*Optional<Int64>, #Optional.some!enumelt
+// CHECK: copy_addr [[RES]] to [init] {{.*}} : $*Int64
 // CHECK: } // end sil function '$s4next8External4TestV_Tg5'
 sil [ossa] @next : $@convention(witness_method: IteratorProtocol) <τ_0_0 where τ_0_0 : Collection> (@inout IndexingIterator<τ_0_0>) -> @out Optional<τ_0_0.Element> {
 bb0(%0 : $*Optional<τ_0_0.Element>, %1 : $*IndexingIterator<τ_0_0>):

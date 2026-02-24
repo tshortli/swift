@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -disable-availability-checking -enable-experimental-feature ThenStatements
+// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -enable-experimental-feature ThenStatements
 
 // Required for regex
 // REQUIRES: swift_swift_parser
@@ -9,14 +9,14 @@ func then(_: Int = 0, x: Int = 0, fn: () -> Void = {}) {}
 func testThenStmt(_ x: Int) {
   // These are statements
   then x // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
-  then ()  // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
-  then (1)  // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
-  then (1, 2)  // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
-  then ""  // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
+  then () // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
+  then (1) // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
+  then (1, 2) // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
+  then "" // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
   then []
   // expected-error@-1 {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
   // expected-error@-2 {{empty collection literal requires an explicit type}}
-  then [0]  // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
+  then [0] // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
 
   then if .random() { 0 } else { 1 }
   // expected-error@-1 {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
@@ -67,7 +67,7 @@ struct S {
 
   mutating func testThenAsMember() -> Int {
     do {
-      then  // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
+      then // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
     } // expected-error {{expected expression after 'then'}}
     then // expected-error {{'then' may only appear as the last statement in an 'if', 'switch', or 'do' expression}}
     0 // expected-warning {{expression following 'then' is treated as an argument of the 'then'}}
@@ -93,10 +93,10 @@ struct S {
 
     (then) // expected-warning {{property is accessed but result is unused}}
 
-    then is Int 
+    then is Int
     // expected-warning@-1 {{'is' test is always true}}
     // expected-warning@-2 {{expression of type 'Bool' is unused}}
-    then as Int 
+    then as Int
     // expected-warning@-1 {{expression of type 'Int' is unused}}
     then as? Int
     // expected-warning@-1 {{conditional cast from 'Int' to 'Int' always succeeds}}

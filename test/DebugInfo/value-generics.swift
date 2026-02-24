@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend %s -emit-ir -g -enable-builtin-module -disable-availability-checking -o - | %FileCheck %s
+// RUN: %target-swift-frontend %s -emit-ir -g -enable-builtin-module -o - | %FileCheck %s
 
 import Builtin
 

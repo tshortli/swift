@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -emit-silgen %s -disable-availability-checking
+// RUN: %target-swift-frontend -emit-silgen %s
 
 protocol P {
   associatedtype A: P

@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -swift-version 6 -disable-availability-checking -emit-sil -o /dev/null %s -parse-as-library -verify -import-objc-header %S/Inputs/sending.h
+// RUN: %target-swift-frontend -swift-version 6 -emit-sil -o /dev/null %s -parse-as-library -verify -import-objc-header %S/Inputs/sending.h
 
 // REQUIRES: concurrency
 // REQUIRES: asserts
@@ -25,7 +25,7 @@ func methodTestSendingResult() async {
 func methodTestSendingArg() async {
   let x = MyType()
   let s = NSObject()
-  let _ = x.getResultWithSendingArgument(s)  // expected-error {{sending 's' risks causing data races}}
+  let _ = x.getResultWithSendingArgument(s) // expected-error {{sending 's' risks causing data races}}
   // expected-note @-1 {{'s' used after being passed as a 'sending' parameter; Later uses could race}}
   useValue(s) // expected-note {{access can happen concurrently}}
 }

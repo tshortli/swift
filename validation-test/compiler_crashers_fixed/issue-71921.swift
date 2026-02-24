@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -emit-ir %s -disable-availability-checking
+// RUN: %target-swift-frontend -emit-ir %s
 
 public protocol Signal {
     mutating func process() -> Float

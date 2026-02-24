@@ -1,6 +1,6 @@
 // RUN: %empty-directory(%t)
 // RUN: split-file %s %t
-// RUN: %target-swift-frontend %t/test.swift -I %t/Inputs -typecheck -enable-library-evolution -enable-experimental-cxx-interop -disable-availability-checking -disable-implicit-cxx-module-import -verify -verify-ignore-unrelated
+// RUN: %target-swift-frontend %t/test.swift -I %t/Inputs -typecheck -enable-library-evolution -enable-experimental-cxx-interop -disable-implicit-cxx-module-import -verify -verify-ignore-unrelated
 
 // REQUIRES: OS=macosx
 
@@ -37,7 +37,7 @@ __attribute__((swift_attr("release:immortal")))
 SingletonReference {
 public:
     SingletonReference(const SingletonReference &) = delete;
-    
+
     static SingletonReference * _Nonnull create();
 
     void method();
@@ -73,7 +73,7 @@ public typealias EnumT = CxxEnum
 extension CxxTemplateInt {
     // ok
     func testInternal() {
-        
+
     }
 }
 

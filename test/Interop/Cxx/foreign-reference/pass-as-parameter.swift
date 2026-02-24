@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift(-I %S/Inputs -cxx-interoperability-mode=upcoming-swift -Xfrontend -disable-availability-checking)
+// RUN: %target-run-simple-swift(-I %S/Inputs -cxx-interoperability-mode=upcoming-swift )
 
 // REQUIRES: executable_test
 

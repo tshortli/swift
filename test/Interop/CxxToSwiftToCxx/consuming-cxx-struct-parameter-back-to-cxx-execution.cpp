@@ -1,10 +1,10 @@
 // RUN: %empty-directory(%t)
 // RUN: split-file %s %t
 
-// RUN: %target-swift-frontend %t%{fs-sep}use-cxx-types.swift -module-name UseCxx -typecheck -verify -verify-additional-file %t%{fs-sep}header.h -emit-clang-header-path %t%{fs-sep}UseCxx.h -I %t -enable-experimental-cxx-interop -clang-header-expose-decls=all-public -disable-availability-checking
+// RUN: %target-swift-frontend %t%{fs-sep}use-cxx-types.swift -module-name UseCxx -typecheck -verify -verify-additional-file %t%{fs-sep}header.h -emit-clang-header-path %t%{fs-sep}UseCxx.h -I %t -enable-experimental-cxx-interop -clang-header-expose-decls=all-public
 
 // RUN: %target-interop-build-clangxx -std=c++20 -c %t%{fs-sep}use-swift-cxx-types.cpp -I %t -o %t%{fs-sep}swift-cxx-execution.o
-// RUN: %target-interop-build-swift %t%{fs-sep}use-cxx-types.swift -o %t%{fs-sep}swift-cxx-execution -Xlinker %t%{fs-sep}swift-cxx-execution.o -module-name UseCxx -Xfrontend -entry-point-function-name -Xfrontend swiftMain -I %t -O -Xfrontend -disable-availability-checking
+// RUN: %target-interop-build-swift %t%{fs-sep}use-cxx-types.swift -o %t%{fs-sep}swift-cxx-execution -Xlinker %t%{fs-sep}swift-cxx-execution.o -module-name UseCxx -Xfrontend -entry-point-function-name -Xfrontend swiftMain -I %t -O
 
 // RUN: %target-codesign %t%{fs-sep}swift-cxx-execution
 // RUN: %target-run %t%{fs-sep}swift-cxx-execution | %FileCheck %s
@@ -119,7 +119,7 @@ public struct ValueWrapper {
   }
 }
 
-public func consumeValueWrapper(_ x: consuming  ValueWrapper) {
+public func consumeValueWrapper(_ x: consuming ValueWrapper) {
   print("return shared frt x \(x.sharedFRT.x)")
 }
 

@@ -1,8 +1,8 @@
 // RUN: %target-swift-frontend \
 // RUN:    -emit-ir %s -swift-version 5 \
-// RUN:   -disable-availability-checking \
-// RUN:     -enable-experimental-feature SuppressedAssociatedTypes \
-// RUN:   -module-name existential_shape_metadata | %IRGenFileCheck %s
+// RUN: \
+// RUN: -enable-experimental-feature SuppressedAssociatedTypes \
+// RUN: -module-name existential_shape_metadata | %IRGenFileCheck %s
 
 // REQUIRES: swift_feature_SuppressedAssociatedTypes
 
@@ -17,6 +17,6 @@ public protocol QNC<A>: ~Copyable {
 public struct NCStruct: ~Copyable { }
 
 
-public func testNoncopyableConcrete() -> any  ~Copyable.Type {
+public func testNoncopyableConcrete() -> any ~Copyable.Type {
   return (any QNC<NCStruct>).self
 }

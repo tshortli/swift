@@ -1,17 +1,17 @@
-// RUN: %target-typecheck-verify-swift -enable-experimental-feature Extern -disable-availability-checking
+// RUN: %target-typecheck-verify-swift -enable-experimental-feature Extern
 
 // REQUIRES: swift_feature_Extern
 
 @_extern(wasm, module: "m1", name: "f1")
 func f1(x: Int) -> Int
 
-@_extern(wasm, module: "m2", name: ) // expected-error  {{expected string literal in '_extern' attribute}}
+@_extern(wasm, module: "m2", name: ) // expected-error {{expected string literal in '_extern' attribute}}
 func f2ErrorOnMissingNameLiteral(x: Int) -> Int // expected-error{{expected '{' in body of function declaration}}
 
-@_extern(wasm, module: "m3", name) // expected-error  {{expected ':' after label 'name'}}
+@_extern(wasm, module: "m3", name) // expected-error {{expected ':' after label 'name'}}
 func f3ErrorOnMissingNameColon(x: Int) -> Int // expected-error{{expected '{' in body of function declaration}}
 
-@_extern(wasm, module: "m4",) // expected-error  {{expected name argument to '@_extern'}}
+@_extern(wasm, module: "m4",) // expected-error {{expected name argument to '@_extern'}}
 func f4ErrorOnMissingNameLabel(x: Int) -> Int // expected-error{{expected '{' in body of function declaration}}
 
 @_extern(wasm, module: "m5") // expected-error {{expected ',' in '_extern' attribute}}

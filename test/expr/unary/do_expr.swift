@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -disable-availability-checking -enable-experimental-feature ThenStatements -enable-experimental-feature DoExpressions
+// RUN: %target-typecheck-verify-swift -enable-experimental-feature ThenStatements -enable-experimental-feature DoExpressions
 
 // REQUIRES: swift_feature_DoExpressions
 // REQUIRES: swift_feature_ThenStatements
@@ -389,7 +389,7 @@ func tryDo27(_ fn: () throws -> Int) rethrows -> Int {
     let x = do { try fn() } catch { try tryDo4() }
     return x
   } catch {
-    throw error  // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
+    throw error // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
   }
 }
 
@@ -398,7 +398,7 @@ func tryDo28(_ fn: () throws -> Int) rethrows -> Int {
     let x = do { try fn() } catch { throw Err() }
     return x
   } catch {
-    throw error  // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
+    throw error // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
   }
 }
 
@@ -670,7 +670,7 @@ func tryAwaitDo13(_ fn: () async throws -> Int) async rethrows -> Int {
     let x = do { try await fn() } catch { try await tryAwaitDo4() }
     return x
   } catch {
-    throw error  // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
+    throw error // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
   }
 }
 
@@ -679,7 +679,7 @@ func tryAwaitDo14(_ fn: () async throws -> Int) async rethrows -> Int {
     let x = do { try await fn() } catch { throw Err() }
     return x
   } catch {
-    throw error  // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
+    throw error // expected-error {{a function declared 'rethrows' may only throw if its parameter does}}
   }
 }
 

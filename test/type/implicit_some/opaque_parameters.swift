@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -disable-availability-checking -enable-experimental-feature ImplicitSome
+// RUN: %target-typecheck-verify-swift -enable-experimental-feature ImplicitSome
 
 // REQUIRES: swift_feature_ImplicitSome
 
@@ -28,11 +28,11 @@ func takesImplicitQ(_ q: Q) -> Bool {
   return q.f() == q.f()
 }
 
-func testParam(_ a: Collection) -> Bool  {
+func testParam(_ a: Collection) -> Bool {
   a.isEmpty
 }
 
-func testMultiple(_ a: Collection, _ b: Collection) -> Bool  {
+func testMultiple(_ a: Collection, _ b: Collection) -> Bool {
   a.count == b.count
 }
 

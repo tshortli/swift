@@ -1,5 +1,5 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-build-swift %s -g -parse-as-library -Xfrontend -disable-availability-checking -Onone -o %t/SimpleAsyncBacktrace
+// RUN: %target-build-swift %s -g -parse-as-library -Onone -o %t/SimpleAsyncBacktrace
 // RUN: %target-codesign %t/SimpleAsyncBacktrace
 // RUN: %target-run %t/SimpleAsyncBacktrace | %FileCheck %s
 
@@ -38,7 +38,7 @@ func level4() {
 func level5() {
   let backtrace = try! Backtrace.capture()
 
-  // CHECK:      0{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
+  // CHECK: 0{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
   // CHECK-NEXT: 1{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
   // CHECK-NEXT: 2{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
   // CHECK-NEXT: 3{{[ \t]+}}0x{{[0-9a-f]+}} [ra]

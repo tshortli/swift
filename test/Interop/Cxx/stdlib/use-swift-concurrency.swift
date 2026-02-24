@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift(-I %S/Inputs -Xfrontend -enable-experimental-cxx-interop -Xfrontend -disable-availability-checking %import-libdispatch -parse-as-library)
+// RUN: %target-run-simple-swift(-I %S/Inputs -Xfrontend -enable-experimental-cxx-interop %import-libdispatch -parse-as-library)
 //
 // REQUIRES: executable_test
 // REQUIRES: concurrency
@@ -33,7 +33,7 @@ import Dispatch
       await Task.sleep(100_000_000)
       expectEqual(await task.get(), "Hello, Swift!")
     }
-    
+
     await runAllTestsAsync()
   }
 }

@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift(-I %swift_src_root/lib/ClangImporter/SwiftBridging -I %S/Inputs -cxx-interoperability-mode=default -Xfrontend -disable-availability-checking -Onone) | %FileCheck %s
+// RUN: %target-run-simple-swift(-I %swift_src_root/lib/ClangImporter/SwiftBridging -I %S/Inputs -cxx-interoperability-mode=default -Onone) | %FileCheck %s
 
 // REQUIRES: executable_test
 
@@ -19,7 +19,7 @@ func go() {
 
 go()
 
-// CHECK:      RefCount: 1, message: Ctor
+// CHECK: RefCount: 1, message: Ctor
 // CHECK-NEXT: RefCount: 2, message: retain
 // CHECK-NEXT: RefCount: 1, message: release
 // CHECK-NEXT: RefCount: 2, message: retain
@@ -34,7 +34,7 @@ func takesLargeStructWithRefCountedField(_ x: LargeStructWithRefCountedField) {
 }
 
 takesLargeStructWithRefCountedField(getStruct())
-// CHECK:      RefCount: 1, message: Ctor
+// CHECK: RefCount: 1, message: Ctor
 // CHECK-NEXT: RefCount: 2, message: retain
 // CHECK-NEXT: RefCount: 1, message: release
 // CHECK-NEXT: RefCount: 0, message: release
@@ -45,7 +45,7 @@ func takesLargeStructWithRefCountedFieldNested(_ x: LargeStructWithRefCountedFie
 }
 
 takesLargeStructWithRefCountedFieldNested(getNestedStruct())
-// CHECK:      RefCount: 1, message: Ctor
+// CHECK: RefCount: 1, message: Ctor
 // CHECK-NEXT: RefCount: 2, message: retain
 // CHECK-NEXT: RefCount: 1, message: release
 // CHECK-NEXT: RefCount: 0, message: release

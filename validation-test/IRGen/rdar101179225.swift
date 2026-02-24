@@ -1,5 +1,5 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-swift-frontend -disable-availability-checking %s -emit-ir > /dev/null
+// RUN: %target-swift-frontend %s -emit-ir > /dev/null
 
 struct Section: Identifiable {
     let id: Int

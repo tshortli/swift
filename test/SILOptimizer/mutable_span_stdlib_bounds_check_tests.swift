@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -O -emit-sil %s -disable-availability-checking | %FileCheck %s --check-prefix=CHECK-SIL 
+// RUN: %target-swift-frontend -O -emit-sil %s | %FileCheck %s --check-prefix=CHECK-SIL
 
 public protocol P {
    mutating func mutate(_ other: Self)

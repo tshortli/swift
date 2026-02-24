@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift(-Xfrontend -disable-availability-checking -parse-as-library -Xfrontend -enable-copy-propagation) | %FileCheck %s
+// RUN: %target-run-simple-swift( -parse-as-library -Xfrontend -enable-copy-propagation) | %FileCheck %s
 
 // REQUIRES: executable_test
 // REQUIRES: concurrency
@@ -6,7 +6,7 @@
 // UNSUPPORTED: back_deployment_runtime
 
 // =============================================================================
-// = Declarations                                                           {{ =
+// = Declarations {{ =
 // =============================================================================
 
 class C {
@@ -83,11 +83,11 @@ class FileHandleWrapper {
 
 
 // =============================================================================
-// = Declarations                                                           }} =
+// = Declarations }} =
 // =============================================================================
 
 // =============================================================================
-// = Tests                                                                  {{ =
+// = Tests {{ =
 // =============================================================================
 
 func test_localLet_keepsObjectAliveBeyondCallToClassWithWeakReference() {
@@ -183,7 +183,7 @@ class FooerAsync {
     return do_foo_async {
       // At this point, strongSelf is keeping the object alive.
       weakSelf?.foo1()
-      // By this point, strongSelf has been nil'd.  However, self in the 
+      // By this point, strongSelf has been nil'd. However, self in the
       // enclosing foo() may still be keeping the object alive, depending on how
       // the closure was scheduled.
       weakSelf?.foo2()
@@ -204,7 +204,7 @@ func test_repeatedLoadWeakSelf() -> Task<Void, Never> {
 }
 
 // =============================================================================
-// = Tests                                                                  }} =
+// = Tests }} =
 // =============================================================================
 
 @main struct Main {

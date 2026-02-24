@@ -1,4 +1,4 @@
-// RUN: %target-swift-emit-silgen -parse-as-library -disable-availability-checking %s | %FileCheck %s
+// RUN: %target-swift-emit-silgen -parse-as-library %s | %FileCheck %s
 
 enum Color {
     case R, G, B

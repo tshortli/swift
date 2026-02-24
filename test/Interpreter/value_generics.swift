@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift(-Xfrontend  -disable-availability-checking) | %FileCheck %s
+// RUN: %target-run-simple-swift(-Xfrontend) | %FileCheck %s
 
 // UNSUPPORTED: use_os_stdlib
 // UNSUPPORTED: back_deployment_runtime

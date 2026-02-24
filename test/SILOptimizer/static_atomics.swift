@@ -1,7 +1,7 @@
-// RUN: %target-build-swift -parse-as-library -Xfrontend -disable-availability-checking -O %s -module-name=test -emit-sil | %FileCheck %s
+// RUN: %target-build-swift -parse-as-library -O %s -module-name=test -emit-sil | %FileCheck %s
 
-// RUN: %empty-directory(%t) 
-// RUN: %target-build-swift -parse-as-library -Xfrontend -disable-availability-checking -O -module-name=test %s -o %t/a.out
+// RUN: %empty-directory(%t)
+// RUN: %target-build-swift -parse-as-library -O -module-name=test %s -o %t/a.out
 // RUN: %target-run %t/a.out | %FileCheck %s -check-prefix=CHECK-OUTPUT
 
 // REQUIRES: executable_test,swift_stdlib_no_asserts,optimized_stdlib

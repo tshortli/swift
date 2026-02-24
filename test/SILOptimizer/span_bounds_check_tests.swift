@@ -1,12 +1,12 @@
 // RUN: %target-swift-frontend %s -emit-sil -O \
-// RUN:   -disable-availability-checking \
-// RUN:   -enable-experimental-feature Lifetimes \
-// RUN:   | %FileCheck %s --check-prefix=CHECK-SIL
+// RUN: \
+// RUN: -enable-experimental-feature Lifetimes \
+// RUN: | %FileCheck %s --check-prefix=CHECK-SIL
 
 // RUN: %target-swift-frontend %s -emit-ir -O \
-// RUN:   -disable-availability-checking \
-// RUN:   -enable-experimental-feature Lifetimes \
-// RUN:   | %FileCheck %s  --check-prefix=CHECK-IR
+// RUN: \
+// RUN: -enable-experimental-feature Lifetimes \
+// RUN: | %FileCheck %s --check-prefix=CHECK-IR
 
 // REQUIRES: swift_in_compiler
 // REQUIRES: swift_feature_Lifetimes

@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -target %target-cpu-apple-macosx10.15 -swift-version 5 -disable-availability-checking
+// RUN: %target-typecheck-verify-swift -target %target-cpu-apple-macosx10.15 -swift-version 5
 // REQUIRES: objc_interop
 // REQUIRES: OS=macosx
 
@@ -25,12 +25,12 @@ struct FullScreenView<Content>: View where Content: View {
         }
       }
     }
-    .fullScreenCover(isPresented: $showFullScreen) {    
+    .fullScreenCover(isPresented: $showFullScreen) {
       ZStack {
         VStack {
           HStack {
             Button {
-	      
+	
             } label: {
               Text("a")
             }

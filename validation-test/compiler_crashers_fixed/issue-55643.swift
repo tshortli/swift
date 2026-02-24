@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -disable-availability-checking -emit-ir -o /dev/null %s
+// RUN: %target-swift-frontend -emit-ir -o /dev/null %s
 
 // https://github.com/apple/swift/issues/55643
 

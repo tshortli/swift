@@ -1,10 +1,10 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-swift-frontend -enable-copy-propagation=requested-passes-only -enable-lexical-lifetimes=false -disable-availability-checking %S/Inputs/specialize_opaque_type_archetypes_2.swift -module-name External -emit-module -emit-module-path %t/External.swiftmodule
-// RUN: %target-swift-frontend -enable-copy-propagation=requested-passes-only -enable-lexical-lifetimes=false -disable-availability-checking %S/Inputs/specialize_opaque_type_archetypes_3.swift -enable-library-evolution -module-name External2 -emit-module -emit-module-path %t/External2.swiftmodule
-// RUN: %target-swift-frontend -enable-copy-propagation=requested-passes-only -enable-lexical-lifetimes=false -disable-availability-checking %S/Inputs/specialize_opaque_type_archetypes_4.swift -I %t -enable-library-evolution -module-name External3 -emit-module -emit-module-path %t/External3.swiftmodule
-// RUN: %target-swift-frontend -enable-copy-propagation=requested-passes-only -enable-lexical-lifetimes=false -disable-availability-checking %S/Inputs/specialize_opaque_type_archetypes_3.swift -I %t -enable-library-evolution -module-name External2 -Osize -Xllvm -sil-disable-pass=redundant-load-elimination -emit-module -o - | %target-sil-opt -sil-print-types -module-name External2 | %FileCheck --check-prefix=RESILIENT %s
-// RUN: %target-swift-frontend -enable-copy-propagation=requested-passes-only -enable-lexical-lifetimes=false -disable-availability-checking -I %t -module-name A -enforce-exclusivity=checked -Osize -Xllvm -sil-disable-pass=redundant-load-elimination -Xllvm -sil-print-types -emit-sil -sil-verify-all %s | %FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-%target-ptrsize
-// RUN: %target-swift-frontend -enable-copy-propagation=requested-passes-only -enable-lexical-lifetimes=false -disable-availability-checking -I %t -module-name A -enforce-exclusivity=checked -enable-library-evolution -Osize -Xllvm -sil-disable-pass=redundant-load-elimination -Xllvm -sil-print-types -emit-sil -sil-verify-all %s | %FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-%target-ptrsize
+// RUN: %target-swift-frontend -enable-copy-propagation=requested-passes-only -enable-lexical-lifetimes=false %S/Inputs/specialize_opaque_type_archetypes_2.swift -module-name External -emit-module -emit-module-path %t/External.swiftmodule
+// RUN: %target-swift-frontend -enable-copy-propagation=requested-passes-only -enable-lexical-lifetimes=false %S/Inputs/specialize_opaque_type_archetypes_3.swift -enable-library-evolution -module-name External2 -emit-module -emit-module-path %t/External2.swiftmodule
+// RUN: %target-swift-frontend -enable-copy-propagation=requested-passes-only -enable-lexical-lifetimes=false %S/Inputs/specialize_opaque_type_archetypes_4.swift -I %t -enable-library-evolution -module-name External3 -emit-module -emit-module-path %t/External3.swiftmodule
+// RUN: %target-swift-frontend -enable-copy-propagation=requested-passes-only -enable-lexical-lifetimes=false %S/Inputs/specialize_opaque_type_archetypes_3.swift -I %t -enable-library-evolution -module-name External2 -Osize -Xllvm -sil-disable-pass=redundant-load-elimination -emit-module -o - | %target-sil-opt -sil-print-types -module-name External2 | %FileCheck --check-prefix=RESILIENT %s
+// RUN: %target-swift-frontend -enable-copy-propagation=requested-passes-only -enable-lexical-lifetimes=false -I %t -module-name A -enforce-exclusivity=checked -Osize -Xllvm -sil-disable-pass=redundant-load-elimination -Xllvm -sil-print-types -emit-sil -sil-verify-all %s | %FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-%target-ptrsize
+// RUN: %target-swift-frontend -enable-copy-propagation=requested-passes-only -enable-lexical-lifetimes=false -I %t -module-name A -enforce-exclusivity=checked -enable-library-evolution -Osize -Xllvm -sil-disable-pass=redundant-load-elimination -Xllvm -sil-print-types -emit-sil -sil-verify-all %s | %FileCheck %s --check-prefix=CHECK --check-prefix=CHECK-%target-ptrsize
 
 // REQUIRES: swift_in_compiler
 
@@ -51,12 +51,12 @@ func identity<T>(_ t: T) -> T {
 
 // CHECK-LABEL: sil {{.*}}@$s1A10testFooBaryyxAA1PRzlF : $@convention(thin) <T where T : P> (@in_guaranteed T) -> () {
 // CHECK: bb3([[FOOS_INT:%.*]] : $Builtin.Int64):
-// CHECK:  [[FOO_RES:%.*]] = struct $Int64 ([[FOOS_INT]] : $Builtin.Int64)
-// CHECK:  [[ID:%.*]] = function_ref @$s1A8identityyxxlFs5Int64V_Tg5 : $@convention(thin) (Int64) -> Int64
-// CHECK:  [[ID_RES:%.*]] = apply [[ID]]([[FOO_RES]]) : $@convention(thin) (Int64) -> Int64
-// CHECK:  [[USEP:%.*]] = function_ref @$s1A4usePyyxAA1PRzlFs5Int64V_Tg5 : $@convention(thin) (Int64) -> ()
-// CHECK:  apply [[USEP]]([[ID_RES]]) : $@convention(thin) (Int64) -> ()
-// CHECK:  apply [[USEP]]([[FOO_RES]]) : $@convention(thin) (Int64) -> ()
+// CHECK: [[FOO_RES:%.*]] = struct $Int64 ([[FOOS_INT]] : $Builtin.Int64)
+// CHECK: [[ID:%.*]] = function_ref @$s1A8identityyxxlFs5Int64V_Tg5 : $@convention(thin) (Int64) -> Int64
+// CHECK: [[ID_RES:%.*]] = apply [[ID]]([[FOO_RES]]) : $@convention(thin) (Int64) -> Int64
+// CHECK: [[USEP:%.*]] = function_ref @$s1A4usePyyxAA1PRzlFs5Int64V_Tg5 : $@convention(thin) (Int64) -> ()
+// CHECK: apply [[USEP]]([[ID_RES]]) : $@convention(thin) (Int64) -> ()
+// CHECK: apply [[USEP]]([[FOO_RES]]) : $@convention(thin) (Int64) -> ()
 
 public func testFooBar<T:P>(_ t : T) {
   let x = foo(getInt())
@@ -103,16 +103,16 @@ public func returnC() -> some CP {
 // CHECK-LABEL: sil @$s1A4useCyyF
 // CHECK: [[FUN:%.*]] = function_ref @$s1A4usePyyxAA1PRzlFs5Int64V_Tg5
 // CHECK: [[INT:%.*]] = struct $Int64 (
-// CHECK:  = apply [[FUN]]([[INT]])
+// CHECK: = apply [[FUN]]([[INT]])
 public func useC() {
    let c = returnC()
    useP(c.myValue())
 }
 
 // CHECK-LABEL: sil @$s1A11useExternalyyF
-// CHECK:  // function_ref Int64.myValue2()
-// CHECK:  [[FUN:%.*]] = function_ref @$ss5Int64V8ExternalE8myValue2AByF
-// CHECK:  apply [[FUN]]
+// CHECK: // function_ref Int64.myValue2()
+// CHECK: [[FUN:%.*]] = function_ref @$ss5Int64V8ExternalE8myValue2AByF
+// CHECK: apply [[FUN]]
 public func useExternal() {
   let e = external()
   useP(e.myValue2())
@@ -121,11 +121,11 @@ public func useExternal() {
 // Call to a resilient function should not be specialized.
 
 // CHECK-LABEL: sil @$s1A20useExternalResilientyyF
-// CHECK:  [[RES:%.*]] = alloc_stack [var_decl] $@_opaqueReturnTypeOf("$s9External217externalResilientQryF", 0)
-// CHECK:  [[FUN:%.*]] = function_ref @$s9External217externalResilientQryF : $@convention(thin) @substituted {{.*}} for <@_opaqueReturnTypeOf("$s9External217externalResilientQryF", 0) __>
-// CHECK:  apply [[FUN]]([[RES]])
-// CHECK:  witness_method
-// CHECK:  return
+// CHECK: [[RES:%.*]] = alloc_stack [var_decl] $@_opaqueReturnTypeOf("$s9External217externalResilientQryF", 0)
+// CHECK: [[FUN:%.*]] = function_ref @$s9External217externalResilientQryF : $@convention(thin) @substituted {{.*}} for <@_opaqueReturnTypeOf("$s9External217externalResilientQryF", 0) __>
+// CHECK: apply [[FUN]]([[RES]])
+// CHECK: witness_method
+// CHECK: return
 public func useExternalResilient() {
   let e = externalResilient()
   useP(e.myValue3())
@@ -140,10 +140,10 @@ struct Container {
 }
 
 // CHECK-LABEL: sil @$s1A11usePropertyyyF
-// CHECK:  [[VAL:%.*]] = struct $Int64
-// CHECK:  // function_ref specialized useP<A>(_:)
-// CHECK:  [[FUN:%.*]] = function_ref @$s1A4usePyyxAA1PRzlFs5Int64V_Tg5
-// CHECK:  apply [[FUN]]([[VAL]])
+// CHECK: [[VAL:%.*]] = struct $Int64
+// CHECK: // function_ref specialized useP<A>(_:)
+// CHECK: [[FUN:%.*]] = function_ref @$s1A4usePyyxAA1PRzlFs5Int64V_Tg5
+// CHECK: apply [[FUN]]([[VAL]])
 public func useProperty() {
    let p = Container().x
    useP(p.myValue())
@@ -220,7 +220,7 @@ public func usePair() {
 struct MyInt64 : ExternalP2 {
   var x = Int64(0)
   public func myValue3() -> Int64 {
-    return  x + 3
+    return x + 3
   }
 }
 
@@ -233,9 +233,9 @@ func nonResilient() -> some ExternalP2 {
 // CHECK: [[USEP:%.*]] = function_ref @$s1A4usePyyxAA1PRzlFs5Int64V_Tg5
 // CHECK: [[FIRST_MYVALUE3:%.*]] = struct $Int64
 // CHECK: apply [[USEP]]([[FIRST_MYVALUE3]])
-// CHECK:  [[MYVALUE_WITNESS:%.*]] = witness_method $@_opaqueReturnTypeOf("$s9External217externalResilientQryF"
-// CHECK:  [[SECOND_MYVALUE3:%.*]] = apply [[MYVALUE_WITNESS]]
-// CHECK:  apply [[USEP]]([[SECOND_MYVALUE3]])
+// CHECK: [[MYVALUE_WITNESS:%.*]] = witness_method $@_opaqueReturnTypeOf("$s9External217externalResilientQryF"
+// CHECK: [[SECOND_MYVALUE3:%.*]] = apply [[MYVALUE_WITNESS]]
+// CHECK: apply [[USEP]]([[SECOND_MYVALUE3]])
 // CHECK: return
 
 public func usePairResilientNonResilient() {
@@ -258,8 +258,8 @@ public struct Adapter<T: P3>: P3 {
 
 // Don't assert.
 // CHECK-LABEL: sil {{.*}} @$s1A7AdapterVyxGAA2P3A2aEP3foo2ATQzyFTW
-// CHECK:  [[F:%.*]] = function_ref @$s1A7AdapterV3fooQryF
-// CHECK:  apply [[F]]<τ_0_0>(%0, %1) : $@convention(method) <τ_0_0 where τ_0_0 : P3> (@in_guaranteed Adapter<τ_0_0>) ->
+// CHECK: [[F:%.*]] = function_ref @$s1A7AdapterV3fooQryF
+// CHECK: apply [[F]]<τ_0_0>(%0, %1) : $@convention(method) <τ_0_0 where τ_0_0 : P3> (@in_guaranteed Adapter<τ_0_0>) ->
 extension P3 {
   public func foo() -> some P3 {
     return Adapter(inner: self)
@@ -270,10 +270,10 @@ extension P3 {
 // inlineable.
 
 // CHECK-LABEL: sil @$s1A21useExternalResilient2yyF : $@convention(thin) () -> ()
-// CHECK:   [[RES:%.*]] = alloc_stack $Int64
-// CHECK:   [[FUN:%.*]] = function_ref @$s9External226inlinableExternalResilientQryF : $@convention(thin) @substituted {{.*}} for <Int64>
-// CHECK:   apply [[FUN]]([[RES]])
-// CHECK:   return
+// CHECK: [[RES:%.*]] = alloc_stack $Int64
+// CHECK: [[FUN:%.*]] = function_ref @$s9External226inlinableExternalResilientQryF : $@convention(thin) @substituted {{.*}} for <Int64>
+// CHECK: apply [[FUN]]([[RES]])
+// CHECK: return
 public func useExternalResilient2() {
   let e = inlinableExternalResilient()
   useP(e.myValue3())
@@ -281,9 +281,9 @@ public func useExternalResilient2() {
 
 // In this case we should only 'peel' one layer of opaque archetypes.
 // CHECK-LABEL: sil @$s1A21useExternalResilient3yyF
-// CHECK:  [[RES:%.*]] = alloc_stack [var_decl] $@_opaqueReturnTypeOf("$s9External217externalResilientQryF", 0)
-// CHECK:  [[FUN:%.*]] = function_ref @$s9External3031inlinableExternalResilientCallsD0QryF : $@convention(thin) @substituted {{.*}} for <@_opaqueReturnTypeOf("$s9External217externalResilientQryF", 0) __>
-// CHECK:  apply [[FUN]]([[RES]])
+// CHECK: [[RES:%.*]] = alloc_stack [var_decl] $@_opaqueReturnTypeOf("$s9External217externalResilientQryF", 0)
+// CHECK: [[FUN:%.*]] = function_ref @$s9External3031inlinableExternalResilientCallsD0QryF : $@convention(thin) @substituted {{.*}} for <@_opaqueReturnTypeOf("$s9External217externalResilientQryF", 0) __>
+// CHECK: apply [[FUN]]([[RES]])
 public func useExternalResilient3() {
   let e = inlinableExternalResilientCallsResilient()
   useP(e.myValue3())
@@ -291,62 +291,62 @@ public func useExternalResilient3() {
 
 // Check that we can look through two layers of inlinable resilient functions.
 // CHECK-LABEL: sil @$s1A21useExternalResilient4yyF
-// CHECK:   [[RES:%.*]] = alloc_stack $Int64
-// CHECK:   [[FUN:%.*]] = function_ref @$s9External3040inlinableExternalResilientCallsInlinablecD0QryF : $@convention(thin) @substituted {{.*}} for <Int64>
-// CHECK:   apply [[FUN]]([[RES]])
+// CHECK: [[RES:%.*]] = alloc_stack $Int64
+// CHECK: [[FUN:%.*]] = function_ref @$s9External3040inlinableExternalResilientCallsInlinablecD0QryF : $@convention(thin) @substituted {{.*}} for <Int64>
+// CHECK: apply [[FUN]]([[RES]])
 public func useExternalResilient4() {
   let e = inlinableExternalResilientCallsInlinableExternalResilient()
   useP(e.myValue3())
 }
 
 // CHECK-LABEL: sil @$s1A18testStoredPropertyyyF
-// CHECK:   [[CONTAINER_INIT_FUN:%.*]] = function_ref @$s8External0A9ContainerVACycfC
-// CHECK:   [[CONTAINER:%.*]] = apply [[CONTAINER_INIT_FUN]]
-// CHECK:   [[RES:%.*]] = alloc_stack $Int64
-// CHECK:   [[COMPUTED_PROP:%.*]] = function_ref @$s8External0A9ContainerV16computedPropertyQrvg
-// CHECK:   apply [[COMPUTED_PROP]]([[RES]], [[CONTAINER]])
-// CHECK:   [[MYVALUE:%.*]] = function_ref @$ss5Int64V8ExternalE8myValue2AByF : $@convention(method) (Int64) -> Int64
-// CHECK:   apply [[MYVALUE]]
+// CHECK: [[CONTAINER_INIT_FUN:%.*]] = function_ref @$s8External0A9ContainerVACycfC
+// CHECK: [[CONTAINER:%.*]] = apply [[CONTAINER_INIT_FUN]]
+// CHECK: [[RES:%.*]] = alloc_stack $Int64
+// CHECK: [[COMPUTED_PROP:%.*]] = function_ref @$s8External0A9ContainerV16computedPropertyQrvg
+// CHECK: apply [[COMPUTED_PROP]]([[RES]], [[CONTAINER]])
+// CHECK: [[MYVALUE:%.*]] = function_ref @$ss5Int64V8ExternalE8myValue2AByF : $@convention(method) (Int64) -> Int64
+// CHECK: apply [[MYVALUE]]
 public func testStoredProperty() {
   let c = ExternalContainer()
   useP(c.computedProperty.myValue2())
 }
 
 // CHECK-LABEL: sil @$s1A21testResilientPropertyyyF
-// CHECK:   [[CONTAINER:%.*]] = alloc_stack [var_decl] $ResilientContainer
-// CHECK:   [[RES:%.*]] = alloc_stack $@_opaqueReturnTypeOf("$s9External218ResilientContainerV16computedPropertyQrvp", 0)
-// CHECK:   [[FUN:%.*]] = function_ref @$s9External218ResilientContainerV16computedPropertyQrvg
-// CHECK:   apply [[FUN]]([[RES]], [[CONTAINER]])
+// CHECK: [[CONTAINER:%.*]] = alloc_stack [var_decl] $ResilientContainer
+// CHECK: [[RES:%.*]] = alloc_stack $@_opaqueReturnTypeOf("$s9External218ResilientContainerV16computedPropertyQrvp", 0)
+// CHECK: [[FUN:%.*]] = function_ref @$s9External218ResilientContainerV16computedPropertyQrvg
+// CHECK: apply [[FUN]]([[RES]], [[CONTAINER]])
 public func testResilientProperty() {
   let r = ResilientContainer()
   useP(r.computedProperty.myValue3())
 }
 
 // CHECK-LABEL: sil @$s1A30testResilientInlinablePropertyyyF
-// CHECK:  [[CONTAINER:%.*]] = alloc_stack [var_decl] $ResilientContainer
-// CHECK:  [[RES:%.*]] = alloc_stack $Int64
-// CHECK:  [[FUN:%.*]] = function_ref @$s9External218ResilientContainerV18inlineablePropertyQrvg
-// CHECK:  apply [[FUN]]([[RES]], [[CONTAINER]])
+// CHECK: [[CONTAINER:%.*]] = alloc_stack [var_decl] $ResilientContainer
+// CHECK: [[RES:%.*]] = alloc_stack $Int64
+// CHECK: [[FUN:%.*]] = function_ref @$s9External218ResilientContainerV18inlineablePropertyQrvg
+// CHECK: apply [[FUN]]([[RES]], [[CONTAINER]])
 public func testResilientInlinableProperty() {
   let r = ResilientContainer()
   useP(r.inlineableProperty.myValue3())
 }
 
 // CHECK-LABEL: sil @$s1A31testResilientInlinableProperty3yyF
-// CHECK:  [[CONTAINER:%.*]] = alloc_stack [var_decl] $ResilientContainer
-// CHECK:  [[RES:%.*]] = alloc_stack $Int64
-// CHECK:  [[FUN:%.*]] = function_ref @$s9External218ResilientContainerV19inlineableProperty2Qrvg
-// CHECK:  apply [[FUN]]([[RES]], [[CONTAINER]])
+// CHECK: [[CONTAINER:%.*]] = alloc_stack [var_decl] $ResilientContainer
+// CHECK: [[RES:%.*]] = alloc_stack $Int64
+// CHECK: [[FUN:%.*]] = function_ref @$s9External218ResilientContainerV19inlineableProperty2Qrvg
+// CHECK: apply [[FUN]]([[RES]], [[CONTAINER]])
 public func testResilientInlinableProperty3() {
   let r = ResilientContainer()
   useP(r.inlineableProperty2.myValue3())
 }
 
 // CHECK-LABEL: sil @$s1A22testResilientProperty2yyF
-// CHECK:  [[CONTAINER:%.*]] = alloc_stack [var_decl] $ResilientContainer2
-// CHECK:  [[RES:%.*]] = alloc_stack $@_opaqueReturnTypeOf("$s9External319ResilientContainer2V16computedPropertyQrvp", 0)
-// CHECK:  [[FUN:%.*]] = function_ref @$s9External319ResilientContainer2V16computedPropertyQrvg
-// CHECK:  apply [[FUN]]([[RES]], [[CONTAINER]])
+// CHECK: [[CONTAINER:%.*]] = alloc_stack [var_decl] $ResilientContainer2
+// CHECK: [[RES:%.*]] = alloc_stack $@_opaqueReturnTypeOf("$s9External319ResilientContainer2V16computedPropertyQrvp", 0)
+// CHECK: [[FUN:%.*]] = function_ref @$s9External319ResilientContainer2V16computedPropertyQrvg
+// CHECK: apply [[FUN]]([[RES]], [[CONTAINER]])
 public func testResilientProperty2() {
   let r = ResilientContainer2()
   useP(r.computedProperty.myValue3())
@@ -354,41 +354,41 @@ public func testResilientProperty2() {
 
 // The inlinable property recursively calls an resilient property 'peel' one layer of opaque archetypes.
 // CHECK-LABEL: sil @$s1A31testResilientInlinableProperty2yyF
-// CHECK:  [[CONTAINER:%.*]] = alloc_stack [var_decl] $ResilientContainer2
-// CHECK:  [[RES:%.*]] = alloc_stack $@_opaqueReturnTypeOf("$s9External218ResilientContainerV16computedPropertyQrvp", 0)
-// CHECK:  [[FUN:%.*]] = function_ref @$s9External319ResilientContainer2V18inlineablePropertyQrvg
-// CHECK:  apply [[FUN]]([[RES]], [[CONTAINER]])
+// CHECK: [[CONTAINER:%.*]] = alloc_stack [var_decl] $ResilientContainer2
+// CHECK: [[RES:%.*]] = alloc_stack $@_opaqueReturnTypeOf("$s9External218ResilientContainerV16computedPropertyQrvp", 0)
+// CHECK: [[FUN:%.*]] = function_ref @$s9External319ResilientContainer2V18inlineablePropertyQrvg
+// CHECK: apply [[FUN]]([[RES]], [[CONTAINER]])
 public func testResilientInlinableProperty2() {
   let r = ResilientContainer2()
   useP(r.inlineableProperty.myValue3())
 }
 
 // CHECK-LABEL: sil @$s1A035testResilientInlinablePropertyCallsbC0yyF : $@convention(thin) () -> () {
-// CHECK:   [[CONTAINER:%.*]] = alloc_stack [var_decl] $ResilientContainer2
-// CHECK:   [[RES:%.*]] = alloc_stack $Int64
-// CHECK:   [[FUN:%.*]] = function_ref @$s9External319ResilientContainer2V023inlineablePropertyCallsB10InlineableQrvg
-// CHECK:  apply [[FUN]]([[RES]], [[CONTAINER]])
+// CHECK: [[CONTAINER:%.*]] = alloc_stack [var_decl] $ResilientContainer2
+// CHECK: [[RES:%.*]] = alloc_stack $Int64
+// CHECK: [[FUN:%.*]] = function_ref @$s9External319ResilientContainer2V023inlineablePropertyCallsB10InlineableQrvg
+// CHECK: apply [[FUN]]([[RES]], [[CONTAINER]])
 public func testResilientInlinablePropertyCallsResilientInlinable() {
   let r = ResilientContainer2()
   useP(r.inlineablePropertyCallsResilientInlineable.myValue3())
 }
 
 // RESILIENT-LABEL: sil {{.*}}@$s9External218ResilientContainerV33genericEagerMoveInlineableContextyyxlFSi_Tgq5 : {{.*}}{
-// RESILIENT:       {{bb[0-9]+}}({{%[^,]+}} : $Int, {{%[^,]+}} : @_eagerMove $
+// RESILIENT: {{bb[0-9]+}}({{%[^,]+}} : $Int, {{%[^,]+}} : @_eagerMove $
 // RESILIENT-LABEL: } // end sil function '$s9External218ResilientContainerV33genericEagerMoveInlineableContextyyxlFSi_Tgq5'
 
 // RESILIENT-LABEL: sil [serialized] [canonical] [ossa] @$s9External218ResilientContainerV33genericEagerMoveInlineableContextyyxlF : {{.*}} {
-// RESILIENT:       {{bb[0-9]+}}({{%[^,]+}} : $*T, {{%[^,]+}} : @_eagerMove $
+// RESILIENT: {{bb[0-9]+}}({{%[^,]+}} : $*T, {{%[^,]+}} : @_eagerMove $
 // RESILIENT-LABEL: } // end sil function '$s9External218ResilientContainerV33genericEagerMoveInlineableContextyyxlF'
 
 // RESILIENT-LABEL: sil [serialized] [canonical] [ossa] @$s9External218ResilientContainerV26eagerMoveInlineableContextyyF : $@convention(method) (@in_guaranteed ResilientContainer) -> () {
-// RESILIENT:       {{bb[0-9]+}}({{%[^,]+}} : @_eagerMove $
+// RESILIENT: {{bb[0-9]+}}({{%[^,]+}} : @_eagerMove $
 // RESILIENT-LABEL: } // end sil function '$s9External218ResilientContainerV26eagerMoveInlineableContextyyF'
 
 // RESILIENT-LABEL: sil [serialized] [canonical] [ossa] @$s9External218ResilientContainerV17inlineableContextyyF
-// RESILIENT:  [[RES:%.*]] = alloc_stack [var_decl] $@_opaqueReturnTypeOf("$s9External218ResilientContainerV16computedPropertyQrvp", 0)
-// RESILIENT:  [[FUN:%.*]] = function_ref @$s9External218ResilientContainerV16computedPropertyQrvg
-// RESILIENT:  apply [[FUN]]([[RES]], %0)
+// RESILIENT: [[RES:%.*]] = alloc_stack [var_decl] $@_opaqueReturnTypeOf("$s9External218ResilientContainerV16computedPropertyQrvp", 0)
+// RESILIENT: [[FUN:%.*]] = function_ref @$s9External218ResilientContainerV16computedPropertyQrvg
+// RESILIENT: apply [[FUN]]([[RES]], %0)
 
 public protocol P4 {
   associatedtype AT
@@ -397,7 +397,7 @@ public protocol P4 {
 }
 
 struct PA : P4 {
-  func foo(_ x: Int64)  -> some P {
+  func foo(_ x: Int64) -> some P {
     return Int64(x)
   }
 }
@@ -410,23 +410,23 @@ public protocol P4EM {
 }
 
 struct PAEM : P4EM {
-  func foo(@_eagerMove _ x: K)  -> some P {
+  func foo(@_eagerMove _ x: K) -> some P {
     return 5 as Int64
   }
 }
 
 // CHECK-LABEL: sil private [transparent] [thunk] @$s1A2PAVAA2P4A2aDP4testyyFTW
-// CHECK:   [[V:%.*]] = load %0 : $*PA
-// CHECK:   [[F:%.*]] = function_ref @$s1A2PAV4testyyF
-// CHECK:   apply [[F]]([[V]])
+// CHECK: [[V:%.*]] = load %0 : $*PA
+// CHECK: [[F:%.*]] = function_ref @$s1A2PAV4testyyF
+// CHECK: apply [[F]]([[V]])
 
 // CHECK-64-LABEL: sil hidden @$s1A2PAV4testyyF : $@convention(method) (PA) -> ()
-// CHECK-64:         [[V:%.*]] = integer_literal $Builtin.Int64, 5
-// CHECK-64-DAG:     [[I:%.*]] = struct $Int64 ([[V]] : $Builtin.Int64)
-// CHECK-64-DAG:     [[F:%.*]] = function_ref @$s1A4usePyyxAA1PRzlFs5Int64V_Tg5
-// CHECK-64:         apply [[F]]([[I]]) : $@convention(thin) (Int64) -> ()
-// CHECK-64:         apply [[F]]([[I]]) : $@convention(thin) (Int64) -> ()
-// CHECK-64:       } // end sil function '$s1A2PAV4testyyF'
+// CHECK-64: [[V:%.*]] = integer_literal $Builtin.Int64, 5
+// CHECK-64-DAG: [[I:%.*]] = struct $Int64 ([[V]] : $Builtin.Int64)
+// CHECK-64-DAG: [[F:%.*]] = function_ref @$s1A4usePyyxAA1PRzlFs5Int64V_Tg5
+// CHECK-64: apply [[F]]([[I]]) : $@convention(thin) (Int64) -> ()
+// CHECK-64: apply [[F]]([[I]]) : $@convention(thin) (Int64) -> ()
+// CHECK-64: } // end sil function '$s1A2PAV4testyyF'
 @inline(never)
 func testIt<T>(cl: (Int64) throws -> T) {
  do {
@@ -435,11 +435,11 @@ func testIt<T>(cl: (Int64) throws -> T) {
 }
 
 // CHECK-LABEL: sil shared [noinline] @$s1A16testPartialApplyyyxAA2P4RzlFAA2PAV_Tg5
-// CHECK:  [[PA:%.*]] = alloc_stack $PA
-// CHECK:  store %0 to [[PA]] : $*PA
-// CHECK:  [[F:%.*]] = function_ref @$s1A16testPartialApplyyyxAA2P4RzlF2ATQzs5Int64Vcxcfu_AeGcfu0_AA2PAV_TG5 : $@convention(thin) (Int64, @in_guaranteed PA) -> @out Int64
-// CHECK:  [[C:%.*]] = partial_apply [callee_guaranteed] [[F]]([[PA]]) : $@convention(thin) (Int64, @in_guaranteed PA) -> @out Int64
-// CHECK:  convert_function [[C]] : $@callee_guaranteed (Int64) -> @out Int64 to $@callee_guaranteed @substituted <τ_0_0> (Int64) -> (@out τ_0_0, @error any Error) for <Int64>
+// CHECK: [[PA:%.*]] = alloc_stack $PA
+// CHECK: store %0 to [[PA]] : $*PA
+// CHECK: [[F:%.*]] = function_ref @$s1A16testPartialApplyyyxAA2P4RzlF2ATQzs5Int64Vcxcfu_AeGcfu0_AA2PAV_TG5 : $@convention(thin) (Int64, @in_guaranteed PA) -> @out Int64
+// CHECK: [[C:%.*]] = partial_apply [callee_guaranteed] [[F]]([[PA]]) : $@convention(thin) (Int64, @in_guaranteed PA) -> @out Int64
+// CHECK: convert_function [[C]] : $@callee_guaranteed (Int64) -> @out Int64 to $@callee_guaranteed @substituted <τ_0_0> (Int64) -> (@out τ_0_0, @error any Error) for <Int64>
 @inline(never)
 func testPartialApply<T: P4>(_ t: T) {
   let fun = t.foo
@@ -452,7 +452,7 @@ public func testPartialApply() {
 }
 
 // CHECK-LABEL: sil shared [noinline] @$s1A25testPartialApplyEagerMoveyyxAA4P4EMRzlFAA4PAEMV_Tg5 : {{.*}}{
-// CHECK:       {{bb[0-9]+}}({{%[^,]+}} : @_eagerMove $
+// CHECK: {{bb[0-9]+}}({{%[^,]+}} : @_eagerMove $
 // CHECK-LABEL: } // end sil function '$s1A25testPartialApplyEagerMoveyyxAA4P4EMRzlFAA4PAEMV_Tg5'
 
 @inline(never)
@@ -482,10 +482,10 @@ func createTrivial<T>(_ t: T) -> Trivial<T> {
 }
 
 // CHECK: sil @$s1A11testTrivialyyF : $@convention(thin) () -> ()
-// CHECK:   %[[LITERAL:.+]] = integer_literal $Builtin.Int64, 1
-// CHECK:   %[[STRUCT:.+]] = struct $Int64 (%[[LITERAL]] : $Builtin.Int64)
-// CHECK:   %[[FUNC:.+]] = function_ref @$s1A4usePyyxAA1PRzlFs5Int64V_Tg5 : $@convention(thin) (Int64) -> ()
-// CHECK:   apply %[[FUNC]](%[[STRUCT]])
+// CHECK: %[[LITERAL:.+]] = integer_literal $Builtin.Int64, 1
+// CHECK: %[[STRUCT:.+]] = struct $Int64 (%[[LITERAL]] : $Builtin.Int64)
+// CHECK: %[[FUNC:.+]] = function_ref @$s1A4usePyyxAA1PRzlFs5Int64V_Tg5 : $@convention(thin) (Int64) -> ()
+// CHECK: apply %[[FUNC]](%[[STRUCT]])
 public func testTrivial() {
    let s = bar(10)
    let t = createTrivial(s)
@@ -497,11 +497,11 @@ func createTuple<T>(_ t: T) -> (T,T) {
 }
 
 // CHECK: sil @$s1A9testTupleyyF
-// CHECK:  [[I:%.*]] = integer_literal $Builtin.Int64, 10
-// CHECK:  [[I2:%.*]] = struct $Int64 ([[I]] : $Builtin.Int64)
-// CHECK:  [[F:%.*]] = function_ref @$s1A4usePyyxAA1PRzlFs5Int64V_Tg5 : $@convention(thin) (Int64) -> ()
-// CHECK:  apply [[F]]([[I2]]) : $@convention(thin) (Int64) -> ()
-// CHECK:  apply [[F]]([[I2]]) : $@convention(thin) (Int64) -> ()
+// CHECK: [[I:%.*]] = integer_literal $Builtin.Int64, 10
+// CHECK: [[I2:%.*]] = struct $Int64 ([[I]] : $Builtin.Int64)
+// CHECK: [[F:%.*]] = function_ref @$s1A4usePyyxAA1PRzlFs5Int64V_Tg5 : $@convention(thin) (Int64) -> ()
+// CHECK: apply [[F]]([[I2]]) : $@convention(thin) (Int64) -> ()
+// CHECK: apply [[F]]([[I2]]) : $@convention(thin) (Int64) -> ()
 public func testTuple() {
   let s = bar(10)
   let t = createTuple(s)
@@ -623,4 +623,4 @@ public func rdar56410009_inlinedBoth() {
   // CHECK: [[INLINABLE_EXTERNAL_RESILIENT_WRAPPER:%.+]] = function_ref @$s9External233inlinableExternalResilientWrapperyQrxAA0C2P2RzlFs5Int64V_Tg5
   // CHECK: = apply [[INLINABLE_EXTERNAL_RESILIENT_WRAPPER]]({{%.+}}, {{%.+}}) : $@convention(thin) (Int64) -> @out WrapperP2<Int64>
   _ = inlinableExternalResilientWrapper(inlinableExternalResilient())
-} // CHECK:  end sil function '$s1A24rdar56410009_inlinedBothyyF'
+} // CHECK: end sil function '$s1A24rdar56410009_inlinedBothyyF'

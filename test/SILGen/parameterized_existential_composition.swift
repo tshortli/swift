@@ -1,4 +1,4 @@
-// RUN: %target-swift-emit-silgen -disable-availability-checking %s | %FileCheck %s
+// RUN: %target-swift-emit-silgen %s -target %target-swift-5.7-abi-triple | %FileCheck %s
 
 protocol P<A> {
   associatedtype A

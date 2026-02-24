@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -disable-availability-checking -verify-ignore-unknown -verify-ignore-unrelated
+// RUN: %target-typecheck-verify-swift -verify-ignore-unknown -verify-ignore-unrelated
 // REQUIRES: concurrency
 // REQUIRES: distributed
 
@@ -60,7 +60,7 @@ protocol P1: DistributedActor {
 // expected-error@+1{{conformance of 'D5' to distributed protocol 'P1' uses non-distributed operations}}
 distributed actor D5: P1 {
   // expected-note@-1{{mark all declarations used in the conformance 'distributed'}}
-  
+
   func dist() -> String { "" }
   // expected-note@-1{{non-distributed instance method 'dist()'}}
 }

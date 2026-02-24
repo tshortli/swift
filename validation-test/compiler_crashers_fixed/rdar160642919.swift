@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -emit-ir %s -disable-availability-checking
+// RUN: %target-swift-frontend -emit-ir %s
 
 public protocol IntoTuple {
     func asTuple<each E>() -> (repeat each E)

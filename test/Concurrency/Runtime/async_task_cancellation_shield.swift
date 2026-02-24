@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift( -Xfrontend -disable-availability-checking %import-libdispatch -parse-as-library) | %FileCheck %s --dump-input=always
+// RUN: %target-run-simple-swift( %import-libdispatch -parse-as-library) | %FileCheck %s --dump-input=always
 
 // rdar://170452940 - Test is failing in different configurations.
 // REQUIRES: rdar170452940
@@ -18,54 +18,54 @@ import Dispatch
 @available(SwiftStdlib 6.4, *)
 func test_task_cancel_shield() async {
   print("==== ------------------------------------------------")
-  print(#function)  // CHECK: test_task_cancel_shield
+  print(#function) // CHECK: test_task_cancel_shield
 
   let t = Task {
-    print("Inside task, before cancel: isCancelled:\(Task.isCancelled)")  
+    print("Inside task, before cancel: isCancelled:\(Task.isCancelled)")
     // CHECK: Inside task, before cancel: isCancelled:false
 
     print("cancel self")
-    withUnsafeCurrentTask { $0?.cancel() }  // cancel myself!
+    withUnsafeCurrentTask { $0?.cancel() } // cancel myself!
 
-    print("Inside task, after cancel: isCancelled:\(Task.isCancelled)")  
+    print("Inside task, after cancel: isCancelled:\(Task.isCancelled)")
     // CHECK: Inside task, after cancel: isCancelled:true
 
     withTaskCancellationShield {
-      print("Inside task, shielded: isCancelled:\(Task.isCancelled)") 
+      print("Inside task, shielded: isCancelled:\(Task.isCancelled)")
        // CHECK: Inside task, shielded: isCancelled:false
     }
-    print("Inside task, after shield: isCancelled:\(Task.isCancelled)") 
+    print("Inside task, after shield: isCancelled:\(Task.isCancelled)")
      // CHECK: Inside task, after shield: isCancelled:true
 
     await withTaskCancellationShield {
       await withTaskCancellationHandler {
-        print("shielded, withTaskCancellationHandler - operation")  
+        print("shielded, withTaskCancellationHandler - operation")
         // CHECK: shielded, withTaskCancellationHandler - operation
 
       } onCancel: {
         // MUST NOT execute because we're shielded
-        print("shielded, withTaskCancellationHandler - onCancel") 
+        print("shielded, withTaskCancellationHandler - onCancel")
          // CHECK-NOT: shielded, withTaskCancellationHandler - onCancel
       }
     }
 
     async let child = {
-      print("Inside child-task: isCancelled:\(Task.isCancelled)")  
+      print("Inside child-task: isCancelled:\(Task.isCancelled)")
       // CHECK: Inside child-task: isCancelled:true
       withTaskCancellationShield {
-        print("Inside child-task, shielded: isCancelled:\(Task.isCancelled)")  
+        print("Inside child-task, shielded: isCancelled:\(Task.isCancelled)")
         // CHECK: Inside child-task, shielded: isCancelled:false
       }
     }()
     _ = await child
 
     let t2 = Task {
-      let unsafeT2 = withUnsafeCurrentTask { $0! }  // escape self reference unsafely
+      let unsafeT2 = withUnsafeCurrentTask { $0! } // escape self reference unsafely
 
       await withTaskCancellationShield {
         await withTaskCancellationHandler {
           print("cancel self")
-          unsafeT2.cancel()  // cancel self, but we're shielded, so the handler MUST NOT run anyway
+          unsafeT2.cancel() // cancel self, but we're shielded, so the handler MUST NOT run anyway
           // CHECK-NOT: Task{}.cancel, withTaskCancellationHandler - onCancel
           print("Task{}.cancel, shielded, withTaskCancellationHandler - operation")
           // CHECK: Task{}.cancel, shielded, withTaskCancellationHandler - operation
@@ -115,7 +115,7 @@ func test_defer_cancel_shield() async {
 @available(SwiftStdlib 6.4, *)
 func test_nested_shields() async {
   print("==== ------------------------------------------------")
-  print(#function)  // CHECK: test_nested_shields
+  print(#function) // CHECK: test_nested_shields
 
   let task = Task {
     withUnsafeCurrentTask { $0?.cancel() }
@@ -125,7 +125,7 @@ func test_nested_shields() async {
     withTaskCancellationShield {
       print("Inside shield, after cancel: isCancelled:\(Task.isCancelled)")
       // CHECK: Inside shield, after cancel: isCancelled:false
-      
+
       withTaskCancellationShield {
         print("Inside shield shield, after cancel: isCancelled:\(Task.isCancelled)")
         // CHECK: Inside shield shield, after cancel: isCancelled:false
@@ -146,7 +146,7 @@ func test_nested_shields() async {
 @available(SwiftStdlib 6.4, *)
 func test_sleep_cancel_shield() async {
   print("==== ------------------------------------------------")
-  print(#function)  // CHECK: test_sleep_cancel_shield
+  print(#function) // CHECK: test_sleep_cancel_shield
 
   let task = Task {
     await withTaskCancellationShield {
@@ -161,8 +161,8 @@ func test_sleep_cancel_shield() async {
 @available(SwiftStdlib 6.4, *)
 func test_async_stream_cancel_shield() async {
   print("==== ------------------------------------------------")
-  print(#function)  // CHECK: test_async_stream_cancel_shield
-  
+  print(#function) // CHECK: test_async_stream_cancel_shield
+
   let (stream, continuation) = AsyncThrowingStream<Void, any Error>.makeStream()
   let task = Task {
     try await withTaskCancellationShield {
@@ -182,7 +182,7 @@ func test_async_stream_cancel_shield() async {
 @available(SwiftStdlib 6.4, *)
 func test_child_task_cancel_shield() async {
   print("==== ------------------------------------------------")
-  print(#function)  // CHECK: test_child_task_cancel_shield
+  print(#function) // CHECK: test_child_task_cancel_shield
 
   let cancellableContinuation = CancellableContinuation()
   await withTaskGroup { group in
@@ -201,7 +201,7 @@ func test_child_task_cancel_shield() async {
 @available(SwiftStdlib 6.4, *)
 func test_task_group_cancel_shield() async {
   print("==== ------------------------------------------------")
-  print(#function)  // CHECK: test_task_group_cancel_shield
+  print(#function) // CHECK: test_task_group_cancel_shield
 
   await withTaskGroup(of: Void.self) { group in
     group.cancelAll()
@@ -230,7 +230,7 @@ func test_task_group_cancel_shield() async {
 @available(SwiftStdlib 6.4, *)
 func test_add_task_cancel_shield() async {
   print("==== ------------------------------------------------")
-  print(#function)  // CHECK: test_add_task_cancel_shield
+  print(#function) // CHECK: test_add_task_cancel_shield
 
   await withTaskGroup(of: Void.self) { group in
     group.cancelAll()
@@ -251,7 +251,7 @@ func test_add_task_cancel_shield() async {
 @available(SwiftStdlib 6.4, *)
 func test_hasActiveCancellationShield() async {
   print("==== ------------------------------------------------")
-  print(#function)  // CHECK: test_hasActiveCancellationShield
+  print(#function) // CHECK: test_hasActiveCancellationShield
 
   let task = Task {
     print("hasShield:\(Task.hasActiveCancellationShield)")
@@ -306,7 +306,7 @@ func test_hasActiveCancellationShield() async {
 @available(SwiftStdlib 6.4, *)
 func test_task_isCancelled_instance_vs_static() async {
   print("==== ------------------------------------------------")
-  print(#function)  // CHECK: test_task_isCancelled_instance_vs_static
+  print(#function) // CHECK: test_task_isCancelled_instance_vs_static
 
   let ready = DispatchSemaphore(value: 0)
   let proceed = DispatchSemaphore(value: 0)

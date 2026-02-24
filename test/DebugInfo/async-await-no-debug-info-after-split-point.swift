@@ -1,6 +1,6 @@
 // RUN: %target-swift-frontend %s -emit-irgen -g -o - \
-// RUN:    -module-name M  -disable-availability-checking \
-// RUN:    -parse-as-library | %FileCheck %s --check-prefix=CHECK
+// RUN: -module-name M \
+// RUN: -parse-as-library | %FileCheck %s --check-prefix=CHECK
 
 // REQUIRES: concurrency
 

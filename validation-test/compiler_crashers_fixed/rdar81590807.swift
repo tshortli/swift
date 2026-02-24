@@ -1,11 +1,11 @@
 // RUN: %empty-directory(%t)
 // RUN: %target-clang %S/Inputs/rdar81590807.m -I %S/Inputs -c -o %t/rdar81590807.o
-// RUN: %target-build-swift -Xfrontend -disable-availability-checking -import-objc-header %S/Inputs/rdar81590807.h -Xlinker %t/rdar81590807.o -parse-as-library %s -o %t/main
+// RUN: %target-build-swift -import-objc-header %S/Inputs/rdar81590807.h -Xlinker %t/rdar81590807.o -parse-as-library %s -o %t/main
 // RUN: %target-codesign %t/main
 // RUN: %target-run %t/main > %t/log 2>&1 || true
 // RUN: %FileCheck %s < %t/log
 
-// Unsupported because the crash on continueIncorrect is just an illegal 
+// Unsupported because the crash on continueIncorrect is just an illegal
 // instruction rather than a nice fatal error.
 // UNSUPPORTED: swift_test_mode_optimize
 // UNSUPPORTED: swift_test_mode_optimize_size

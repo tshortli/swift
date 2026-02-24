@@ -1,5 +1,5 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-build-swift -plugin-path %swift-plugin-dir -Xfrontend -disable-availability-checking %s %import-libdispatch -swift-version 6 -o %t/a.out
+// RUN: %target-build-swift -plugin-path %swift-plugin-dir %s %import-libdispatch -swift-version 6 -o %t/a.out
 // RUN: %target-codesign %t/a.out
 // RUN: %target-run %t/a.out | %FileCheck %s --dump-input=always
 
@@ -278,7 +278,7 @@ syncOnNonTaskThread(synchronousTask: behavior)
 // CHECK-NOT: ERROR!
 // CHECK-NEXT: inside immediate [thread:[[CALLING_THREAD2]]]
 // CHECK-NEXT: inside immediate, before sleep [thread:[[CALLING_THREAD2]]]
-// CHECK-NEXT: after immediate, outside; cancel (wakeup) the synchronous task!  [thread:[[CALLING_THREAD2]]]
+// CHECK-NEXT: after immediate, outside; cancel (wakeup) the synchronous task! [thread:[[CALLING_THREAD2]]]
 // CHECK-NEXT: inside immediate, after sleep
 
 print("\n\n==== ------------------------------------------------------------------")
@@ -291,7 +291,7 @@ syncOnNonTaskThread(synchronousTask: behavior)
 // CHECK-NOT: ERROR!
 // CHECK-NEXT: inside immediate [thread:[[CALLING_THREAD3]]]
 // CHECK: inside immediate, done [thread:[[CALLING_THREAD3]]]
-// CHECK: after immediate, outside; cancel (wakeup) the synchronous task!  [thread:[[CALLING_THREAD3]]]
+// CHECK: after immediate, outside; cancel (wakeup) the synchronous task! [thread:[[CALLING_THREAD3]]]
 
 print("\n\n==== ------------------------------------------------------------------")
 print("callActorFromStartSynchronousTask() - not on specific queue")
@@ -557,6 +557,6 @@ func call_taskImmediate_taskExecutor(taskExecutor: NaiveQueueExecutor) async {
 
 // FIXME: rdar://155596073 task executors can be somewhat racy it seems and not always hop as we'd want them to
 // await call_taskImmediate_taskExecutor(
-//  taskExecutor: NaiveQueueExecutor(queue: DispatchQueue(label: "my-queue")))
+// taskExecutor: NaiveQueueExecutor(queue: DispatchQueue(label: "my-queue")))
 
 print("DONE!") // CHECK: DONE!

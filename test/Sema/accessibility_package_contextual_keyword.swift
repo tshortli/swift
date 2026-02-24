@@ -1,11 +1,11 @@
 // RUN: %empty-directory(%t)
 // RUN: split-file %s %t
 
-// RUN: %target-swift-frontend-typecheck -verify -disable-availability-checking %t/main.swift -package-name myPkg
-// RUN: %target-swift-frontend-typecheck -verify -disable-availability-checking %t/A.swift -package-name myPkg
-// RUN: %target-swift-frontend-typecheck -verify -disable-availability-checking %t/B.swift -package-name myPkg
-// RUN: %target-swift-frontend-typecheck -verify -disable-availability-checking %t/D.swift -package-name myPkg
-// RUN: not %target-swift-frontend-typecheck -verify -disable-availability-checking %t/C.swift -package-name myPkg 2>&1 | %FileCheck %s
+// RUN: %target-swift-frontend-typecheck -verify %t/main.swift -package-name myPkg
+// RUN: %target-swift-frontend-typecheck -verify %t/A.swift -package-name myPkg
+// RUN: %target-swift-frontend-typecheck -verify %t/B.swift -package-name myPkg
+// RUN: %target-swift-frontend-typecheck -verify %t/D.swift -package-name myPkg
+// RUN: not %target-swift-frontend-typecheck -verify %t/C.swift -package-name myPkg 2>&1 | %FileCheck %s
 
 //--- main.swift
 package(set) public var a: String // should pass when `package` modifier is used at top level decls
@@ -19,7 +19,7 @@ package()
 //--- A.swift
 package class package { // package can be a type name
   package init() {}
-  package var package: String?  // package can be a var name
+  package var package: String? // package can be a var name
 }
 
 package class pkg {

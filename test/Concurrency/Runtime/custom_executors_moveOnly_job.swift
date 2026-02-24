@@ -1,5 +1,5 @@
-// RUN: %target-run-simple-swift( -Xfrontend -disable-availability-checking %import-libdispatch -parse-as-library) | %FileCheck %s
-// RUN: %target-run-simple-swift( -Xfrontend -disable-availability-checking %import-libdispatch -parse-as-library -swift-version 5 -strict-concurrency=complete -enable-upcoming-feature NonisolatedNonsendingByDefault)  | %FileCheck %s
+// RUN: %target-run-simple-swift( %import-libdispatch -parse-as-library) | %FileCheck %s
+// RUN: %target-run-simple-swift( %import-libdispatch -parse-as-library -swift-version 5 -strict-concurrency=complete -enable-upcoming-feature NonisolatedNonsendingByDefault) | %FileCheck %s
 // REQUIRES: swift_feature_NonisolatedNonsendingByDefault
 
 // REQUIRES: concurrency
@@ -89,19 +89,19 @@ actor Custom {
   }
 }
 
-// CHECK:      begin - unowned
+// CHECK: begin - unowned
 // CHECK-NEXT: unownedExecutor: InlineExecutor_UnownedJob
 // CHECK-NEXT: custom.count == 0
 // CHECK-NEXT: unownedExecutor: InlineExecutor_UnownedJob
 // CHECK-NEXT: custom.count == 1
 
-// CHECK:      begin - job
+// CHECK: begin - job
 // CHECK-NEXT: unownedExecutor: InlineExecutor_Job
 // CHECK-NEXT: custom.count == 0
 // CHECK-NEXT: unownedExecutor: InlineExecutor_Job
 // CHECK-NEXT: custom.count == 1
 
-// CHECK:      begin - executor job
+// CHECK: begin - executor job
 // CHECK-NEXT: unownedExecutor: InlineExecutor_ExecutorJob
 // CHECK-NEXT: custom.count == 0
 // CHECK-NEXT: unownedExecutor: InlineExecutor_ExecutorJob

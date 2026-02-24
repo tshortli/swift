@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -emit-ir %s -disable-availability-checking
+// RUN: %target-swift-frontend -emit-ir %s
 
 public protocol SomeObject {}
 
@@ -17,7 +17,7 @@ public struct ObjectContainer {
     public init<each S: SomeObject>(box: VariadicObjectBox<repeat each S>) {
         // This init compiles
     }
-    
+
     public init<each S: SomeObject>(@VariadicObjectBoxBuilder _ builder: () -> VariadicObjectBox<repeat each S>) {
         // This init crashes on compilation
     }

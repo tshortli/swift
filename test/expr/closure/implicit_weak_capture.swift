@@ -1,5 +1,5 @@
-// RUN: %target-run-simple-swift(-Xfrontend -disable-availability-checking -swift-version 6)
-// RUN: %target-run-simple-swift(-Xfrontend -disable-availability-checking -swift-version 6 -enable-upcoming-feature ImmutableWeakCaptures)
+// RUN: %target-run-simple-swift( -swift-version 6)
+// RUN: %target-run-simple-swift( -swift-version 6 -enable-upcoming-feature ImmutableWeakCaptures)
 
 // REQUIRES: concurrency
 // REQUIRES: executable_test

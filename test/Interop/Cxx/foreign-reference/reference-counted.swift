@@ -1,5 +1,5 @@
-// RUN: %target-run-simple-swift(-I %S/Inputs/ -Xfrontend -enable-experimental-cxx-interop -Xfrontend -validate-tbd-against-ir=none -Xfrontend -disable-llvm-verify -Xfrontend -disable-availability-checking -Onone -D NO_OPTIMIZATIONS)
-// RUN: %target-run-simple-swift(-I %S/Inputs/ -Xfrontend -enable-experimental-cxx-interop -Xfrontend -validate-tbd-against-ir=none -Xfrontend -disable-llvm-verify -Xfrontend -disable-availability-checking -O)
+// RUN: %target-run-simple-swift(-I %S/Inputs/ -Xfrontend -enable-experimental-cxx-interop -Xfrontend -validate-tbd-against-ir=none -Xfrontend -disable-llvm-verify -Onone -D NO_OPTIMIZATIONS)
+// RUN: %target-run-simple-swift(-I %S/Inputs/ -Xfrontend -enable-experimental-cxx-interop -Xfrontend -validate-tbd-against-ir=none -Xfrontend -disable-llvm-verify -O)
 //
 // REQUIRES: executable_test
 
@@ -13,7 +13,7 @@ import ReferenceCounted
 var ReferenceCountedTestSuite = TestSuite("Foreign reference types that have reference counts")
 
 @inline(never)
-public func blackHole<T>(_ _: T) {  }
+public func blackHole<T>(_ _: T) { }
 
 @inline(never)
 func localTest() {

@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swift(-parse-as-library  -Xfrontend -disable-availability-checking -Xfrontend -concurrency-model=task-to-thread) | %FileCheck %s
+// RUN: %target-run-simple-swift(-parse-as-library -Xfrontend -concurrency-model=task-to-thread) | %FileCheck %s
 
 // REQUIRES: concurrency
 // REQUIRES: executable_test
@@ -8,16 +8,16 @@
 @_spi(_TaskToThreadModel) import _Concurrency
 
 // =============================================================================
-// Driver                                                                     {{
+// Driver {{
 // =============================================================================
 @main struct Main {
   // Note that this isn't and can't be async.
   static func main() {
     // Test some of the following combinations
     // - closure context: no, immutable, mutable
-    // - returns:         void, trivial, nontrivial, gigantic
-    // - throws:          can't, no, yes(trivial), yes(nontrivial)
-    // - callee:          no, sync, async
+    // - returns: void, trivial, nontrivial, gigantic
+    // - throws: can't, no, yes(trivial), yes(nontrivial)
+    // - callee: no, sync, async
 
     // 0000
     NoClosureContext_VoidReturn_CantThrow_NoCallee()
@@ -44,11 +44,11 @@
   }
 }
 // =============================================================================
-// Driver                                                                     }}
+// Driver }}
 // =============================================================================
 
 // =============================================================================
-// Tests                                                                      {{
+// Tests {{
 // =============================================================================
 func NoClosureContext_VoidReturn_CantThrow_NoCallee() {
   // CHECK: NoClosureContext_VoidReturn_CantThrow_NoCallee() before
@@ -213,11 +213,11 @@ func MutableClosureContext_NontrivialReturn_NontrivialThrow_AsyncCallee() {
   print("\(#function) after: \(mutableField)")
 }
 // =============================================================================
-// Tests                                                                      }}
+// Tests }}
 // =============================================================================
 
 // =============================================================================
-// Callees                                                                    {{
+// Callees {{
 // =============================================================================
 // Some of the combinations of the following:
 // - synchroneity: sync, async
@@ -266,11 +266,11 @@ func CalleeAsync_NontrivialThrow_NontrivialReturn() async throws -> Nontrivial {
   throw ENontrivial.nontrivial(Nontrivial("\(#function)|error"))
 }
 // =============================================================================
-// Callees                                                                    }}
+// Callees }}
 // =============================================================================
 
 // =============================================================================
-// Types                                                                      {{
+// Types {{
 // =============================================================================
 class X {
   var context: String
@@ -437,5 +437,5 @@ enum ENontrivial : Error, CustomStringConvertible {
   case nontrivial(Nontrivial)
 }
 // =============================================================================
-// Types                                                                      }}
+// Types }}
 // =============================================================================

@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -O -Xllvm -sil-print-types -emit-sil -disable-availability-checking %s | %IRGenFileCheck %s
+// RUN: %target-swift-frontend -O -Xllvm -sil-print-types -emit-sil %s | %IRGenFileCheck %s
 
 // REQUIRES: synchronization
 
@@ -12,10 +12,10 @@ func testInt(_: Int)
 //===----------------------------------------------------------------------===//
 
 // CHECK-LABEL: sil {{.*}} @localLoad {{.*}} {
-// CHECK:         [[ATOMIC:%.*]] = alloc_stack [lexical] [var_decl] $Atomic<Int>
-// CHECK:         [[ATOMIC_PTR:%.*]] = builtin "addressOfRawLayout"<Atomic<Int>>([[ATOMIC]] : $*Atomic<Int>)
-// CHECK:         builtin "atomicload_monotonic_Int[[PTR_SIZE]]"([[ATOMIC_PTR]] : $Builtin.RawPointer)
-// CHECK:         dealloc_stack [[ATOMIC]] : $*Atomic<Int>
+// CHECK: [[ATOMIC:%.*]] = alloc_stack [lexical] [var_decl] $Atomic<Int>
+// CHECK: [[ATOMIC_PTR:%.*]] = builtin "addressOfRawLayout"<Atomic<Int>>([[ATOMIC]] : $*Atomic<Int>)
+// CHECK: builtin "atomicload_monotonic_Int[[PTR_SIZE]]"([[ATOMIC_PTR]] : $Builtin.RawPointer)
+// CHECK: dealloc_stack [[ATOMIC]] : $*Atomic<Int>
 // CHECK-LABEL: } // end sil function 'localLoad'
 @_silgen_name("localLoad")
 func localLoad() -> Int {
@@ -24,10 +24,10 @@ func localLoad() -> Int {
 }
 
 // CHECK-LABEL: sil {{.*}} @localStore {{.*}} {
-// CHECK:         [[ATOMIC:%.*]] = alloc_stack [lexical] [var_decl] $Atomic<Int>
-// CHECK:         [[ATOMIC_PTR:%.*]] = builtin "addressOfRawLayout"<Atomic<Int>>([[ATOMIC]] : $*Atomic<Int>)
-// CHECK:         builtin "atomicstore_release_Int[[PTR_SIZE]]"([[ATOMIC_PTR]] : $Builtin.RawPointer
-// CHECK:         dealloc_stack [[ATOMIC]] : $*Atomic<Int>
+// CHECK: [[ATOMIC:%.*]] = alloc_stack [lexical] [var_decl] $Atomic<Int>
+// CHECK: [[ATOMIC_PTR:%.*]] = builtin "addressOfRawLayout"<Atomic<Int>>([[ATOMIC]] : $*Atomic<Int>)
+// CHECK: builtin "atomicstore_release_Int[[PTR_SIZE]]"([[ATOMIC_PTR]] : $Builtin.RawPointer
+// CHECK: dealloc_stack [[ATOMIC]] : $*Atomic<Int>
 // CHECK-LABEL: } // end sil function 'localStore'
 @_silgen_name("localStore")
 func localStore() {
@@ -36,10 +36,10 @@ func localStore() {
 }
 
 // CHECK-LABEL: sil {{.*}} @localExchange {{.*}} {
-// CHECK:         [[ATOMIC:%.*]] = alloc_stack [lexical] [var_decl] $Atomic<Int>
-// CHECK:         [[ATOMIC_PTR:%.*]] = builtin "addressOfRawLayout"<Atomic<Int>>([[ATOMIC]] : $*Atomic<Int>)
-// CHECK:         builtin "atomicrmw_xchg_acquire_Int[[PTR_SIZE]]"([[ATOMIC_PTR]] : $Builtin.RawPointer
-// CHECK:         dealloc_stack [[ATOMIC]] : $*Atomic<Int>
+// CHECK: [[ATOMIC:%.*]] = alloc_stack [lexical] [var_decl] $Atomic<Int>
+// CHECK: [[ATOMIC_PTR:%.*]] = builtin "addressOfRawLayout"<Atomic<Int>>([[ATOMIC]] : $*Atomic<Int>)
+// CHECK: builtin "atomicrmw_xchg_acquire_Int[[PTR_SIZE]]"([[ATOMIC_PTR]] : $Builtin.RawPointer
+// CHECK: dealloc_stack [[ATOMIC]] : $*Atomic<Int>
 // CHECK-LABEL: } // end sil function 'localExchange'
 @_silgen_name("localExchange")
 func localExchange() -> Int {
@@ -48,10 +48,10 @@ func localExchange() -> Int {
 }
 
 // CHECK-LABEL: sil {{.*}} @localCompareExchange {{.*}} {
-// CHECK:         [[ATOMIC:%.*]] = alloc_stack [lexical] [var_decl] $Atomic<Int>
-// CHECK:         [[ATOMIC_PTR:%.*]] = builtin "addressOfRawLayout"<Atomic<Int>>([[ATOMIC]] : $*Atomic<Int>)
-// CHECK:         builtin "cmpxchg_seqcst_seqcst_Int[[PTR_SIZE]]"([[ATOMIC_PTR]] : $Builtin.RawPointer
-// CHECK:         dealloc_stack [[ATOMIC]] : $*Atomic<Int>
+// CHECK: [[ATOMIC:%.*]] = alloc_stack [lexical] [var_decl] $Atomic<Int>
+// CHECK: [[ATOMIC_PTR:%.*]] = builtin "addressOfRawLayout"<Atomic<Int>>([[ATOMIC]] : $*Atomic<Int>)
+// CHECK: builtin "cmpxchg_seqcst_seqcst_Int[[PTR_SIZE]]"([[ATOMIC_PTR]] : $Builtin.RawPointer
+// CHECK: dealloc_stack [[ATOMIC]] : $*Atomic<Int>
 // CHECK-LABEL: } // end sil function 'localCompareExchange'
 @_silgen_name("localCompareExchange")
 func localCompareExchange() -> (exchanged: Bool, original: Int) {
@@ -68,8 +68,8 @@ func localCompareExchange() -> (exchanged: Bool, original: Int) {
 //===----------------------------------------------------------------------===//
 
 // CHECK-LABEL: sil {{.*}} @deadAtomic {{.*}} {
-// CHECK:         %0 = tuple ()
-// CHECK-NEXT:    return %0 : $()
+// CHECK: %0 = tuple ()
+// CHECK-NEXT: return %0 : $()
 // CHECK-LABEL: } // end sil function 'deadAtomic'
 @_silgen_name("deadAtomic")
 func deadAtomic() {
@@ -86,16 +86,16 @@ func nonescapingClosure(with body: () -> ()) {
 }
 
 // CHECK-LABEL: sil {{.*}} @testNonescapingClosure {{.*}} {
-// CHECK:         {{%.*}} = alloc_stack [lexical] [var_decl] $Atomic<Int>, let, name "foo"
-// CHECK:         {{%.*}} = alloc_stack [lexical] [var_decl] $Atomic<Int>, let, name "bar"
-// CHECK:         builtin "atomicrmw_add_monotonic_Int[[PTR_SIZE]]"
-// CHECK:         builtin "atomicrmw_add_monotonic_Int[[PTR_SIZE]]"
+// CHECK: {{%.*}} = alloc_stack [lexical] [var_decl] $Atomic<Int>, let, name "foo"
+// CHECK: {{%.*}} = alloc_stack [lexical] [var_decl] $Atomic<Int>, let, name "bar"
+// CHECK: builtin "atomicrmw_add_monotonic_Int[[PTR_SIZE]]"
+// CHECK: builtin "atomicrmw_add_monotonic_Int[[PTR_SIZE]]"
 
 // Make sure there are no moves
-// CHECK-NOT:     alloc_stack $Atomic<Int>
+// CHECK-NOT: alloc_stack $Atomic<Int>
 
 // Make sure we don't emit a partial application
-// CHECK-NOT:     partial_apply
+// CHECK-NOT: partial_apply
 
 // CHECK-LABEL: } // end sil function 'testNonescapingClosure'
 @_silgen_name("testNonescapingClosure")

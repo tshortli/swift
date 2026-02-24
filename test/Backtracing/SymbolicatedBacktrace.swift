@@ -1,5 +1,5 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-build-swift %s -parse-as-library -Xfrontend -disable-availability-checking -g -Onone -o %t/symbolicated.exe
+// RUN: %target-build-swift %s -parse-as-library -g -Onone -o %t/symbolicated.exe
 // RUN: %target-codesign %t/symbolicated.exe
 // RUN: %target-run %t/symbolicated.exe | %FileCheck %s
 
@@ -36,13 +36,13 @@ func pow() {
     options: [ .showInlineFrames, .showSourceLocations ]
   )!
 
-  // CHECK:      0{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe pow()
-  // CHECK:      1{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe splat()
-  // CHECK:      2{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe zonk()
-  // CHECK:      3{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe whap()
-  // CHECK:      4{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe kerpow()
-  // CHECK:      5{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe kablam()
-  // CHECK:      6{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe static SymbolicatedBacktrace.main()
+  // CHECK: 0{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe pow()
+  // CHECK: 1{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe splat()
+  // CHECK: 2{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe zonk()
+  // CHECK: 3{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe whap()
+  // CHECK: 4{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe kerpow()
+  // CHECK: 5{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe kablam()
+  // CHECK: 6{{[ \t]+}}0x{{[0-9a-f]+}} [ra] [0] symbolicated.exe static SymbolicatedBacktrace.main()
 
   print(backtrace)
 }

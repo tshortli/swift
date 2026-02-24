@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -disable-availability-checking
+// RUN: %target-typecheck-verify-swift
 
 let a: InlineArray = [1, 2, 3] // Ok, InlineArray<3, Int>
 let b: InlineArray<_, Int> = [1, 2, 3] // Ok, InlineArray<3, Int>
@@ -11,9 +11,9 @@ let f: InlineArray<_, Int> = ["hello"] // expected-error {{cannot convert value 
 
 let g: InlineArray<1, 1> // expected-error {{cannot use value type '1' for generic argument 'Element'}}
 
-let _: [3 of Int] = [1, 2, 3]  // Ok, InlineArray<3, Int>
-let _: [_ of Int] = [1, 2, 3]  // Ok, InlineArray<3, Int>
-let _: [3 of _] = [1, 2, 3]    // Ok, InlineArray<3, Int>
+let _: [3 of Int] = [1, 2, 3] // Ok, InlineArray<3, Int>
+let _: [_ of Int] = [1, 2, 3] // Ok, InlineArray<3, Int>
+let _: [3 of _] = [1, 2, 3] // Ok, InlineArray<3, Int>
 let _: [_ of _] = ["", "", ""] // Ok, InlineArray<3, String>
 
 let _: [3 of [3 of Int]] = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
@@ -27,7 +27,7 @@ let _ = [3 of [_ of Int]](repeating: [1, 2])
 let _: [Int of 10] = [1, 2] // expected-error {{element count must precede inline array element type}} {{16-18=Int}} {{9-12=10}}
 // expected-error@-1 {{expected '10' elements in inline array literal, but got '2'}}
 
-let _: [4 of _] = [1, 2, 3]   // expected-error {{expected '4' elements in inline array literal, but got '3'}}
+let _: [4 of _] = [1, 2, 3] // expected-error {{expected '4' elements in inline array literal, but got '3'}}
 let _: [3 of Int] = [1, 2, 3, 4] // expected-error {{expected '3' elements in inline array literal, but got '4'}}
 let _: [3 of String] = [1, 2, 3] // expected-error 3{{cannot convert value of type 'Int' to expected element type 'String'}}
 let _: [3 of String] = [1] // expected-error {{cannot convert value of type 'Int' to expected element type 'String'}}
@@ -142,13 +142,13 @@ func testMismatches(_ x: [3 of Int], _ y: InlineArray<3, Int>) {
   let _: InlineArray<3, Int> = x
   let _: InlineArray<4, Int> = x // expected-error {{cannot assign value of type '[3 of Int]' to type 'InlineArray<4, Int>'}}
   // expected-note@-1 {{arguments to generic parameter 'count' ('3' and '4') are expected to be equal}}
-  let _: InlineArray<3, String> = x  // expected-error {{cannot assign value of type '[3 of Int]' to type 'InlineArray<3, String>'}}
+  let _: InlineArray<3, String> = x // expected-error {{cannot assign value of type '[3 of Int]' to type 'InlineArray<3, String>'}}
   // expected-note@-1 {{arguments to generic parameter 'Element' ('Int' and 'String') are expected to be equal}}
 
   let _: [3 of Int] = y
   let _: [4 of Int] = y // expected-error {{cannot assign value of type 'InlineArray<3, Int>' to type '[4 of Int]'}}
   // expected-note@-1 {{arguments to generic parameter 'count' ('3' and '4') are expected to be equal}}
-  let _: [3 of String] = y  // expected-error {{cannot assign value of type 'InlineArray<3, Int>' to type '[3 of String]'}}
+  let _: [3 of String] = y // expected-error {{cannot assign value of type 'InlineArray<3, Int>' to type '[3 of String]'}}
   // expected-note@-1 {{arguments to generic parameter 'Element' ('Int' and 'String') are expected to be equal}}
 }
 

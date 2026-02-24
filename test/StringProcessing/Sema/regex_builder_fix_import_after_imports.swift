@@ -5,7 +5,7 @@
 // RUN: %target-swift-frontend -emit-module -module-name B -o %t/B.swiftmodule %S/Inputs/dummy.swift
 // RUN: %target-swift-frontend -emit-module -module-name C -o %t/C.swiftmodule %S/Inputs/dummy.swift
 
-// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -disable-availability-checking -I %t
+// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -I %t
 
 // REQUIRES: swift_swift_parser
 

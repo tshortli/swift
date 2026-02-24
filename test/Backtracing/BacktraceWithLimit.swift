@@ -1,5 +1,5 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-build-swift %s -parse-as-library -Xfrontend -disable-availability-checking -Onone -o %t/BacktraceWithLimit.exe
+// RUN: %target-build-swift %s -parse-as-library -Onone -o %t/BacktraceWithLimit.exe
 // RUN: %target-codesign %t/BacktraceWithLimit.exe
 // RUN: %target-run %t/BacktraceWithLimit.exe | %FileCheck %s
 
@@ -24,7 +24,7 @@ func doFrames(_ count: Int) {
 @main
 struct BacktraceWithLimit {
   static func main() {
-    // CHECK:      0{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
+    // CHECK: 0{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
     // CHECK-NEXT: 1{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
     // CHECK-NEXT: 2{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
     // CHECK-NEXT: 3{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
@@ -38,7 +38,7 @@ struct BacktraceWithLimit {
 
     print("")
 
-    // CHECK:      0{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
+    // CHECK: 0{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
     // CHECK-NEXT: 1{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
     // CHECK-NEXT: 2{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
     // CHECK-NEXT: 3{{[ \t]+}}0x{{[0-9a-f]+}} [ra]

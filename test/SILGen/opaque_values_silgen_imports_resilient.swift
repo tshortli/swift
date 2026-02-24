@@ -1,6 +1,6 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-swift-frontend -emit-module -disable-availability-checking -o %t -enable-library-evolution -module-name ResilientLibrary %S/Inputs/opaque_values_silgen_resilient.swift
-// RUN: %target-swift-frontend -enable-sil-opaque-values -Xllvm -sil-print-types -emit-silgen -disable-availability-checking -I %t %s | %FileCheck %s
+// RUN: %target-swift-frontend -emit-module -o %t -enable-library-evolution -module-name ResilientLibrary %S/Inputs/opaque_values_silgen_resilient.swift
+// RUN: %target-swift-frontend -enable-sil-opaque-values -Xllvm -sil-print-types -emit-silgen -I %t %s | %FileCheck %s
 
 import ResilientLibrary
 
@@ -12,9 +12,9 @@ import ResilientLibrary
 // information to determine whether a destroy_addr is required so it is always
 // required.
 // CHECK-LABEL: sil [ossa] @produceSomeEmptyNontrivialAddronlyEnumInstance : {{.*}} {
-// CHECK:         [[EMPTY_CASE:%[^,]+]] = enum $EnumNontrivialWithEmptyCases, #EnumNontrivialWithEmptyCases.empty!enumelt
-// CHECK:         [[SOME_EMPTY_CASE:%[^,]+]] = enum $Optional<EnumNontrivialWithEmptyCases>, #Optional.some!enumelt, [[EMPTY_CASE]]
-// CHECK:         destroy_value [[SOME_EMPTY_CASE]]
+// CHECK: [[EMPTY_CASE:%[^,]+]] = enum $EnumNontrivialWithEmptyCases, #EnumNontrivialWithEmptyCases.empty!enumelt
+// CHECK: [[SOME_EMPTY_CASE:%[^,]+]] = enum $Optional<EnumNontrivialWithEmptyCases>, #Optional.some!enumelt, [[EMPTY_CASE]]
+// CHECK: destroy_value [[SOME_EMPTY_CASE]]
 // CHECK-LABEL: } // end sil function 'produceSomeEmptyNontrivialAddronlyEnumInstance'
 @_silgen_name("produceSomeEmptyNontrivialAddronlyEnumInstance")
 public func produceSomeEmptyNontrivialAddronlyEnumInstance(_ one: EnumNontrivialWithEmptyCases?) {
@@ -23,8 +23,8 @@ public func produceSomeEmptyNontrivialAddronlyEnumInstance(_ one: EnumNontrivial
 }
 
 // CHECK-LABEL: sil [ossa] @produceNoneEmptyAddronlyEnumInstance : {{.*}} {
-// CHECK:         [[NONE:%[^,]+]] = enum $Optional<EnumNontrivialWithEmptyCases>, #Optional.none!enumelt 
-// CHECK:         return [[NONE]] : $Optional<EnumNontrivialWithEmptyCases> 
+// CHECK: [[NONE:%[^,]+]] = enum $Optional<EnumNontrivialWithEmptyCases>, #Optional.none!enumelt
+// CHECK: return [[NONE]] : $Optional<EnumNontrivialWithEmptyCases>
 // CHECK-LABEL: } // end sil function 'produceNoneEmptyAddronlyEnumInstance'
 @_silgen_name("produceNoneEmptyAddronlyEnumInstance")
 public func produceNoneEmptyAddronlyEnumInstance() -> EnumNontrivialWithEmptyCases? {

@@ -1,5 +1,5 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-swiftc_driver -Xfrontend -disable-availability-checking -O -Xllvm -sil-opt-pass-count=0 -Xfrontend -disable-llvm-optzns %s -o %t/out
+// RUN: %target-swiftc_driver -O -Xllvm -sil-opt-pass-count=0 -Xfrontend -disable-llvm-optzns %s -o %t/out
 // RUN: %target-codesign %t/out
 // RUN: %target-run %t/out
 

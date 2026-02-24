@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -parse-as-library -disable-availability-checking -enable-experimental-feature RawLayout -import-objc-header %S/Inputs/perf-annotations.h -emit-sil %s -o /dev/null -verify
+// RUN: %target-swift-frontend -parse-as-library -enable-experimental-feature RawLayout -import-objc-header %S/Inputs/perf-annotations.h -emit-sil %s -o /dev/null -verify
 
 // REQUIRES: swift_in_compiler
 // REQUIRES: optimized_stdlib
@@ -29,7 +29,7 @@ struct Str : P {
 
 struct AllocatingStr : P {
   func protoMethod(_ a: Int) -> Int {
-    _ = Cl()                // expected-error {{Using type 'Cl' can cause metadata allocation or locks}} 
+    _ = Cl() // expected-error {{Using type 'Cl' can cause metadata allocation or locks}}
     return 0
   }
 }
@@ -45,7 +45,7 @@ func callArrayGet(_ a: [Str]) -> Int {
 
 @_noLocks
 func arcOperations(_ x: Cl) -> Cl {
-  return x                // expected-error {{this code performs reference counting operations which can cause locking}} 
+  return x // expected-error {{this code performs reference counting operations which can cause locking}}
 }
 
 func genFunc<T: P>(_ t: T, _ a: Int) -> Int {
@@ -217,14 +217,14 @@ class H {
 }
 
 struct MyStruct {
-  static var v: Int = {      // expected-error {{Using type 'H' can cause metadata allocation or locks}}
+  static var v: Int = { // expected-error {{Using type 'H' can cause metadata allocation or locks}}
     return H().hash
   }()
 }
 
 @_noAllocation
 func globalWithInitializer(x: MyStruct) {
-  _ = MyStruct.v         // expected-note {{called from here}}
+  _ = MyStruct.v // expected-note {{called from here}}
 }
 
 @_noAllocation
@@ -235,14 +235,14 @@ func callBadClosure(closure: ()->Int) -> Int {
 @_noAllocation
 func badClosure() {
   _ = callBadClosure(closure: { // expected-note {{called from here}}
-     _ = Cl()                   // expected-error {{Using type 'Cl' can cause metadata allocation or locks}}
+     _ = Cl() // expected-error {{Using type 'Cl' can cause metadata allocation or locks}}
      return 42
     })
 }
 
 func badClosure2() {
   _ = callBadClosure(closure: { // expected-note {{called from here}}
-     _ = Cl()                   // expected-error {{Using type 'Cl' can cause metadata allocation or locks}}
+     _ = Cl() // expected-error {{Using type 'Cl' can cause metadata allocation or locks}}
      return 42
     })
 }
@@ -359,14 +359,14 @@ extension Y {
   func with2(_ body: () -> ()) {
     body()
   }
-  
+
   func with1(_ body: (Int) -> (Int)) -> Int {
     with2 {
       _ = body(48)
     }
     return 777
   }
-  
+
   func Xsort() -> Int {
     with1 { i in
       i

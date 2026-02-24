@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -disable-availability-checking -emit-sil -verify %s | %FileCheck %s
+// RUN: %target-swift-frontend -emit-sil -verify %s | %FileCheck %s
 
 // REQUIRES: objc_interop
 

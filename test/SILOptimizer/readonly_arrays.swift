@@ -1,7 +1,7 @@
-// RUN: %target-swift-frontend -target %module-target-future -primary-file %s -O -sil-verify-all -disable-availability-checking -Xllvm -sil-disable-pass=FunctionSignatureOpts -module-name=test -emit-ir | %FileCheck %s
+// RUN: %target-swift-frontend -target %module-target-future -primary-file %s -O -sil-verify-all -Xllvm -sil-disable-pass=FunctionSignatureOpts -module-name=test -emit-ir | %FileCheck %s
 
 // Also do an end-to-end test to check all components, including IRGen.
-// RUN: %empty-directory(%t) 
+// RUN: %empty-directory(%t)
 // RUN: %target-build-swift -target %target-future-triple -O -Xllvm -sil-disable-pass=FunctionSignatureOpts -module-name=test %s -o %t/a.out
 // RUN: %target-run %t/a.out | %FileCheck %s -check-prefix=CHECK-OUTPUT
 
@@ -67,10 +67,10 @@ public func storeArray() {
   gg = [227, 228]
 }
 
-// CHECK-OUTPUT:      [200, 201, 202]
+// CHECK-OUTPUT: [200, 201, 202]
 print(Str.staticLet)
 
-// CHECK-OUTPUT:      [300, 301, 302]
+// CHECK-OUTPUT: [300, 301, 302]
 print(Str.staticVar)
 
 // CHECK-OUTPUT{LITERAL}: [[1, 2], [3, 4], [5, 6]]

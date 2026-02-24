@@ -1,6 +1,6 @@
 // RUN: %empty-directory(%t)
 // RUN: %target-clang %S/Inputs/rdar81617749.m -I %S/Inputs -c -o %t/rdar81617749.o
-// RUN: %target-build-swift -Xfrontend -disable-availability-checking -import-objc-header %S/Inputs/rdar81617749.h -Xlinker %t/rdar81617749.o -parse-as-library %s -o %t/main
+// RUN: %target-build-swift -import-objc-header %S/Inputs/rdar81617749.h -Xlinker %t/rdar81617749.o -parse-as-library %s -o %t/main
 // RUN: %target-codesign %t/main
 // RUN: %target-run %t/main | %FileCheck %s
 
@@ -28,7 +28,7 @@ func run(on object: PFXObject) async throws {
 
   // CHECK: performSingleBothy21
   print(try await object.performSingleBothy21()())
-  
+
   // CHECK: performSingleBothy23
   print(try await object.performSingleBothy23()())
   // CHECK: performSingleBothy31

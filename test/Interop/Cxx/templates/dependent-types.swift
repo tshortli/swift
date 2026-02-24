@@ -1,7 +1,7 @@
 // Waiting for support for dependent types to be added back: rdar://103530256&90587703&89090706&89090631&89034704&89034440&83406001&83367285
 // XFAIL: *
 
-// RUN: %target-run-simple-swift(-I %S/Inputs -Xfrontend -enable-experimental-cxx-interop -Xfrontend -validate-tbd-against-ir=none -Xfrontend -disable-availability-checking)
+// RUN: %target-run-simple-swift(-I %S/Inputs -Xfrontend -enable-experimental-cxx-interop -Xfrontend -validate-tbd-against-ir=none )
 //
 // REQUIRES: executable_test
 //
@@ -100,15 +100,15 @@ DependentTypesTestSuite.test("Complex different dependent argument and return ty
 
 //TODO: Import issue: rdar://89028943
 // DependentTypesTestSuite.test("Dependent to Reference") {
-//   var x = 42
-//   let m = dependentToRef(x) as! M<Int>
-//   expectEqual(m.getValue(), 42)
+// var x = 42
+// let m = dependentToRef(x) as! M<Int>
+// expectEqual(m.getValue(), 42)
 // }
 
 //TODO: Not imported: rdar://89034440
 // DependentTypesTestSuite.test("Dependent Reference.") {
-//   let m = dependentRef()
-//   expectEqual(m.getValue(), 42)
+// let m = dependentRef()
+// expectEqual(m.getValue(), 42)
 // }
 
 //TODO: Not imported: rdar://89034440

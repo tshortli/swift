@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -print-ast -disable-availability-checking %s 2>&1 | %FileCheck %s
+// RUN: %target-swift-frontend -print-ast %s 2>&1 | %FileCheck %s
 
 func fetch() async throws -> String {
 }
@@ -32,22 +32,22 @@ let fn5 = { (x: String, y: Int) in }
 
 let fn6: (Int) -> Int = { x -> Int in x }
 // CHECK: @_hasInitialValue internal let fn6: (Int) -> Int = { (x: Int) -> Int in
-// CHECK:   return x
+// CHECK: return x
 // CHECK: }
 
 let fn7: (Int, Int) -> Int = { (x, y) -> Int in x + y }
 // CHECK: @_hasInitialValue internal let fn7: (Int, Int) -> Int = { (x: Int, y: Int) -> Int in
-// CHECK:   return x + y
+// CHECK: return x + y
 // CHECK: }
 
 let fn8 = { (x: Int, y: Int) -> Int in x + y }
 // CHECK: @_hasInitialValue internal let fn8: (_ x: Int, _ y: Int) -> Int = { (x: Int, y: Int) -> Int in
-// CHECK:   return x + y
+// CHECK: return x + y
 // CHECK: }
 
 let fn9 = { () -> Int in 0 }
 // CHECK: @_hasInitialValue internal let fn9: () -> Int = { () -> Int in
-// CHECK:   return 0
+// CHECK: return 0
 // CHECK: }
 
 let fn10 = { () in }

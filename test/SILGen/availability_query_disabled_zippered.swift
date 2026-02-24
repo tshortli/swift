@@ -1,8 +1,8 @@
-// RUN: %target-swift-emit-silgen -target %target-cpu-apple-macosx13 -target-variant %target-cpu-apple-ios16-macabi -disable-availability-checking %s -verify
-// RUN: %target-swift-emit-silgen -target-variant %target-cpu-apple-macosx13 -target %target-cpu-apple-ios16-macabi -disable-availability-checking %s -verify
+// RUN: %target-swift-emit-silgen -target %target-cpu-apple-macosx13 -target-variant %target-cpu-apple-ios16-macabi %s -verify
+// RUN: %target-swift-emit-silgen -target-variant %target-cpu-apple-macosx13 -target %target-cpu-apple-ios16-macabi %s -verify
 
-// RUN: %target-swift-emit-silgen -target %target-cpu-apple-macosx13 -target-variant %target-cpu-apple-ios16-macabi -disable-availability-checking %s | %FileCheck %s
-// RUN: %target-swift-emit-silgen -target-variant %target-cpu-apple-macosx13 -target %target-cpu-apple-ios16-macabi -disable-availability-checking %s | %FileCheck %s
+// RUN: %target-swift-emit-silgen -target %target-cpu-apple-macosx13 -target-variant %target-cpu-apple-ios16-macabi %s | %FileCheck %s
+// RUN: %target-swift-emit-silgen -target-variant %target-cpu-apple-macosx13 -target %target-cpu-apple-ios16-macabi %s | %FileCheck %s
 
 // REQUIRES: OS=macosx || OS=maccatalyst
 

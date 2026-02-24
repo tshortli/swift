@@ -1,5 +1,5 @@
-// RUN: %target-run-simple-swift( -Xfrontend -enable-experimental-move-only -Xfrontend -disable-availability-checking %import-libdispatch -parse-as-library) | %FileCheck %s
-// RUN: %target-run-simple-swift( -Xfrontend -enable-experimental-move-only -Xfrontend -disable-availability-checking %import-libdispatch -parse-as-library -swift-version 5 -strict-concurrency=complete -enable-upcoming-feature NonisolatedNonsendingByDefault)  | %FileCheck %s
+// RUN: %target-run-simple-swift( -Xfrontend -enable-experimental-move-only %import-libdispatch -parse-as-library) | %FileCheck %s
+// RUN: %target-run-simple-swift( -Xfrontend -enable-experimental-move-only %import-libdispatch -parse-as-library -swift-version 5 -strict-concurrency=complete -enable-upcoming-feature NonisolatedNonsendingByDefault) | %FileCheck %s
 // REQUIRES: swift_feature_NonisolatedNonsendingByDefault
 
 // REQUIRES: concurrency
@@ -83,7 +83,7 @@ actor MyActor: WithSpecifiedExecutor {
   }
 }
 
-// CHECK:      begin
+// CHECK: begin
 // CHECK-NEXT: NaiveQueueExecutor(CustomQueue): enqueue
 // CHECK-NEXT: MyActor: on executor NaiveQueueExecutor(CustomQueue)
 // CHECK-NEXT: MyActor: on executor NaiveQueueExecutor(CustomQueue)

@@ -1,4 +1,4 @@
-// RUN: %target-build-swift -parse-as-library -Xfrontend -disable-availability-checking -module-name a %s -o %t.out
+// RUN: %target-build-swift -parse-as-library -module-name a %s -o %t.out
 // RUN: %target-codesign %t.out
 // RUN: %target-run %t.out
 

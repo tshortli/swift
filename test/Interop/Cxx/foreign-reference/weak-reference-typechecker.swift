@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -cxx-interoperability-mode=default -I %S/Inputs -disable-availability-checking
+// RUN: %target-typecheck-verify-swift -cxx-interoperability-mode=default -I %S/Inputs
 
 import POD
 

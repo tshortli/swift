@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -emit-sil -O %s -disable-availability-checking
+// RUN: %target-swift-frontend -emit-sil -O %s
 
 // This should not hang forever.
 

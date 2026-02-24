@@ -1,4 +1,4 @@
-// RUN: not %target-swift-frontend -disable-availability-checking -emit-ir %s
+// RUN: not %target-swift-frontend -emit-ir %s
 
 protocol P<X, Y> {
   associatedtype X : P

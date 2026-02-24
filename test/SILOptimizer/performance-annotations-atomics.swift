@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -parse-as-library -disable-availability-checking -emit-sil %s -o /dev/null
+// RUN: %target-swift-frontend -parse-as-library -emit-sil %s -o /dev/null
 
 // REQUIRES: swift_stdlib_no_asserts,optimized_stdlib
 // REQUIRES: synchronization

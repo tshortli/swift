@@ -1,5 +1,5 @@
-// RUN: %target-run-simple-swift(-Xfrontend -disable-availability-checking) | %FileCheck %s
-// RUN: %target-run-simple-swift(-O -Xfrontend -disable-availability-checking) | %FileCheck %s
+// RUN: %target-run-simple-swift() | %FileCheck %s
+// RUN: %target-run-simple-swift(-O ) | %FileCheck %s
 
 // REQUIRES: executable_test
 

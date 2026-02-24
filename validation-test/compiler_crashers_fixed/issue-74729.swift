@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -emit-ir %s -disable-availability-checking
+// RUN: %target-swift-frontend -emit-ir %s
 
 protocol ContextDescriptor: Sendable { }
 
@@ -12,12 +12,12 @@ protocol ErasedReducer<Context>: Sendable {
     associatedtype Result: ResultDescriptor
 
     var name: String { get }
-    var function: @Sendable (_ context: Context?, _ trigger: TriggerOutcome) -> Result  { get }
+    var function: @Sendable (_ context: Context?, _ trigger: TriggerOutcome) -> Result { get }
 }
 
 protocol Reducer<Context, TriggerOutcome>: ErasedReducer {
     var name: String { get }
-    var function: @Sendable (_ context: Context?, _ trigger: TriggerOutcome) -> Result  { get }
+    var function: @Sendable (_ context: Context?, _ trigger: TriggerOutcome) -> Result { get }
 }
 
 struct ExampleContext: ContextDescriptor { }
@@ -32,7 +32,7 @@ struct ExampleReducer<Context: ContextDescriptor, TriggerOutcome: OutcomeDescrip
 }
 
 class ExampleService<Context: ContextDescriptor> {
-    let reducers:  [any ErasedReducer<Context>]
+    let reducers: [any ErasedReducer<Context>]
 
     public init(reducers: [any ErasedReducer<Context>]) {
         self.reducers = reducers

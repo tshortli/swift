@@ -1,18 +1,18 @@
 // RUN: rm -rf %t
 // RUN: split-file %s %t
-// RUN: %target-swift-frontend -typecheck -I %t/Inputs  %t/test.swift  -enable-experimental-cxx-interop -disable-availability-checking 2>&1
+// RUN: %target-swift-frontend -typecheck -I %t/Inputs %t/test.swift -enable-experimental-cxx-interop 2>&1
 
 //--- Inputs/module.modulemap
 module Test {
     header "test.h"
     requires cplusplus
-    
+
     module sub {
         header "subtest.h"
 
         export *
     }
-    
+
     export *
 }
 

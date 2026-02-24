@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend(mock-sdk: %clang-importer-sdk-nosource -I %t) -swift-version 6 -disable-availability-checking -emit-sil -o /dev/null %s -parse-as-library -enable-experimental-feature SendingArgsAndResults -verify -import-objc-header %S/Inputs/sending.h
+// RUN: %target-swift-frontend(mock-sdk: %clang-importer-sdk-nosource -I %t) -swift-version 6 -emit-sil -o /dev/null %s -parse-as-library -enable-experimental-feature SendingArgsAndResults -verify -import-objc-header %S/Inputs/sending.h
 
 // REQUIRES: concurrency
 // REQUIRES: swift_feature_SendingArgsAndResults

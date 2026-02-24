@@ -1,5 +1,5 @@
 // RUN: %empty-directory(%t)
-// RUN: %target-build-swift %s -target %target-cpu-macos15.0 -Xfrontend -disable-availability-checking -Xfrontend -parse-as-library -Onone -o %t/CodableBacktrace.exe
+// RUN: %target-build-swift %s -target %target-cpu-macos15.0 -Xfrontend -parse-as-library -Onone -o %t/CodableBacktrace.exe
 // RUN: %target-codesign %t/CodableBacktrace.exe
 // RUN: %target-run %t/CodableBacktrace.exe | %FileCheck %s
 
@@ -41,8 +41,8 @@ func level5() {
   print(json)
 
   // CHECK: {
-  // CHECK:    "architecture" : "{{.*}}",
-  // CHECK:    "backtrace" : "{{[A-Za-z0-9+/]*}}"
+  // CHECK: "architecture" : "{{.*}}",
+  // CHECK: "backtrace" : "{{[A-Za-z0-9+/]*}}"
   // CHECK: }
 
   let decoder = JSONDecoder()
@@ -51,7 +51,7 @@ func level5() {
 
   print(bt2)
 
-  // CHECK:      0{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
+  // CHECK: 0{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
   // CHECK-NEXT: 1{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
   // CHECK-NEXT: 2{{[ \t]+}}0x{{[0-9a-f]+}} [ra]
   // CHECK-NEXT: 3{{[ \t]+}}0x{{[0-9a-f]+}} [ra]

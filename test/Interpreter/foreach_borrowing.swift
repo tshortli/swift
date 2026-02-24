@@ -1,6 +1,6 @@
 // RUN: %target-run-simple-swift(-enable-experimental-feature BorrowingForLoop \
-// RUN: -Xfrontend -disable-availability-checking) \
-// RUN:     %s | %FileCheck %s
+// RUN: ) \
+// RUN: %s | %FileCheck %s
 
 // REQUIRES: swift_feature_BorrowingForLoop
 // REQUIRES: executable_test

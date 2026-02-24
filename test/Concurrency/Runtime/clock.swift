@@ -1,13 +1,13 @@
-// RUN: %target-typecheck-verify-swift -strict-concurrency=complete -disable-availability-checking -parse-as-library
-// RUN: %target-run-simple-swift( -Xfrontend -disable-availability-checking -parse-as-library)
-// RUN: %target-run-simple-swift( -Xfrontend -disable-availability-checking -parse-as-library -swift-version 5 -strict-concurrency=complete -enable-upcoming-feature NonisolatedNonsendingByDefault)
+// RUN: %target-typecheck-verify-swift -strict-concurrency=complete -parse-as-library
+// RUN: %target-run-simple-swift( -parse-as-library)
+// RUN: %target-run-simple-swift( -parse-as-library -swift-version 5 -strict-concurrency=complete -enable-upcoming-feature NonisolatedNonsendingByDefault)
 // REQUIRES: swift_feature_NonisolatedNonsendingByDefault
 
 // REQUIRES: concurrency
 // REQUIRES: executable_test
 // REQUIRES: concurrency_runtime
 
-// Test requires _swift_task_enterThreadLocalContext which is not available 
+// Test requires _swift_task_enterThreadLocalContext which is not available
 // in the back deployment runtime.
 // UNSUPPORTED: back_deployment_runtime
 // UNSUPPORTED: back_deploy_concurrency

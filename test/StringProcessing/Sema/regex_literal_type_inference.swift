@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex -disable-availability-checking
+// RUN: %target-typecheck-verify-swift -enable-bare-slash-regex
 // REQUIRES: swift_swift_parser
 
 let r0 = #/./#
@@ -30,9 +30,9 @@ let r6 = #/(?'we'.(?'are'.(?'regex'.)+)?)/#
 let _: Regex<(Substring, we: Substring, are: Substring?, regex: Substring?)>.Type = type(of: r6)
 
 let r7 = #/(?:(?:(.(.(.)*)?))*?)?/#
-//               ^ 1
-//                 ^ 2
-//                   ^ 3
+// ^ 1
+// ^ 2
+// ^ 3
 let _: Regex<(Substring, Substring?, Substring?, Substring?)>.Type = type(of: r7)
 
 let r8 = #/well(?<theres_no_single_element_tuple_what_can_we>do)/#

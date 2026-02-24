@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -disable-availability-checking -enable-experimental-concurrency
+// RUN: %target-typecheck-verify-swift -enable-experimental-concurrency
 
 // Required for '-enable-experimental-concurrency'
 // REQUIRES: concurrency

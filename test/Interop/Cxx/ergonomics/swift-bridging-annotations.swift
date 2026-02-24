@@ -12,11 +12,11 @@
 // RUN: %target-swift-ide-test -print-module -module-to-print=SwiftMod -module-to-print=CxxModule -I %t -I %t/Inputs -I %swift_src_root/lib/ClangImporter/SwiftBridging -source-filename=x -cxx-interoperability-mode=upcoming-swift -Xcc -DINCMOD | %FileCheck --check-prefixes=CHECK,CHECKLATEST %s
 
 // Test through the use of the bridging header
-// RUN: %target-swift-frontend -emit-ir -I %t -import-objc-header %t/Inputs/header.h -I %swift_src_root/lib/ClangImporter/SwiftBridging -enable-experimental-cxx-interop -DBRIDGING_HEADER_TEST -disable-availability-checking %t/SwiftMod.swift
+// RUN: %target-swift-frontend -emit-ir -I %t -import-objc-header %t/Inputs/header.h -I %swift_src_root/lib/ClangImporter/SwiftBridging -enable-experimental-cxx-interop -DBRIDGING_HEADER_TEST %t/SwiftMod.swift
 
 // Precompile the bridging header and test the use of that.
 // RUN: %target-swift-frontend -emit-pch -I %t -pch-output-dir %t/pch %t/Inputs/header.h -I %swift_src_root/lib/ClangImporter/SwiftBridging -enable-experimental-cxx-interop
-// RUN: %target-swift-frontend -emit-ir -I %t -pch-output-dir %t/pch -import-objc-header %t/Inputs/header.h -I %swift_src_root/lib/ClangImporter/SwiftBridging -enable-experimental-cxx-interop -DBRIDGING_HEADER_TEST -disable-availability-checking %t/SwiftMod.swift
+// RUN: %target-swift-frontend -emit-ir -I %t -pch-output-dir %t/pch -import-objc-header %t/Inputs/header.h -I %swift_src_root/lib/ClangImporter/SwiftBridging -enable-experimental-cxx-interop -DBRIDGING_HEADER_TEST %t/SwiftMod.swift
 
 
 //--- SwiftMod.swift
@@ -35,7 +35,7 @@ func g() {
   takeLoggersByPointer(logger, &logger, &loggerPtr)
   takeLoggersByPointer(logger, loggerPtr, loggerPtrPtr)
   takeLoggersByPointer(nil, nil, nil)
-  
+
   takeLoggersByReference(logger!, &logger, &loggerPtr)
   takeLoggersByReference(logger!, &loggerPtr!.pointee, &loggerPtrPtr!.pointee)
 }
@@ -118,15 +118,15 @@ private:
 
 // CHECK: struct SelfContained {
 
-// CHECK:   func returnsIndependent() -> UnsafePointer<Int32>!
+// CHECK: func returnsIndependent() -> UnsafePointer<Int32>!
 
 // CHECK: class SharedObject {
-// CHECK:   class func create() -> SharedObject!
+// CHECK: class func create() -> SharedObject!
 // CHECK: func retainSharedObject(_: SharedObject!)
 // CHECK: func releaseSharedObject(_: SharedObject!)
 
 // CHECK: class LoggerSingleton {
-// CHECK:   class func getInstance() -> LoggerSingleton!
+// CHECK: class func getInstance() -> LoggerSingleton!
 // CHECK: }
 
 // CHECK-LABEL: func takeLoggersByPointer(

@@ -1,4 +1,4 @@
-// RUN: %target-swift-emit-sil -I %S/Inputs -cxx-interoperability-mode=upcoming-swift -disable-availability-checking -diagnostic-style llvm %s -validate-tbd-against-ir=none -Xcc -fignore-exceptions | %FileCheck %s
+// RUN: %target-swift-emit-sil -I %S/Inputs -cxx-interoperability-mode=upcoming-swift -diagnostic-style llvm %s -validate-tbd-against-ir=none -Xcc -fignore-exceptions | %FileCheck %s
 
 import FunctionsAndMethodsReturningFRT
 
@@ -82,31 +82,31 @@ func testStaticFreeFunctions() {
     // CHECK: function_ref @$sSo39global_static_function_returning_createSo9FRTStructVyFTo : $@convention(c) () -> @owned FRTStruct
 
     let frtLocalVar6 = global_static_function_returning_copy_with_attr_returns_retained()
-    // CHECK: function_ref @$sSo64global_static_function_returning_copy_with_attr_returns_retainedSo9FRTStructVyFTo : $@convention(c) () ->  @owned FRTStruct
+    // CHECK: function_ref @$sSo64global_static_function_returning_copy_with_attr_returns_retainedSo9FRTStructVyFTo : $@convention(c) () -> @owned FRTStruct
 
     let frtLocalVar7 = global_static_function_returning_copy_with_attr_returns_unretained()
     // CHECK: function_ref @$sSo66global_static_function_returning_copy_with_attr_returns_unretainedSo9FRTStructVyFTo : $@convention(c) () -> FRTStruct
 }
 
-//  Testing Global/free C++ functions without _Nonnull
+// Testing Global/free C++ functions without _Nonnull
 func testtFreeFunctionsWithoutNonnull() {
     let frtLocalVar1 = global_function_returning_FRT_wihout_Nonnull()
     // CHECK: function_ref @$sSo44global_function_returning_FRT_wihout_NonnullSo9FRTStructVSgyFTo : $@convention(c) () -> Optional<FRTStruct>
 
     let frtLocalVar2 = global_function_returning_FRT_with_attr_returns_retained_wihout_Nonnull()
-    // CHECK: function_ref @$sSo71global_function_returning_FRT_with_attr_returns_retained_wihout_NonnullSo9FRTStructVSgyFTo : $@convention(c) () ->  @owned Optional<FRTStruct>
+    // CHECK: function_ref @$sSo71global_function_returning_FRT_with_attr_returns_retained_wihout_NonnullSo9FRTStructVSgyFTo : $@convention(c) () -> @owned Optional<FRTStruct>
 
     let frtLocalVar3 = global_function_returning_FRT_with_attr_returns_unretained_wihout_Nonnull()
     // CHECK: function_ref @$sSo73global_function_returning_FRT_with_attr_returns_unretained_wihout_NonnullSo9FRTStructVSgyFTo : $@convention(c) () -> Optional<FRTStruct>
 
     let frtLocalVar4 = global_function_returning_copy_wihout_Nonnull()
-    // CHECK: function_ref @$sSo45global_function_returning_copy_wihout_NonnullSo9FRTStructVSgyFTo : $@convention(c) () ->  @owned Optional<FRTStruct>
+    // CHECK: function_ref @$sSo45global_function_returning_copy_wihout_NonnullSo9FRTStructVSgyFTo : $@convention(c) () -> @owned Optional<FRTStruct>
 
     let frtLocalVar5 = global_function_returning_create_wihout_Nonnull()
-    // CHECK: function_ref @$sSo47global_function_returning_create_wihout_NonnullSo9FRTStructVSgyFTo : $@convention(c) () ->  @owned Optional<FRTStruct>
+    // CHECK: function_ref @$sSo47global_function_returning_create_wihout_NonnullSo9FRTStructVSgyFTo : $@convention(c) () -> @owned Optional<FRTStruct>
 
     let frtLocalVar6 = global_function_returning_copy_with_attr_returns_retained_wihout_Nonnull()
-    // CHECK: function_ref @$sSo72global_function_returning_copy_with_attr_returns_retained_wihout_NonnullSo9FRTStructVSgyFTo : $@convention(c) () ->  @owned Optional<FRTStruct>
+    // CHECK: function_ref @$sSo72global_function_returning_copy_with_attr_returns_retained_wihout_NonnullSo9FRTStructVSgyFTo : $@convention(c) () -> @owned Optional<FRTStruct>
 
     let frtLocalVar7 = global_function_returning_copy_with_attr_returns_unretained_wihout_Nonnull()
     // CHECK: function_ref @$sSo74global_function_returning_copy_with_attr_returns_unretained_wihout_NonnullSo9FRTStructVSgyFTo : $@convention(c) () -> Optional<FRTStruct>

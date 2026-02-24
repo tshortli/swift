@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend %s -disable-availability-checking -emit-ir | %FileCheck %s
+// RUN: %target-swift-frontend %s -emit-ir | %FileCheck %s
 
 // REQUIRES: concurrency
 

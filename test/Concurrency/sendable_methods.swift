@@ -1,5 +1,5 @@
-// RUN: %target-typecheck-verify-swift -enable-upcoming-feature InferSendableFromCaptures -disable-availability-checking -strict-concurrency=complete
-// RUN: %target-swift-emit-silgen %s -verify -enable-upcoming-feature InferSendableFromCaptures -disable-availability-checking -module-name sendable_methods -strict-concurrency=complete | %FileCheck %s
+// RUN: %target-typecheck-verify-swift -enable-upcoming-feature InferSendableFromCaptures -strict-concurrency=complete
+// RUN: %target-swift-emit-silgen %s -verify -enable-upcoming-feature InferSendableFromCaptures -module-name sendable_methods -strict-concurrency=complete | %FileCheck %s
 
 // REQUIRES: concurrency
 // REQUIRES: swift_feature_InferSendableFromCaptures
@@ -24,7 +24,7 @@ struct S : Sendable {
 
 enum E : Sendable {
   case a, b, c
-  
+
   func f() {}
 }
 
@@ -43,7 +43,7 @@ struct InferredSendableS: P {
 enum InferredSendableE: P {
   case a, b
   case c(Int)
-  
+
   func f() { }
 }
 
@@ -79,7 +79,7 @@ func g<T>(_ f: @escaping @Sendable (T) -> (@Sendable () -> Void)) where T: P {
   }
 }
 // Unapplied Func Parameters
-g(GenericS<NonSendable>.f)  // ok because unapplied references don't capture state
+g(GenericS<NonSendable>.f) // ok because unapplied references don't capture state
 g(GenericC<NonSendable>.f)
 g(InferredSendableS.f)
 g(InferredSendableC.f)
@@ -113,14 +113,14 @@ extension InferredSendableE {
 }
 
 // Partial Apply Parameters
-func h(_ f: (@Sendable () -> Void)) {  }
+func h(_ f: (@Sendable () -> Void)) { }
 h(GenericQ<NonSendable>().f) // ok
 h(GenericS(NonSendable()).f) // ok
 h(GenericS<Int>().f)
 h(GenericS(1).f)
 h(NonSendable().f) // expected-warning{{converting non-Sendable function value to '@Sendable () -> Void' may introduce data races}}
 
-func executeAsTask (_ f: @escaping  @Sendable () -> Void) {
+func executeAsTask (_ f: @escaping @Sendable () -> Void) {
   Task {
     f()
   }
@@ -136,12 +136,12 @@ do {
 }
 
 // Declarations
-let us:  @Sendable (GenericS<Int>) -> (@Sendable () -> Void) = GenericS<Int>.f
-let uc:  @Sendable (GenericC<Int>) -> (@Sendable () -> Void) = GenericC<Int>.f
+let us: @Sendable (GenericS<Int>) -> (@Sendable () -> Void) = GenericS<Int>.f
+let uc: @Sendable (GenericC<Int>) -> (@Sendable () -> Void) = GenericC<Int>.f
 
-let unappliedStruct:  @Sendable (S) -> (@Sendable () -> Void) = S.f
-let unappliedClass:  @Sendable (C) -> (@Sendable () -> Void) = C.f
-let unappliedEnum:  @Sendable (E) -> (@Sendable () -> Void) = E.f
+let unappliedStruct: @Sendable (S) -> (@Sendable () -> Void) = S.f
+let unappliedClass: @Sendable (C) -> (@Sendable () -> Void) = C.f
+let unappliedEnum: @Sendable (E) -> (@Sendable () -> Void) = E.f
 
 var partialStruct : @Sendable () -> Void = S().f
 var partialClass : @Sendable () -> Void = C().f
@@ -152,12 +152,12 @@ partialClass = NonSendable().f // expected-warning{{converting non-Sendable func
 partialStruct = NonSendable().f // expected-warning{{converting non-Sendable function value to '@Sendable () -> Void' may introduce data races}}
 partialEnum = NonSendable().f // expected-warning{{converting non-Sendable function value to '@Sendable () -> Void' may introduce data races}}
 
-// Static Functions 
+// Static Functions
 struct World {
   static func greet () { print("hello") }
 }
 
-let helloworld:  @Sendable () -> Void = World.greet
+let helloworld: @Sendable () -> Void = World.greet
 
 class NonSendableC { // expected-note{{class 'NonSendableC' does not conform to the 'Sendable' protocol}}
     var x: Int = 0

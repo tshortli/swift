@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -disable-availability-checking
+// RUN: %target-typecheck-verify-swift
 
 // REQUIRES: concurrency
 
@@ -6,7 +6,7 @@ func test1(asyncfp : () async -> Int, fp : () -> Int) async {
   _ = await asyncfp()
   _ = await asyncfp() + asyncfp()
   _ = await asyncfp() + fp()
-  _ = await fp() + 42  // expected-warning {{no 'async' operations occur within 'await' expression}}{{7-13=}}
+  _ = await fp() + 42 // expected-warning {{no 'async' operations occur within 'await' expression}}{{7-13=}}
   _ = 32 + asyncfp() + asyncfp() // expected-error {{expression is 'async' but is not marked with 'await'}}{{7-7=await }}
   // expected-note@-1:12{{call is 'async'}}
   // expected-note@-2:24{{call is 'async'}}
@@ -32,7 +32,7 @@ func test4()throws { // expected-note{{add 'async' to function 'test4()' to make
   _ = await getInt() // expected-error{{'async' call in a function that does not support concurrency}}
 }
 
-func test5<T>(_ f : () async throws -> T)  rethrows->T { // expected-note{{add 'async' to function 'test5' to make it asynchronous}} {{44-52=async rethrows}}
+func test5<T>(_ f : () async throws -> T) rethrows->T { // expected-note{{add 'async' to function 'test5' to make it asynchronous}} {{44-52=async rethrows}}
   return try await f() // expected-error{{'async' call in a function that does not support concurrency}}
 }
 
@@ -214,7 +214,7 @@ func search(query: String) async throws -> [String] {
 func testAsyncLetOutOfAsync() {
   async let x = 1 // expected-error{{'async let' in a function that does not support concurrency}}
 
-  _ = await x  // expected-error{{'async let' in a function that does not support concurrency}}
+  _ = await x // expected-error{{'async let' in a function that does not support concurrency}}
   _ = x // expected-error{{'async let' in a function that does not support concurrency}}
 }
 

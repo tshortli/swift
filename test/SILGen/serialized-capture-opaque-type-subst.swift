@@ -1,4 +1,4 @@
-// RUN: %target-swift-frontend -disable-availability-checking -emit-silgen -verify %s
+// RUN: %target-swift-frontend -emit-silgen -verify %s
 
 public func foo() -> some Any { return 1 }
 

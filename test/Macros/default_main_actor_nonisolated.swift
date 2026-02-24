@@ -4,7 +4,7 @@
 // RUN: %host-build-swift -swift-version 5 -emit-library -o %t/%target-library-name(MacroDefinition) -module-name=MacroDefinition %S/Inputs/syntax_macro_definitions.swift -g -no-toolchain-stdlib-rpath
 
 // Check for errors
-// RUN: %target-swift-frontend -swift-version 5 -typecheck -load-plugin-library %t/%target-library-name(MacroDefinition) %s -I %t -disable-availability-checking -swift-version 6 -default-isolation MainActor
+// RUN: %target-swift-frontend -swift-version 5 -typecheck -load-plugin-library %t/%target-library-name(MacroDefinition) %s -I %t -swift-version 6 -default-isolation MainActor
 
 @attached(extension, conformances: Sendable)
 macro AddSendable() = #externalMacro(module: "MacroDefinition", type: "SendableMacro")

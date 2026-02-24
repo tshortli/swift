@@ -1,4 +1,4 @@
-// RUN: %target-swift-emit-silgen -disable-availability-checking -verify %s
+// RUN: %target-swift-emit-silgen -verify %s
 protocol P {}
 extension Int: P {}
 

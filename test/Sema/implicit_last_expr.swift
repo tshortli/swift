@@ -1,4 +1,4 @@
-// RUN: %target-typecheck-verify-swift -enable-experimental-feature ImplicitLastExprResults -disable-availability-checking
+// RUN: %target-typecheck-verify-swift -enable-experimental-feature ImplicitLastExprResults
 
 // REQUIRES: swift_feature_ImplicitLastExprResults
 
@@ -256,7 +256,7 @@ func testMismatch6() {
     ()
     if .random() {
       ()
-      ""  // expected-error {{cannot convert value of type 'String' to specified type 'Int'}}
+      "" // expected-error {{cannot convert value of type 'String' to specified type 'Int'}}
     } else {
       ()
       ""

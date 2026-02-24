@@ -1,4 +1,4 @@
-// RUN: %target-run-simple-swiftgyb(-Xfrontend -disable-availability-checking)
+// RUN: %target-run-simple-swiftgyb()
 
 // REQUIRES: executable_test
 

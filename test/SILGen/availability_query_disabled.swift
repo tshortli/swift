@@ -1,5 +1,5 @@
-// RUN: %target-swift-emit-silgen -disable-availability-checking %s -verify
-// RUN: %target-swift-emit-silgen -disable-availability-checking %s | %FileCheck %s
+// RUN: %target-swift-emit-silgen %s -verify
+// RUN: %target-swift-emit-silgen %s | %FileCheck %s
 
 // CHECK-LABEL: // available()
 func available() {

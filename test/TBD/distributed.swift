@@ -3,7 +3,7 @@
 // REQUIRES: distributed
 
 // RUN: %empty-directory(%t)
-// RUN: %target-swift-frontend %s -enable-testing -disable-availability-checking -emit-ir -o %t/test.ll -emit-tbd -emit-tbd-path %t/test.tbd -I %t -tbd-install_name distributed
+// RUN: %target-swift-frontend %s -enable-testing -emit-ir -o %t/test.ll -emit-tbd -emit-tbd-path %t/test.tbd -I %t -tbd-install_name distributed
 // RUN %llvm-nm -g %t/test.tbd | %FileCheck %s --dump-input=always
 
 import Distributed
@@ -60,7 +60,7 @@ public struct FakeActorSystem: DistributedActorSystem {
 
   public func resolve<Act>(id: ActorID, as actorType: Act.Type) throws -> Act?
       where Act: DistributedActor,
-      Act.ID == ActorID  {
+      Act.ID == ActorID {
     nil
   }
 

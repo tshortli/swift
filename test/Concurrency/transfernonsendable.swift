@@ -1,5 +1,5 @@
-// RUN: %target-swift-frontend -emit-sil -strict-concurrency=complete -disable-availability-checking -verify -verify-additional-prefix ni- %s -o /dev/null -enable-upcoming-feature GlobalActorIsolatedTypesUsability
-// RUN: %target-swift-frontend -emit-sil -strict-concurrency=complete -disable-availability-checking -verify -verify-additional-prefix ni-ns- %s -o /dev/null -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature NonisolatedNonsendingByDefault
+// RUN: %target-swift-frontend -emit-sil -strict-concurrency=complete -verify -verify-additional-prefix ni- %s -o /dev/null -enable-upcoming-feature GlobalActorIsolatedTypesUsability
+// RUN: %target-swift-frontend -emit-sil -strict-concurrency=complete -verify -verify-additional-prefix ni-ns- %s -o /dev/null -enable-upcoming-feature GlobalActorIsolatedTypesUsability -enable-upcoming-feature NonisolatedNonsendingByDefault
 
 // REQUIRES: concurrency
 // REQUIRES: swift_feature_GlobalActorIsolatedTypesUsability
@@ -307,7 +307,7 @@ extension MyActor {
       print(self.klass)
     }
     // In contrast to the tuple backwards case, we do error here since the value
-    // we are forming is an Any?  so we actually form the tuple as an object and
+    // we are forming is an Any? so we actually form the tuple as an object and
     // store it all as once.
     let x: Any? = (closure, 1)
     await transferToMain(x)
@@ -727,7 +727,7 @@ func varSendableNonTrivialClassFieldTest() async {
   await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
-  _ = test.varSendableNonTrivial  // expected-note {{access can happen concurrently}}
+  _ = test.varSendableNonTrivial // expected-note {{access can happen concurrently}}
   useValue(test)
 }
 
@@ -794,7 +794,7 @@ func varSendableNonTrivialFinalClassFieldTest() async {
   await transferToMain(test) // expected-warning {{sending 'test' risks causing data races}}
   // expected-note @-1 {{sending 'test' to main actor-isolated global function 'transferToMain' risks causing data races between main actor-isolated and local nonisolated uses}}
 
-  _ = test.varSendableNonTrivial  // expected-note {{access can happen concurrently}}
+  _ = test.varSendableNonTrivial // expected-note {{access can happen concurrently}}
   useValue(test)
 }
 
@@ -1235,7 +1235,7 @@ func varNonSendableNonTrivialLetStructFieldClosureFlowSensitive6() async {
   }
 
   test.varSendableNonTrivial = SendableKlass() // expected-note {{access can happen concurrently}}
-  useValue(test)  // expected-note {{access can happen concurrently}}
+  useValue(test) // expected-note {{access can happen concurrently}}
 }
 
 // In this case since we are tracking the transfer from the else statement, we
@@ -1610,7 +1610,7 @@ func initAccessorTests() {
     var first: NonSendableKlass
     var second: NonSendableKlass? = nil {
       @storageRestrictions(initializes: first)
-      init(initialValue)  {
+      init(initialValue) {
         first = initialValue!
       }
 
@@ -1623,7 +1623,7 @@ func initAccessorTests() {
     @MainActor
     var fourth: NonSendableKlass? = nil {
       @storageRestrictions(initializes: third)
-      init(initialValue)  {
+      init(initialValue) {
         third = initialValue!
       }
 
@@ -1997,7 +1997,7 @@ func indirectEnumTestCase<T>(_ e: MyEnum<T>) async -> Bool {
 /// d().
 func inferLocationOfCapturedTaskIsolatedSelfCorrectly() {
   class A {
-    var block:  @MainActor () -> Void = {}
+    var block: @MainActor () -> Void = {}
   }
   class B {
     let a = A()

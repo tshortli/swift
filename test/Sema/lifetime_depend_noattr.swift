@@ -1,11 +1,11 @@
 // RUN: %target-typecheck-verify-swift \
-// RUN:   -disable-availability-checking \
-// RUN:   -enable-experimental-feature Lifetimes
+// RUN: \
+// RUN: -enable-experimental-feature Lifetimes
 
 // REQUIRES: swift_feature_Lifetimes
 
 // These tests complement lifetime_depend_nofeature.swift. If you add a test here, add one there.
- 
+
 // Check that missing lifetime dependencies are diagnosed. Enabling LifetimeDependencies will issue more detailed
 // diagnostics.
 
