@@ -160,11 +160,6 @@ private:
   std::optional<AvailabilityDomain>
   getRemappedDomainOrNull(const ASTContext &ctx) const;
 
-  AvailabilityRange getRemappedRange(AvailabilityDomain toDomain,
-                                     const llvm::VersionTuple &version,
-                                     AvailabilityVersionKind versionKind,
-                                     const ASTContext &ctx) const;
-
 public:
   AvailabilityDomain() {}
 
@@ -345,6 +340,14 @@ public:
   getRemappedDomainAndRange(const llvm::VersionTuple &version,
                             AvailabilityVersionKind versionKind,
                             const ASTContext &ctx) const;
+
+  /// Converts the given version into a canonical
+  /// range that can be used for availability comparisons in the given domain.
+  /// NOTE: The given domain must be contained in this domain.
+  AvailabilityRange getRemappedRange(AvailabilityDomain toDomain,
+                                     const llvm::VersionTuple &version,
+                                     AvailabilityVersionKind versionKind,
+                                     const ASTContext &ctx) const;
 
   /// Returns true for a domain that is permanently always available, and
   /// therefore availability constraints in the domain are effectively the same

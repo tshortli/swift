@@ -74,10 +74,10 @@ public distributed actor DAG<ActorSystem> where ActorSystem: DistributedActorSys
 }
 
 // CHECK-NOT: #if compiler(>=5.3) && $Actors
-// CHECK:     @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
+// CHECK:     @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0,  *)
 // CHECK-NEXT:extension Library::DA : Swift::Encodable {}
 // CHECK-NOT: #if compiler(>=5.3) && $Actors
-// CHECK:     @available(macOS 13.0, iOS 16.0, watchOS 9.0, tvOS 16.0, *)
+// CHECK:     @available(macOS 13.0, iOS 16.0, tvOS 16.0, watchOS 9.0, *)
 // CHECK-NEXT:extension Library::DA : Swift::Decodable {}
 
 //--- Client.swift

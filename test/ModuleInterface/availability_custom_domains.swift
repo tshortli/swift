@@ -47,14 +47,14 @@ public enum AvailableInColoradoAndPacificEquatableEnum {
   case a
 }
 
-// CHECK:      @available(Colorado)
-// CHECK-NEXT: @available(Pacific)
+// CHECK:      @available(Pacific)
+// CHECK-NEXT: @available(Colorado)
 // CHECK-NEXT: extension Test::AvailableInColoradoAndPacificMainActorClass : Swift::Sendable {}
 
-// CHECK:      @available(Colorado)
-// CHECK-NEXT: @available(Pacific)
+// CHECK:      @available(Pacific)
+// CHECK-NEXT: @available(Colorado)
 // CHECK-NEXT: extension Test::AvailableInColoradoAndPacificEquatableEnum : Swift::Equatable {}
 
-// CHECK:      @available(Colorado)
-// CHECK-NEXT: @available(Pacific)
+// CHECK:      @available(Pacific)
+// CHECK-NEXT: @available(Colorado)
 // CHECK-NEXT: extension Test::AvailableInColoradoAndPacificEquatableEnum : Swift::Hashable {}

@@ -4118,6 +4118,20 @@ public:
            getObsoleted().has_value();
   }
 
+  /// Returns the version (`introduced:`, `deprecated:`, or `obsoleted:`) for
+  /// the given version kind.
+  std::optional<llvm::VersionTuple>
+  versionForKind(AvailabilityVersionKind versionKind) {
+    switch (versionKind) {
+    case AvailabilityVersionKind::Introduced:
+      return getIntroduced();
+    case AvailabilityVersionKind::Deprecated:
+      return getDeprecated();
+    case AvailabilityVersionKind::Obsoleted:
+      return getObsoleted();
+    }
+  }
+
   /// Whether this is a language mode specific attribute.
   bool isSwiftLanguageModeSpecific() const {
     return getDomain().isSwiftLanguageMode() && isVersionSpecific();

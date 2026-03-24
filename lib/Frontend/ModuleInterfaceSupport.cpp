@@ -13,6 +13,7 @@
 #include "swift/Frontend/ModuleInterfaceSupport.h"
 #include "swift/AST/ASTContext.h"
 #include "swift/AST/ASTPrinter.h"
+#include "swift/AST/AvailabilityInference.h"
 #include "swift/AST/Decl.h"
 #include "swift/AST/DiagnosticsFrontend.h"
 #include "swift/AST/DiagnosticsSema.h"
@@ -430,7 +431,7 @@ namespace {
 class InheritedProtocolCollector {
   static const StringLiteral DummyProtocolName;
 
-  using AvailableAttrList = SmallVector<SemanticAvailableAttr>;
+  using AvailableAttrList = SmallVector<AvailableAttr *>;
   using OriginallyDefinedInAttrList =
       TinyPtrVector<const OriginallyDefinedInAttr *>;
   using ProtocolAndAvailability =
@@ -449,26 +450,14 @@ class InheritedProtocolCollector {
   /// Helper to extract the `@available` attributes on a decl.
   static AvailableAttrList
   getAvailabilityAttrs(const Decl *D, std::optional<AvailableAttrList> &cache) {
-    if (cache.has_value())
-      return cache.value();
+    if (cache)
+      return *cache;
 
     cache.emplace();
-    while (D) {
-      for (auto nextAttr : D->getSemanticAvailableAttrs()) {
-        // FIXME: This is just approximating the effects of nested availability
-        // attributes for the same platform; formally they'd need to be merged.
-        bool alreadyHasMoreSpecificAttrForThisPlatform = llvm::any_of(
-            *cache, [nextAttr](SemanticAvailableAttr existingAttr) {
-              return existingAttr.getDomain() == nextAttr.getDomain();
-            });
-        if (alreadyHasMoreSpecificAttrForThisPlatform)
-          continue;
-        cache->push_back(nextAttr);
-      }
-      D = D->getDeclContext()->getAsDecl();
-    }
 
-    return cache.value();
+    AvailabilityInference::createInferredAvailableAttrs({D}, *cache,
+                                                        D->getASTContext());
+    return *cache;
   }
 
   static OriginallyDefinedInAttrList
@@ -789,9 +778,8 @@ public:
 
     // Build up synthesized DeclAttributes for the extension.
     TinyPtrVector<const DeclAttribute *> clonedAttrs;
-    for (auto attr : availability) {
-      clonedAttrs.push_back(
-          attr.getParsedAttr()->clone(ctx, /*implicit*/ true));
+    for (auto attr : llvm::reverse(availability)) {
+      clonedAttrs.push_back(attr->clone(ctx, /*implicit*/ true));
     }
     for (auto *attr : proto->getAttrs().getAttributes<SPIAccessControlAttr>()) {
       clonedAttrs.push_back(attr->clone(ctx, /*implicit*/ true));
@@ -803,9 +791,8 @@ public:
     // Since DeclAttributes is a linked list where each added attribute becomes
     // the head, we need to add these attributes in reverse order to reproduce
     // the order in which previous implementations printed these attributes.
-    for (auto attr = clonedAttrs.rbegin(), end = clonedAttrs.rend();
-         attr != end; ++attr) {
-      extension->addAttribute(const_cast<DeclAttribute *>(*attr));
+    for (auto attr : llvm::reverse(clonedAttrs)) {
+      extension->addAttribute(const_cast<DeclAttribute *>(attr));
     }
 
     ctx.evaluator.cacheOutput(ExtendedTypeRequest{extension},

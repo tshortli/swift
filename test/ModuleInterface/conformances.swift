@@ -197,8 +197,8 @@ extension Bool: ExtraHashable {}
 @available(macOS, unavailable)
 public struct CoolTVType: PrivateSubProto {}
 // CHECK: public struct CoolTVType {
-// CHECK-END: @available(iOS, unavailable)
-// CHECK-END-NEXT: @available(macOS, unavailable)
+// CHECK-END: @available(macOS, unavailable)
+// CHECK-END-NEXT: @available(iOS, unavailable)
 // CHECK-END-NEXT: extension conformances::CoolTVType : conformances::PublicBaseProto {}
 
 @available(macOS 10.99, *)

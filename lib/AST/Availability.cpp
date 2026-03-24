@@ -84,6 +84,8 @@ struct InferredAvailability {
   StringRef Message;
   StringRef Rename;
   bool IsSPI = false;
+
+  bool hasVersion() const { return Introduced || Deprecated || Obsoleted; }
 };
 
 /// The type of a function that merges two version tuples.
@@ -95,57 +97,82 @@ typedef const llvm::VersionTuple &(*MergeFunction)(
 /// Apply a merge function to two optional versions, returning the result
 /// in Inferred.
 static bool
-mergeIntoInferredVersion(const std::optional<llvm::VersionTuple> &Version,
-                         std::optional<llvm::VersionTuple> &Inferred,
-                         MergeFunction Merge) {
-  if (Version.has_value()) {
-    if (Inferred.has_value()) {
-      Inferred = Merge(Inferred.value(), Version.value());
-      return *Inferred == *Version;
-    } else {
-      Inferred = Version;
-      return true;
-    }
+mergeIntoInferredVersion(const llvm::VersionTuple &version,
+                         std::optional<llvm::VersionTuple> &inferred,
+                         MergeFunction merge) {
+  if (!inferred) {
+    inferred = version;
+    return true;
   }
-  return false;
+
+  inferred = merge(*inferred, version);
+  return *inferred == version;
+}
+
+static bool mergeInferredVersion(SemanticAvailableAttr attr,
+                                 AvailabilityDomain targetDomain,
+                                 std::optional<llvm::VersionTuple> &inferred,
+                                 AvailabilityVersionKind versionKind,
+                                 const ASTContext &ctx) {
+  auto version = attr.versionForKind(versionKind);
+  if (!version)
+    return false;
+
+  auto range = attr.getDomain().getRemappedRange(targetDomain, *version,
+                                                 versionKind, ctx);
+  if (attr.getDomain() != targetDomain)
+    llvm::errs() << "ALLANXXX remapping " << attr.getDomain().getNameForAttributePrinting() << " " << (*version) << " to " << targetDomain.getNameForAttributePrinting() << ": " << range << "\n";
+  // ALLANXXX ugh
+  version = range.getRawMinimumVersion();
+
+  switch (versionKind) {
+  case AvailabilityVersionKind::Introduced:
+    return mergeIntoInferredVersion(*version, inferred, std::max);
+  case AvailabilityVersionKind::Deprecated:
+  case AvailabilityVersionKind::Obsoleted:
+    return mergeIntoInferredVersion(*version, inferred, std::min);
+  }
 }
 
 /// Merge an attribute's availability with an existing inferred availability
 /// so that the new inferred availability is at least as available as
 /// the attribute requires.
-static void mergeWithInferredAvailability(SemanticAvailableAttr Attr,
-                                          InferredAvailability &Inferred) {
-  auto *ParsedAttr = Attr.getParsedAttr();
-  Inferred.Kind = static_cast<AvailableAttr::Kind>(
-      std::max(static_cast<unsigned>(Inferred.Kind),
-               static_cast<unsigned>(ParsedAttr->getKind())));
+static void mergeWithInferredAvailability(SemanticAvailableAttr attr,
+                                          AvailabilityDomain domain,
+                                          InferredAvailability &inferred,
+                                          const ASTContext &ctx) {
+  // ALLANXXX re-evaluate available attr kind merge
+  inferred.Kind = static_cast<AvailableAttr::Kind>(
+      std::max(static_cast<unsigned>(inferred.Kind),
+               static_cast<unsigned>(attr.getParsedAttr()->getKind())));
 
-  // The merge of two introduction versions is the maximum of the two versions.
-  if (mergeIntoInferredVersion(Attr.getIntroduced(), Inferred.Introduced,
-                               std::max)) {
-    Inferred.IsSPI = Attr.isSPI();
+  if (domain.isVersioned()) {
+    if (mergeInferredVersion(attr, domain, inferred.Introduced,
+                             AvailabilityVersionKind::Introduced, ctx)) {
+      inferred.IsSPI = attr.isSPI();
+    }
+    mergeInferredVersion(attr, domain, inferred.Deprecated,
+                         AvailabilityVersionKind::Deprecated, ctx);
+    mergeInferredVersion(attr, domain, inferred.Obsoleted,
+                         AvailabilityVersionKind::Obsoleted, ctx);
   }
 
-  // The merge of deprecated and obsoleted versions takes the minimum.
-  mergeIntoInferredVersion(Attr.getDeprecated(), Inferred.Deprecated, std::min);
-  mergeIntoInferredVersion(Attr.getObsoleted(), Inferred.Obsoleted, std::min);
+  if (inferred.Message.empty() && !attr.getMessage().empty())
+    inferred.Message = attr.getMessage();
 
-  if (Inferred.Message.empty() && !Attr.getMessage().empty())
-    Inferred.Message = Attr.getMessage();
-
-  if (Inferred.Rename.empty() && !Attr.getRename().empty())
-    Inferred.Rename = Attr.getRename();
+  if (inferred.Rename.empty() && !attr.getRename().empty())
+    inferred.Rename = attr.getRename();
 }
 
 /// Create an implicit availability attribute for the given domain
 /// and with the inferred availability.
 static AvailableAttr *createAvailableAttr(AvailabilityDomain Domain,
                                           const InferredAvailability &Inferred,
-                                          ASTContext &Context) {
+                                          const ASTContext &Context) {
   // If there is no information that would go into the availability attribute,
   // don't create one.
-  if (Inferred.Kind == AvailableAttr::Kind::Default && !Inferred.Introduced &&
-      !Inferred.Deprecated && !Inferred.Obsoleted && Inferred.Message.empty() &&
+  if (Domain.isVersioned() && Inferred.Kind == AvailableAttr::Kind::Default &&
+      !Inferred.hasVersion() && Inferred.Message.empty() &&
       Inferred.Rename.empty())
     return nullptr;
 
@@ -163,49 +190,100 @@ static AvailableAttr *createAvailableAttr(AvailabilityDomain Domain,
       Inferred.IsSPI);
 }
 
-void AvailabilityInference::applyInferredAvailableAttrs(
-    Decl *ToDecl, ArrayRef<const Decl *> InferredFromDecls) {
-  auto &Context = ToDecl->getASTContext();
-
-  // Iterate over the declarations and infer required availability on
-  // a per-domain basis.
+void AvailabilityInference::createInferredAvailableAttrs(
+    ArrayRef<const Decl *> sourceDecls,
+    llvm::SmallVectorImpl<AvailableAttr *> &result, const ASTContext &ctx) {
   std::map<AvailabilityDomain, InferredAvailability,
            StableAvailabilityDomainComparator>
-      Inferred;
-  for (const Decl *D : InferredFromDecls) {
-    llvm::SmallVector<SemanticAvailableAttr, 8> MergedAttrs;
+      inferredAvailability;
+  llvm::SmallSet<AvailabilityDomain, 8> platformDomains;
+  llvm::SmallVector<const Decl *, 8> declsWithPlatformAvailability;
 
+  // Enumerate the source decls and their parents, computing the intersection of
+  // availability for the non-platform domains. Collect domains and decls to
+  // revisit with a second pass to compute the platform availability
+  // intersection.
+  for (auto *decl : sourceDecls) {
     do {
-      llvm::SmallVector<SemanticAvailableAttr, 8> PendingAttrs;
-
-      for (auto AvAttr : D->getSemanticAvailableAttrs()) {
-        // Skip an attribute from an outer declaration if it is for a platform
-        // that was already handled implicitly by an attribute from an inner
-        // declaration.
-        if (llvm::any_of(MergedAttrs,
-                         [&AvAttr](SemanticAvailableAttr MergedAttr) {
-                           return inheritsAvailabilityFromPlatform(
-                               AvAttr.getPlatform(), MergedAttr.getPlatform());
-                         }))
+      for (auto attr : decl->getSemanticAvailableAttrs()) {
+        auto domain = attr.getDomain();
+        if (!domain.isPlatform()) {
+          mergeWithInferredAvailability(attr, domain,
+                                        inferredAvailability[domain], ctx);
           continue;
+        }
 
-        mergeWithInferredAvailability(AvAttr, Inferred[AvAttr.getDomain()]);
-        PendingAttrs.push_back(AvAttr);
+        declsWithPlatformAvailability.push_back(decl);
+        platformDomains.insert(domain);
       }
-
-      MergedAttrs.append(PendingAttrs);
 
       // Walk up the enclosing declaration hierarchy to make sure we aren't
       // missing any inherited attributes.
-      D = D->parentDeclForAvailability();
-    } while (D);
+      decl = decl->parentDeclForAvailability();
+    } while (decl);
   }
 
-  // Create an availability attribute for each observed platform and add
-  // to ToDecl.
-  for (auto &Pair : Inferred) {
-    if (auto Attr = createAvailableAttr(Pair.first, Pair.second, Context))
-      ToDecl->addAttribute(Attr);
+  // For each platform domain that was seen in the first pass, compute an
+  // availability intersection. On each declaration, find the availability
+  // attributes that are most relevant to the domain we are computing
+  // availability for and then intersect them, remapping versions if necessary.
+  for (auto platformDomain : platformDomains) {
+    for (auto *decl : declsWithPlatformAvailability) {
+      // ALLANXXX hoist this algorithm out to separate utility
+
+      // Find the attributes on this decl that apply to the target platform
+      // domain.
+      llvm::SmallVector<SemanticAvailableAttr> platformAttrs;
+
+      for (auto attr : decl->getSemanticAvailableAttrs()) {
+        // Filter out attributes that are not related to the target platform.
+        if (!attr.getDomain().contains(platformDomain))
+          continue;
+
+        // If it's the first relevant attribute we've found, add it.
+        if (platformAttrs.empty()) {
+          platformAttrs.push_back(attr);
+          continue;
+        }
+
+        auto existingDomain = platformAttrs.front().getDomain();
+
+        // If the attribute is from the current most-specific domain, add it.
+        if (existingDomain == attr.getDomain()) {
+          platformAttrs.push_back(attr);
+          continue;
+        }
+
+        // Check if the attribute is from a more specific domain. If it is,
+        // discard the attributes that were added previously and this one.
+        if (existingDomain.isSupersetOf(attr.getDomain())) {
+          platformAttrs.clear();
+          platformAttrs.push_back(attr);
+          continue;
+        }
+      }
+
+      for (auto attr : platformAttrs) {
+        mergeWithInferredAvailability(
+            attr, platformDomain, inferredAvailability[platformDomain], ctx);
+      }
+    }
+  }
+
+  // Create an availability attribute for each observed platform.
+  for (auto &pair : inferredAvailability) {
+    if (auto attr = createAvailableAttr(pair.first, pair.second, ctx))
+      result.push_back(attr);
+  }
+}
+
+void AvailabilityInference::applyInferredAvailableAttrs(
+    Decl *ToDecl, ArrayRef<const Decl *> InferredFromDecls) {
+  auto &Ctx = ToDecl->getASTContext();
+  llvm::SmallVector<AvailableAttr *, 8> Attrs;
+  createInferredAvailableAttrs(InferredFromDecls, Attrs, Ctx);
+  for (auto Attr : Attrs) {
+    ToDecl->addAttribute(Attr);
   }
 }
 

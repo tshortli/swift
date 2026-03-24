@@ -146,7 +146,7 @@ public class MacCatalystAvailableClass {
   // CHECK-NEXT: public actor AvailableiOSAndMacOSNestedActor {
   @available(iOS 15.0, macOS 12.0, *)
   public actor AvailableiOSAndMacOSNestedActor {
-    // CHECK:      @available(macOS 12.0, iOS 15.0, tvOS 13.0, watchOS 6.0, *)
+    // CHECK:      @available(macOS 12.0, iOS 15.0, tvOS 13.0, watchOS 6.0, macCatalyst 15.0, *)
     // CHECK-NEXT: @_semantics("defaultActor") nonisolated final public var unownedExecutor: _Concurrency::UnownedSerialExecutor
   }
 
@@ -157,6 +157,7 @@ public class MacCatalystAvailableClass {
   public actor UnavailableiOSNestedActor {
     // CHECK:      @available(macOS 10.15, tvOS 13.0, watchOS 6.0, *)
     // CHECK-NEXT: @available(iOS, unavailable, introduced: 13.0)
+    // CHECK-NEXT: @available(macCatalyst, unavailable, introduced: 13.1)
     // CHECK-NEXT: @_semantics("defaultActor") nonisolated final public var unownedExecutor: _Concurrency::UnownedSerialExecutor
   }
 }

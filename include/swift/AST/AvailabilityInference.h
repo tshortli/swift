@@ -24,15 +24,24 @@
 
 namespace swift {
 class ASTContext;
+class AvailableAttr;
 class AvailabilityDomain;
 class Decl;
 class SemanticAvailableAttr;
 
 class AvailabilityInference {
 public:
-  /// Infers the common availability required to access an array of
-  /// declarations and adds attributes reflecting that availability
-  /// to ToDecl.
+  /// Infers the intersection of availability requirements of the given
+  /// declarations and creates new attributes satisfying that availability
+  /// intersection.
+  static void
+  createInferredAvailableAttrs(ArrayRef<const Decl *> InferredFromDecls,
+                               llvm::SmallVectorImpl<AvailableAttr *> &Attrs,
+                               const ASTContext &Ctx);
+
+  /// Infers the intersection of availability requirements of the given
+  /// declarations and adds new attributes satisfying that availability
+  /// intersection to `ToDecl`.
   static void
   applyInferredAvailableAttrs(Decl *ToDecl,
                               ArrayRef<const Decl *> InferredFromDecls);
