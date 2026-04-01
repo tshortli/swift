@@ -321,6 +321,34 @@ enum ImpliedMain: ImplierMain {
 }
 extension ImpliedOther: ImplierMain {}
 
+struct UnavailableEquatable { }
+
+@available(*, unavailable)
+extension UnavailableEquatable: Equatable { }
+
+struct UnavailableHashable { }
+
+@available(*, unavailable)
+extension UnavailableHashable: Hashable { }
+
+// ALLANXXX should be diagnosed
+enum HasUnavailableEquatableElement: Equatable {
+  case a(UnavailableEquatable)
+}
+enum HasUnavailableHashableElement: Hashable {
+  case a(UnavailableHashable)
+}
+
+// OK, the necessary member conformances are as unavailable.
+@available(*, unavailable)
+enum UnavailableAndHasUnavailableEquatableElement: Equatable {
+  case a(UnavailableEquatable)
+}
+@available(*, unavailable)
+enum UnavailableAndHasUnavailableHashableElement: Equatable {
+  case a(UnavailableHashable)
+}
+
 // FIXME: Remove -verify-ignore-unknown.
 // <unknown>:0: error: unexpected note produced: candidate has non-matching type '(Foo, Foo) -> Bool'
 // <unknown>:0: error: unexpected note produced: candidate has non-matching type '<T> (Generic<T>, Generic<T>) -> Bool'

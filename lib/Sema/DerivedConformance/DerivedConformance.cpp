@@ -14,6 +14,8 @@
 #include "TypeCheckConcurrency.h"
 #include "TypeChecker.h"
 #include "swift/AST/ASTPrinter.h"
+#include "swift/AST/AvailabilityConstraint.h"
+#include "swift/AST/AvailabilityContext.h"
 #include "swift/AST/ConformanceLookup.h"
 #include "swift/AST/Decl.h"
 #include "swift/AST/Expr.h"
@@ -194,6 +196,7 @@ DerivedConformance::storedPropertiesNotConformingToProtocol(
     if (!checkConformance(DC->mapTypeIntoEnvironment(type), protocol)) {
       nonconformingProperties.push_back(propertyDecl);
     }
+    // ALLANXXX check availability
   }
   return nonconformingProperties;
 }
@@ -237,6 +240,7 @@ void DerivedConformance::diagnoseAnyNonConformingMemberTypes(
       SourceLoc reprLoc;
       if (auto *repr = typeToDiagnose->getTypeRepr())
         reprLoc = repr->getStartLoc();
+      // ALLANXXX diangose unavailability
       ctx.Diags.diagnose(
           reprLoc, diag::missing_member_type_conformance_prevents_synthesis,
           NonconformingMemberKind::AssociatedValue,
@@ -250,6 +254,7 @@ void DerivedConformance::diagnoseAnyNonConformingMemberTypes(
     auto nonconformingStoredProperties =
         storedPropertiesNotConformingToProtocol(DC, structDecl, protocol);
     for (auto *propertyToDiagnose : nonconformingStoredProperties) {
+      // ALLANXXX diangose unavailability
       ctx.Diags.diagnose(
           propertyToDiagnose->getLoc(),
           diag::missing_member_type_conformance_prevents_synthesis,
@@ -822,6 +827,7 @@ DeclRefExpr *DerivedConformance::convertEnumToIndex(SmallVectorImpl<ASTNode> &st
 SmallVector<ParamDecl *, 4>
 DerivedConformance::associatedValuesNotConformingToProtocol(
     DeclContext *DC, EnumDecl *theEnum, ProtocolDecl *protocol) {
+  auto availability = AvailabilityContext::forDeclSignature(theEnum);
   SmallVector<ParamDecl *, 4> nonconformingAssociatedValues;
   for (auto elt : theEnum->getAllElements()) {
     auto PL = elt->getParameterList();
@@ -830,8 +836,21 @@ DerivedConformance::associatedValuesNotConformingToProtocol(
 
     for (auto param : *PL) {
       auto type = param->getInterfaceType();
-      if (checkConformance(DC->mapTypeIntoEnvironment(type), protocol).isInvalid()) {
+      auto conformance = checkConformance(DC->mapTypeIntoEnvironment(type), protocol);
+      if (conformance.isInvalid()) {
         nonconformingAssociatedValues.push_back(param);
+        continue;
+      }
+
+      if (conformance.isAbstract())
+        continue;
+      auto *rootConf = conformance.getConcrete()->getRootConformance();
+      if (auto *ext = dyn_cast<ExtensionDecl>(rootConf->getDeclContext())) {
+        if (getAvailabilityConstraintsForDecl(ext, availability).getPrimaryConstraint()) {
+          // ALLANXXX record reason
+          nonconformingAssociatedValues.push_back(param);
+          continue;
+        }
       }
     }
   }
