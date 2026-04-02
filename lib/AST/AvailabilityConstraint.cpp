@@ -14,6 +14,9 @@
 #include "swift/AST/ASTContext.h"
 #include "swift/AST/AvailabilityContext.h"
 #include "swift/AST/Decl.h"
+#include "swift/AST/PackConformance.h"
+#include "swift/AST/ProtocolConformance.h"
+#include "swift/AST/ProtocolConformanceRef.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 
@@ -393,6 +396,48 @@ swift::getAvailabilityConstraintsForDecl(const Decl *decl,
     getAvailabilityConstraintsForDecl(constraints, extension, context, flags);
 
   return constraints;
+}
+
+bool swift::enumerateAvailabilityConstraintsForConformance(
+    ProtocolConformanceRef conformance, const AvailabilityContext &context,
+    std::function<bool(const Decl *, DeclAvailabilityConstraints)> callback,
+    AvailabilityConstraintFlags flags) {
+  if (conformance.isInvalid() || conformance.isAbstract())
+    return false;
+
+  if (conformance.isPack()) {
+    for (auto patternConf : conformance.getPack()->getPatternConformances()) {
+      if (enumerateAvailabilityConstraintsForConformance(patternConf, context,
+                                                         callback, flags))
+        return true;
+    }
+    return false;
+  }
+
+  const ProtocolConformance *concreteConf = conformance.getConcrete();
+  const RootProtocolConformance *rootConf = concreteConf->getRootConformance();
+
+  // Conformance to Copyable and Escapable doesn't have its own availability
+  // independent of the type.
+  if (rootConf->getProtocol()->getInvertibleProtocolKind())
+    return false;
+
+  // Conformance declarations can be more available than the protocols they
+  // involve due to source compatibility exceptions. Thus, it is important to
+  // check both the availability of protocol and the conformance declaration.
+  if (auto constraints =
+          getAvailabilityConstraintsForDecl(conformance.getProtocol(), context))
+    return callback(conformance.getProtocol(), constraints);
+
+  auto *conformanceDC = rootConf->getDeclContext();
+  if (auto constraints = getAvailabilityConstraintsForDecl(
+          conformanceDC->getAsDecl(), context))
+    return callback(conformanceDC->getAsDecl(), constraints);
+
+  // ALLANXXX visit substitution map
+  SubstitutionMap subConformanceSubs = concreteConf->getSubstitutionMap();
+
+  return false;
 }
 
 std::optional<AvailabilityConstraint>

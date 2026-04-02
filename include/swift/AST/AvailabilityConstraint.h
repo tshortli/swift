@@ -214,6 +214,11 @@ public:
   DeclAvailabilityConstraints(const Storage &&constraints)
       : constraints(constraints) {}
 
+  /// Returns true if there are no constraints.
+  bool empty() const { return constraints.empty(); }
+
+  operator bool() const { return !empty(); }
+
   /// Returns the strongest availability constraint or `std::nullopt` if empty.
   std::optional<AvailabilityConstraint> getPrimaryConstraint() const;
 
@@ -250,6 +255,32 @@ using AvailabilityConstraintFlags = OptionSet<AvailabilityConstraintFlag>;
 DeclAvailabilityConstraints getAvailabilityConstraintsForDecl(
     const Decl *decl, const AvailabilityContext &context,
     AvailabilityConstraintFlags flags = std::nullopt);
+
+/// Enumerates the availability constraints that restrict use of \p conformance
+/// when it is referenced from the given context, similar to
+/// `getAvailabilityConstraintsForDecl()`. The enumerated constraints may
+/// include constraints on the conformance declaration itself, constraints on
+/// members of a pack conformance, or constraints on associated conformances. \p
+/// callback is invoked for each relevant conformance declaration that has
+/// non-empty constraints. To abort enumeration, return `true` from a \p
+/// callback invocation. Returns `true` if enumeration was aborted.
+bool enumerateAvailabilityConstraintsForConformance(
+    ProtocolConformanceRef conformance, const AvailabilityContext &context,
+    std::function<bool(const Decl *, DeclAvailabilityConstraints)> callback,
+    AvailabilityConstraintFlags flags = std::nullopt);
+
+/// Returns `true` if there are any availability constraints restricting the use
+/// of \p conformance in the given context.
+inline bool hasAnyAvailabilityConstraintsForConformance(
+    ProtocolConformanceRef conformance, const AvailabilityContext &context,
+    AvailabilityConstraintFlags flags = std::nullopt) {
+  return enumerateAvailabilityConstraintsForConformance(
+      conformance, context,
+      [](const Decl *decl, DeclAvailabilityConstraints constraints) {
+        return true;
+      },
+      flags);
+}
 
 /// Returns the availability constraints that restricts use of \p decl
 /// in \p domain when it is referenced from the given context. In other words,

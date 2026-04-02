@@ -3532,6 +3532,7 @@ swift::diagnoseConformanceAvailability(SourceLoc loc,
                                        Type depTy, Type replacementTy,
                                        bool warnIfConformanceUnavailablePreSwift6,
                                        bool preconcurrency) {
+  // ALLANXXX adopt availabilityconstraints utility
   assert(!where.isImplicit());
 
   if (conformance.isInvalid() || conformance.isAbstract())

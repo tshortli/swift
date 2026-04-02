@@ -3450,7 +3450,9 @@ bool swift::shouldUseBorrowingSequence(ASTContext &ctx, Type seqTy,
   if (auto cxxBorrowingSequence =
           ctx.getProtocol(KnownProtocolKind::CxxBorrowingSequence)) {
     if (auto conf = lookupConformance(seqTy, cxxBorrowingSequence)) {
-      return !conf.getAvailabilityConstraint(dc, loc);
+      if (hasAnyAvailabilityConstraintsForConformance(
+              conf, AvailabilityContext::forLocation(loc, dc)))
+        return false;
     }
   }
 
@@ -3514,11 +3516,17 @@ public:
     seqConformanceRef = lookupConformance(seqType, sequenceProto);
     ASSERT(!seqConformanceRef.isInvalid() || seqType->isExistentialType());
 
-    if (auto constraint = seqConformanceRef.getAvailabilityConstraint(
-            dc, stmt->getForLoc())) {
-      emitDiagnosticsForUnavailableConformance(seqType, constraint.value());
+    bool hadError = enumerateAvailabilityConstraintsForConformance(
+        seqConformanceRef,
+        AvailabilityContext::forLocation(stmt->getForLoc(), dc),
+        [&](const Decl *decl, DeclAvailabilityConstraints constraints) {
+          emitDiagnosticsForUnavailableConformance(
+              seqType, constraints.getPrimaryConstraint().value());
+          return true;
+        });
+
+    if (hadError)
       return nullptr;
-    }
 
     buildMakeIteratorVar();
 
