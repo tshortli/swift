@@ -3540,7 +3540,6 @@ private:
   void
   emitDiagnosticsForUnavailableConformance(Type seqType,
                                            AvailabilityConstraint constraint) {
-    // ALLANXXX
     auto loc = stmt->getForLoc();
     auto protoDecl = seqConformanceRef.getProtocol();
 
