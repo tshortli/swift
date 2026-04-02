@@ -175,6 +175,25 @@ public:
   /// on the reason for the constraint.
   AvailabilityDomainAndRange getDomainAndRange(const ASTContext &ctx) const;
 
+  /// Returns true if the domain name should be omitted from unavailability
+  /// diagnostics. The domain is hidden for universal and other non-platform
+  /// domains where "in <X>" would not be meaningful, except for Swift language
+  /// mode constraints that are version-based.
+  bool shouldHideDomainInDiagnostics() const;
+
+  /// Formats a human-readable description of the availability constraint for
+  /// use in diagnostics. Writes the description to \p scratch and returns a
+  /// StringRef into it. The description is one of:
+  ///   - "is unavailable"
+  ///   - "is unavailable in <domain>"
+  ///   - "is only available in <domain>"
+  ///   - "is only available in <domain> <version> or newer"
+  ///
+  /// If there is a `message:` on the attribute that creates the constraint
+  /// then that message's body will be appended to the result.
+  StringRef getDiagnosticDescription(llvm::SmallString<64> &scratch,
+                                     const ASTContext &ctx) const;
+
   /// Some availability constraints are active for type-checking but cannot
   /// be translated directly into an `if #available(...)` runtime query.
   bool isActiveForRuntimeQueries(const ASTContext &ctx) const;

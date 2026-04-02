@@ -1090,24 +1090,26 @@ behaviorLimitForExplicitUnavailability(
 
 /// Emits a diagnostic for a protocol conformance that is potentially
 /// unavailable at the given source location.
-static bool diagnosePotentialUnavailability(
-    const RootProtocolConformance *rootConf, const ExtensionDecl *ext,
-    SourceLoc loc, const DeclContext *dc, AvailabilityDomain domain,
-    const AvailabilityRange &availability) {
+static bool
+diagnosePotentialUnavailability(const RootProtocolConformance *rootConf,
+                                const ExtensionDecl *ext, SourceLoc loc,
+                                const DeclContext *dc,
+                                const AvailabilityConstraint &constraint) {
   ASTContext &ctx = dc->getASTContext();
   if (ctx.LangOpts.DisableAvailabilityChecking)
     return false;
 
+  auto domainAndRange = constraint.getDomainAndRange(ctx);
+  auto domain = domainAndRange.getDomain();
+  const auto &availability = domainAndRange.getRange();
+
   {
     auto type = rootConf->getType();
     auto proto = rootConf->getProtocol()->getDeclaredInterfaceType();
-    auto err = availability.hasMinimumVersion()
-        ? ctx.Diags.diagnose(
-            loc, diag::conformance_availability_only_version_newer, type, proto,
-            domain, availability)
-        : ctx.Diags.diagnose(
-            loc, diag::conformance_availability_not_available, type, proto,
-            domain);
+    llvm::SmallString<64> diagDescription;
+    auto err = ctx.Diags.diagnose(
+        loc, diag::conformance_availability_unavailable, type, proto,
+        constraint.getDiagnosticDescription(diagDescription, ctx));
 
     auto behaviorLimit = behaviorLimitForExplicitUnavailability(rootConf, dc);
     if (!availability.hasMinimumVersion()) {
@@ -1758,29 +1760,6 @@ static bool diagnoseExplicitUnavailability(
       });
 }
 
-bool shouldHideDomainNameForConstraintDiagnostic(
-    const AvailabilityConstraint &constraint) {
-  switch (constraint.getDomain().getKind()) {
-  case AvailabilityDomain::Kind::Universal:
-  case AvailabilityDomain::Kind::Embedded:
-  case AvailabilityDomain::Kind::Custom:
-  case AvailabilityDomain::Kind::PackageDescription:
-    return true;
-  case AvailabilityDomain::Kind::StandaloneSwiftRuntime:
-  case AvailabilityDomain::Kind::Platform:
-    return false;
-  case AvailabilityDomain::Kind::SwiftLanguageMode:
-    switch (constraint.getReason()) {
-    case AvailabilityConstraint::Reason::UnavailableUnconditionally:
-    case AvailabilityConstraint::Reason::UnavailableUnintroduced:
-      return false;
-    case AvailabilityConstraint::Reason::Unintroduced:
-    case AvailabilityConstraint::Reason::UnavailableObsolete:
-      return true;
-    }
-  }
-}
-
 bool diagnoseExplicitUnavailability(SourceLoc loc,
                                     const AvailabilityConstraint &constraint,
                                     const RootProtocolConformance *rootConf,
@@ -1808,11 +1787,10 @@ bool diagnoseExplicitUnavailability(SourceLoc loc,
   auto behavior =
       behaviorLimitForExplicitUnavailability(rootConf, where.getDeclContext());
 
-  EncodedDiagnosticMessage EncodedMessage(attr.getMessage());
+  llvm::SmallString<64> diagDescription;
   diags
       .diagnose(loc, diag::conformance_availability_unavailable, type, proto,
-                shouldHideDomainNameForConstraintDiagnostic(constraint),
-                domainAndRange.getDomain(), EncodedMessage.Message)
+                constraint.getDiagnosticDescription(diagDescription, ctx))
       .limitBehaviorWithPreconcurrency(behavior, preconcurrency)
       .warnUntilLanguageModeIf(warnIfConformanceUnavailablePreSwift6,
                                LanguageMode::v6);
@@ -2239,7 +2217,7 @@ bool diagnoseExplicitUnavailability(
     EncodedDiagnosticMessage EncodedMessage(message);
     diags
         .diagnose(Loc, diag::availability_decl_unavailable, D,
-                  shouldHideDomainNameForConstraintDiagnostic(constraint),
+                  constraint.shouldHideDomainInDiagnostics(),
                   domainAndRange.getDomain(), EncodedMessage.Message)
         .highlight(R)
         .limitBehavior(limit);
@@ -3635,10 +3613,8 @@ swift::diagnoseConformanceAvailability(SourceLoc loc,
       }
 
       // Diagnose (and possibly signal) for potential unavailability
-      auto domainAndRange = constraint->getDomainAndRange(ctx);
       if (diagnosePotentialUnavailability(rootConf, ext, loc, DC,
-                                          domainAndRange.getDomain(),
-                                          domainAndRange.getRange())) {
+                                          *constraint)) {
         maybeEmitAssociatedTypeNote();
         return true;
       }

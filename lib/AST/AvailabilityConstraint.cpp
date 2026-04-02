@@ -14,6 +14,8 @@
 #include "swift/AST/ASTContext.h"
 #include "swift/AST/AvailabilityContext.h"
 #include "swift/AST/Decl.h"
+#include "llvm/ADT/SmallString.h"
+#include "llvm/Support/raw_ostream.h"
 
 using namespace swift;
 
@@ -27,6 +29,58 @@ AvailabilityConstraint::getDomainAndRange(const ASTContext &ctx) const {
   case Reason::Unintroduced:
     return getAttr().getIntroducedDomainAndRange(ctx).value();
   }
+}
+
+bool AvailabilityConstraint::shouldHideDomainInDiagnostics() const {
+  switch (getDomain().getKind()) {
+  case AvailabilityDomain::Kind::Universal:
+  case AvailabilityDomain::Kind::Embedded:
+  case AvailabilityDomain::Kind::Custom:
+  case AvailabilityDomain::Kind::PackageDescription:
+    return true;
+  case AvailabilityDomain::Kind::StandaloneSwiftRuntime:
+  case AvailabilityDomain::Kind::Platform:
+    return false;
+  case AvailabilityDomain::Kind::SwiftLanguageMode:
+    switch (getReason()) {
+    case Reason::UnavailableUnconditionally:
+    case Reason::UnavailableUnintroduced:
+      return false;
+    case Reason::Unintroduced:
+    case Reason::UnavailableObsolete:
+      return true;
+    }
+  }
+}
+
+StringRef
+AvailabilityConstraint::getDiagnosticDescription(llvm::SmallString<64> &scratch,
+                                                 const ASTContext &ctx) const {
+  auto domainAndRange = getDomainAndRange(ctx);
+  auto domain = domainAndRange.getDomain();
+  llvm::raw_svector_ostream os(scratch);
+  switch (getReason()) {
+  case Reason::UnavailableUnconditionally:
+  case Reason::UnavailableObsolete:
+  case Reason::UnavailableUnintroduced: {
+    os << "is unavailable";
+
+    if (!shouldHideDomainInDiagnostics())
+      os << " in " << domain.getNameForDiagnostics();
+
+    // Include the optional message from the @available attribute.
+    if (!getAttr().getMessage().empty())
+      os << ": " << getAttr().getMessage();
+    break;
+  }
+  case Reason::Unintroduced: {
+    os << "is only available in " << domain.getNameForDiagnostics();
+    if (domainAndRange.getRange().hasMinimumVersion())
+      os << " " << domainAndRange.getRange().getVersionString() << " or newer";
+    break;
+  }
+  }
+  return scratch.str();
 }
 
 bool AvailabilityConstraint::isActiveForRuntimeQueries(
