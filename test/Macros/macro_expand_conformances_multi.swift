@@ -1,15 +1,19 @@
 // REQUIRES: swift_swift_parser
 
 // RUN: %empty-directory(%t)
+// RUN: split-file %s %t
+
 // RUN: %host-build-swift -swift-version 5 -emit-library -o %t/%target-library-name(MacroDefinition) -module-name=MacroDefinition %S/Inputs/syntax_macro_definitions.swift -g -no-toolchain-stdlib-rpath
 
 // Make sure we see the conformances from another file.
-// RUN: %target-typecheck-verify-swift -swift-version 5 -load-plugin-library %t/%target-library-name(MacroDefinition) -module-name MacroUser -swift-version 5 -primary-file %S/Inputs/macro_expand_conformances_other.swift -DDISABLE_TOP_LEVEL_CODE
+// RUN: %target-swift-frontend -typecheck -verify -swift-version 5 -load-plugin-library %t/%target-library-name(MacroDefinition) -module-name MacroUser -primary-file %t/other.swift %t/main.swift
 
-@attached(conformance)
+//--- main.swift
+
+@attached(extension, conformances: Equatable)
 macro Equatable() = #externalMacro(module: "MacroDefinition", type: "EquatableMacro")
 
-@attached(conformance)
+@attached(extension, conformances: Hashable)
 macro Hashable() = #externalMacro(module: "MacroDefinition", type: "HashableMacro")
 
 func requireEquatable(_ value: some Equatable) -> Int {
@@ -31,3 +35,12 @@ macro ConformanceViaExtension() = #externalMacro(module: "MacroDefinition", type
 
 @ConformanceViaExtension
 class Parent {}
+
+//--- other.swift
+
+struct STest {
+  var x = requireEquatable(S())
+}
+
+@ConformanceViaExtension
+class Child: Parent {}
