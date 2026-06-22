@@ -916,6 +916,16 @@ ConformanceLookupTable::getConformance(NominalTypeDecl *nominal,
   // Never produce a conformance for a pre-macro-expansion conformance. They
   // are placeholders that will be superseded.
   if (entry->getKind() == ConformanceEntryKind::PreMacroExpansion) {
+    // The supersede relationship is established by resolveConformances() on
+    // the implying protocol's entries. If we get here from the chase through
+    // a separate protocol's lookup (e.g. a base protocol whose conformance is
+    // implied by a refining protocol whose conformance came from a macro),
+    // the implying protocol's entries may not have been resolved yet. Resolve
+    // them now to give this PreMacroExpansion placeholder a chance to be
+    // superseded by the real macro-expanded entry.
+    if (!entry->SupersededBy)
+      resolveConformances(protocol);
+
     if (auto supersedingEntry = entry->SupersededBy) {
       return getConformance(nominal, supersedingEntry);
     }
