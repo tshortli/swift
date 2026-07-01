@@ -358,9 +358,25 @@ class SILSymbolVisitorImpl : public ASTVisitor<SILSymbolVisitorImpl> {
 
     // Some members of classes get extra handling, beyond members of
     // struct/enums, so let's walk over them manually.
-    if (Ctx.getOpts().VisitMembers)
-      for (auto *var : CD->getStoredProperties())
+    if (Ctx.getOpts().VisitMembers) {
+      // IRGen stores field offsets in the class metadata rather than as global
+      // variables once the layout depends on generic parameters. Mirror the
+      // logic in `ClassMetadataFlags::ClassHasGenericLayout` here by fencing
+      // subsequent field offsets once we encounter a stored property whose
+      // type is a bare type parameter. Note: this is an approximation of
+      // IRGen's `!isFixedSize() && hasArchetype()` check, which is not
+      // available at the AST level; classes whose first "unfixed" stored
+      // property uses a type parameter indirectly (e.g. `T?`) may still emit
+      // a bogus field-offset symbol here.
+      bool skipFieldOffsets = false;
+      for (auto *var : CD->getStoredProperties()) {
+        if (var->getInterfaceType()->isTypeParameter())
+          skipFieldOffsets = true;
+        if (skipFieldOffsets)
+          continue;
         Visitor.addFieldOffset(var);
+      }
+    }
 
     visitNominalTypeDecl(CD);
 

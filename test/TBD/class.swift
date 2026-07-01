@@ -1,12 +1,12 @@
-// REQUIRES: VENDOR=apple 
-// RUN: %target-swift-frontend -emit-ir -o/dev/null -parse-as-library -module-name test -validate-tbd-against-ir=missing %s
+// REQUIRES: VENDOR=apple
+// RUN: %target-swift-frontend -emit-ir -o/dev/null -parse-as-library -module-name test -validate-tbd-against-ir=all %s
 // RUN: %target-swift-frontend -enable-library-evolution -emit-ir -o/dev/null -parse-as-library -module-name test -validate-tbd-against-ir=missing %s
-// RUN: %target-swift-frontend -emit-ir -o/dev/null -parse-as-library -module-name test -validate-tbd-against-ir=missing %s -enable-testing
+// RUN: %target-swift-frontend -emit-ir -o/dev/null -parse-as-library -module-name test -validate-tbd-against-ir=all %s -enable-testing
 // RUN: %target-swift-frontend -enable-library-evolution -emit-ir -o/dev/null -parse-as-library -module-name test -validate-tbd-against-ir=missing %s -enable-testing
 
-// RUN: %target-swift-frontend -emit-ir -o/dev/null -parse-as-library -module-name test -validate-tbd-against-ir=missing -O %s
+// RUN: %target-swift-frontend -emit-ir -o/dev/null -parse-as-library -module-name test -validate-tbd-against-ir=all -O %s
 // RUN: %target-swift-frontend -enable-library-evolution -emit-ir -o/dev/null -parse-as-library -module-name test -validate-tbd-against-ir=missing -O %s
-// RUN: %target-swift-frontend -emit-ir -o/dev/null -parse-as-library -module-name test -validate-tbd-against-ir=missing %s -enable-testing -O
+// RUN: %target-swift-frontend -emit-ir -o/dev/null -parse-as-library -module-name test -validate-tbd-against-ir=all %s -enable-testing -O
 // RUN: %target-swift-frontend -enable-library-evolution -emit-ir -o/dev/null -parse-as-library -module-name test -validate-tbd-against-ir=missing %s -enable-testing -O
 
 // RUN: %empty-directory(%t)
@@ -212,6 +212,24 @@ public class PublicGeneric<T, U, V> {
   public static func publicStaticGeneric<A>(_: A, default_: Int = 0) {}
   internal static func internalStaticGeneric<A>(_: A, default_: Int = 0) {}
   private static func privateStaticGeneric<A>(_: A, default_: Int = 0) {}
+}
+
+// Tests field offset symbols for concrete fields after a generic field.
+public class PublicGeneric2<T> {
+  public var publicVarConcreteBefore: Int = 0
+  public var publicVarGeneric: T
+  public var publicVarConcreteAfter: Int = 0
+
+  public init(t: T) {
+    publicVarGeneric = t
+  }
+}
+
+public class PublicGeneric3<T> {
+  public var publicVarGenericArray: [T] = []
+  public var publicVarConcreteAfter: Int = 0
+
+  public init() {}
 }
 
 
