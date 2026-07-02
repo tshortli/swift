@@ -2016,7 +2016,8 @@ static bool processCommandLineAndRunImmediately(CompilerInstance &Instance,
 
 static bool validateTBDIfNeeded(const CompilerInvocation &Invocation,
                                 ModuleOrSourceFile MSF,
-                                const llvm::Module &IRModule) {
+                                const llvm::Module &IRModule,
+                                const llvm::StringSet<> &ignoredSymbols) {
   const auto mode = Invocation.getFrontendOptions().ValidateTBDAgainstIR;
   const bool canPerformTBDValidation = [&]() {
     // If the user has requested we skip validation, honor it.
@@ -2095,10 +2096,11 @@ static bool validateTBDIfNeeded(const CompilerInvocation &Invocation,
   // noise from e.g. statically-linked libraries.
   Opts.embedSymbolsFromModules.clear();
   if (auto *SF = MSF.dyn_cast<SourceFile *>()) {
-    return validateTBD(SF, IRModule, Opts, diagnoseExtraSymbolsInTBD);
+    return validateTBD(SF, IRModule, Opts, diagnoseExtraSymbolsInTBD,
+                       ignoredSymbols);
   } else {
     return validateTBD(cast<ModuleDecl *>(MSF), IRModule, Opts,
-                       diagnoseExtraSymbolsInTBD);
+                       diagnoseExtraSymbolsInTBD, ignoredSymbols);
   }
 }
 
@@ -2436,7 +2438,8 @@ static bool performCompileStepsPostSILGen(
   if (!IRModule)
     return Instance.getDiags().hadAnyError();
 
-  if (validateTBDIfNeeded(Invocation, MSF, *IRModule.getModule()))
+  if (validateTBDIfNeeded(Invocation, MSF, *IRModule.getModule(),
+                          IRModule.getClangEmittedSymbols()))
     return true;
 
   if (IRGenOpts.UseSingleModuleLLVMEmission) {

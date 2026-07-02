@@ -1712,6 +1712,12 @@ public:
   void emitNestedTypeDecls(DeclRange members);
   void emitClangDecl(const clang::Decl *decl);
 
+  /// Collect the LLVM names of externally-visible symbols in the module that
+  /// were emitted by ClangCodeGen from imported declarations. These names are
+  /// used by TBD validation to skip symbols that Swift's TBDGen does not
+  /// track.
+  void collectClangEmittedSymbols(llvm::StringSet<> &names);
+
   void finalizeClangCodeGen();
   void finishEmitAfterTopLevel();
 

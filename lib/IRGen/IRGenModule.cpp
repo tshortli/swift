@@ -1435,10 +1435,13 @@ bool IRGenModule::isWellKnownBuiltinOrStructuralType(CanType T) const {
 }
 
 GeneratedModule IRGenModule::intoGeneratedModule() && {
+  llvm::StringSet<> clangEmittedSymbols;
+  collectClangEmittedSymbols(clangEmittedSymbols);
   return GeneratedModule{
       std::move(LLVMContext),
       std::unique_ptr<llvm::Module>{ClangCodeGen->ReleaseModule()},
-      std::move(TargetMachine), std::move(RemarkStream)};
+      std::move(TargetMachine), std::move(RemarkStream),
+      std::move(clangEmittedSymbols)};
 }
 
 bool IRGenerator::canEmitWitnessTableLazily(SILWitnessTable *wt) {

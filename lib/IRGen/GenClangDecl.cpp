@@ -395,6 +395,40 @@ void IRGenModule::ensureImplicitCXXDestructorBodyIsDefined(
   sema.DefineImplicitDestructor(clang::SourceLocation(), destructor);
 }
 
+void IRGenModule::collectClangEmittedSymbols(llvm::StringSet<> &names) {
+  if (!ClangCodeGen)
+    return;
+  auto record = [&](clang::GlobalDecl GD) {
+    // Fetch the LLVM value Clang assigned to this decl. We use
+    // isForDefinition=false so that a definition isn't forced; if the decl
+    // was emitted at all, Clang will return the existing value.
+    llvm::Constant *C =
+        ClangCodeGen->GetAddrOfGlobal(GD, /*isForDefinition=*/false);
+    if (!C)
+      return;
+    if (auto *GV = dyn_cast<llvm::GlobalValue>(C->stripPointerCasts())) {
+      if (!GV->getName().empty())
+        names.insert(GV->getName());
+    }
+  };
+  for (const clang::Decl *D : GlobalClangDecls) {
+    // C++ constructors/destructors have multiple variants; skip them here to
+    // avoid Clang synthesizing spurious declarations for unused variants.
+    // Function pointer interop with plain C decls (rdar://153808913) is the
+    // motivating case and doesn't need CXX-structor handling.
+    if (isa<clang::CXXConstructorDecl>(D) || isa<clang::CXXDestructorDecl>(D))
+      continue;
+    if (auto *FD = dyn_cast<clang::FunctionDecl>(D)) {
+      record(clang::GlobalDecl(FD));
+      continue;
+    }
+    if (auto *VD = dyn_cast<clang::VarDecl>(D)) {
+      if (VD->hasGlobalStorage())
+        record(clang::GlobalDecl(VD));
+    }
+  }
+}
+
 /// Retrieves the base classes of a C++ struct/class ordered by their offset in
 /// the derived type's memory layout.
 SmallVector<CXXBaseRecordLayout, 1>

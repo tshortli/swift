@@ -57,7 +57,8 @@ bool swift::writeTBD(ModuleDecl *M, StringRef OutputFilename,
 static bool validateSymbols(DiagnosticEngine &diags,
                             const std::vector<std::string> &symbols,
                             const llvm::Module &IRModule,
-                            bool diagnoseExtraSymbolsInTBD) {
+                            bool diagnoseExtraSymbolsInTBD,
+                            const llvm::StringSet<> &ignoredSymbols) {
   llvm::StringSet<> symbolSet;
   symbolSet.insert(symbols.begin(), symbols.end());
 
@@ -74,6 +75,12 @@ static bool validateSymbols(DiagnosticEngine &diags,
     // symbol table, so make sure to mangle IRGen names before comparing them
     // with what TBDGen created.
     auto unmangledName = nameValue.getKey();
+
+    // Skip symbols known to be emitted by ClangCodeGen for imported
+    // declarations; those aren't tracked by Swift's TBDGen and don't
+    // participate in TBD/IR consistency.
+    if (ignoredSymbols.contains(unmangledName))
+      continue;
 
     SmallString<128> name;
     llvm::Mangler::getNameWithPrefix(name, unmangledName,
@@ -124,17 +131,20 @@ static bool validateSymbols(DiagnosticEngine &diags,
 bool swift::validateTBD(ModuleDecl *M,
                         const llvm::Module &IRModule,
                         const TBDGenOptions &opts,
-                        bool diagnoseExtraSymbolsInTBD) {
+                        bool diagnoseExtraSymbolsInTBD,
+                        const llvm::StringSet<> &ignoredSymbols) {
   auto symbols = getPublicSymbols(TBDGenDescriptor::forModule(M, opts));
   return validateSymbols(M->getASTContext().Diags, symbols, IRModule,
-                         diagnoseExtraSymbolsInTBD);
+                         diagnoseExtraSymbolsInTBD, ignoredSymbols);
 }
 
 bool swift::validateTBD(FileUnit *file,
                         const llvm::Module &IRModule,
                         const TBDGenOptions &opts,
-                        bool diagnoseExtraSymbolsInTBD) {
+                        bool diagnoseExtraSymbolsInTBD,
+                        const llvm::StringSet<> &ignoredSymbols) {
   auto symbols = getPublicSymbols(TBDGenDescriptor::forFile(file, opts));
   return validateSymbols(file->getParentModule()->getASTContext().Diags,
-                         symbols, IRModule, diagnoseExtraSymbolsInTBD);
+                         symbols, IRModule, diagnoseExtraSymbolsInTBD,
+                         ignoredSymbols);
 }

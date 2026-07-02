@@ -75,6 +75,12 @@ private:
   std::unique_ptr<llvm::TargetMachine> Target;
   std::unique_ptr<llvm::raw_fd_ostream> RemarkStream;
 
+  /// Names of externally-visible symbols in \c Module that were emitted by
+  /// ClangCodeGen for imported C/C++/ObjC declarations. These are not tracked
+  /// by Swift's TBDGen and should be excluded from TBD/IR consistency
+  /// validation.
+  llvm::StringSet<> ClangEmittedSymbols;
+
   GeneratedModule() : Context(nullptr), Module(nullptr), Target(nullptr) {}
 
   GeneratedModule(GeneratedModule const &) = delete;
@@ -88,9 +94,11 @@ public:
   explicit GeneratedModule(std::unique_ptr<llvm::LLVMContext> &&Context,
                            std::unique_ptr<llvm::Module> &&Module,
                            std::unique_ptr<llvm::TargetMachine> &&Target,
-                           std::unique_ptr<llvm::raw_fd_ostream> &&RemarkStream)
+                           std::unique_ptr<llvm::raw_fd_ostream> &&RemarkStream,
+                           llvm::StringSet<> &&ClangEmittedSymbols = {})
       : Context(std::move(Context)), Module(std::move(Module)),
-        Target(std::move(Target)), RemarkStream(std::move(RemarkStream)) {
+        Target(std::move(Target)), RemarkStream(std::move(RemarkStream)),
+        ClangEmittedSymbols(std::move(ClangEmittedSymbols)) {
     assert(getModule() && "Use GeneratedModule::null() instead");
     assert(getContext() && "Use GeneratedModule::null() instead");
     assert(getTargetMachine() && "Use GeneratedModule::null() instead");
@@ -119,6 +127,14 @@ public:
 
   const llvm::TargetMachine *getTargetMachine() const { return Target.get(); }
   llvm::TargetMachine *getTargetMachine() { return Target.get(); }
+
+  /// Returns the names of externally-visible symbols in the module that were
+  /// emitted by ClangCodeGen for imported declarations. These should be
+  /// excluded from TBD/IR consistency validation because they are not tracked
+  /// by Swift's TBDGen.
+  const llvm::StringSet<> &getClangEmittedSymbols() const {
+    return ClangEmittedSymbols;
+  }
 
 public:
   /// Release ownership of the context and module to the caller, consuming

@@ -14,6 +14,7 @@
 #define SWIFT_FRONTENDTOOL_TBD_H
 
 #include "swift/Frontend/FrontendOptions.h"
+#include "llvm/ADT/StringSet.h"
 
 namespace llvm {
 class StringRef;
@@ -33,11 +34,13 @@ bool writeTBD(ModuleDecl *M, StringRef OutputFilename,
 bool validateTBD(ModuleDecl *M,
                  const llvm::Module &IRModule,
                  const TBDGenOptions &opts,
-                 bool diagnoseExtraSymbolsInTBD);
+                 bool diagnoseExtraSymbolsInTBD,
+                 const llvm::StringSet<> &ignoredSymbols);
 bool validateTBD(FileUnit *M,
                  const llvm::Module &IRModule,
                  const TBDGenOptions &opts,
-                 bool diagnoseExtraSymbolsInTBD);
+                 bool diagnoseExtraSymbolsInTBD,
+                 const llvm::StringSet<> &ignoredSymbols);
 }
 
 #endif
