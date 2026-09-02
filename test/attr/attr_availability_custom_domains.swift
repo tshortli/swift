@@ -1,15 +1,21 @@
 // RUN: %target-typecheck-verify-swift \
-// RUN:  -enable-experimental-feature CustomAvailability \
-// RUN:  -define-enabled-availability-domain EnabledDomain \
-// RUN:  -define-always-enabled-availability-domain AlwaysEnabledDomain \
-// RUN:  -define-enabled-availability-domain RedefinedDomain \
-// RUN:  -define-disabled-availability-domain DisabledDomain \
-// RUN:  -define-dynamic-availability-domain DynamicDomain \
-// RUN:  -define-disabled-availability-domain RedefinedDomain
+// RUN:  -enable-experimental-feature CustomAvailabilityDomains
 
-// REQUIRES: swift_feature_CustomAvailability
+// REQUIRES: swift_feature_CustomAvailabilityDomains
 
 // FIXME: [availability] Test custom domains in availability macros
+
+@_availabilityDomain(EnabledDomain)
+_const public let enabledDomain = true
+
+@_availabilityDomain(AlwaysEnabledDomain, defaulted)
+_const public let alwaysEnabledDomain = true
+
+@_availabilityDomain(DisabledDomain)
+_const public let disabledDomain = false
+
+@_availabilityDomain(DynamicDomain)
+public let dynamicDomain = Bool.random()
 
 func alwaysAvailable() { }
 
@@ -57,9 +63,6 @@ func obsoletedInEnabledDomain() { }
 
 @available(DisabledDomain, unavailable)
 func unavailableInDisabledDomain() { }
-
-@available(RedefinedDomain, deprecated, message: "Use something else")
-func deprecatedInRedefinedDomain() { }
 
 @available(DynamicDomain)
 func availableInDynamicDomain() { }

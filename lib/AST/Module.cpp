@@ -182,6 +182,11 @@ class swift::SourceLookupCache {
   OperatorMap<OperatorDecl> Operators;
   OperatorMap<PrecedenceGroupDecl> PrecedenceGroups;
 
+  /// The decls that define availability domains, keyed by domain name. The
+  /// decls for a single name are in the order that they were added in.
+  llvm::DenseMap<Identifier, TinyPtrVector<ValueDecl *>>
+      AvailabilityDomainDecls;
+
   template <typename Range>
   void addToUnqualifiedLookupCache(Range decls, bool onlyOperators,
                                    bool onlyDerivatives);
@@ -231,6 +236,10 @@ public:
   /// \param name The operator name ("+", ">>", etc.)
   void lookupPrecedenceGroup(Identifier name,
                              TinyPtrVector<PrecedenceGroupDecl *> &results);
+
+  /// Look up the decls that define the availability domain named \p name.
+  void lookupAvailabilityDomainDecls(Identifier name,
+                                     TinyPtrVector<ValueDecl *> &results);
 
   void lookupVisibleDecls(ImportPath::Access AccessPath,
                           VisibleDeclConsumer &Consumer,
@@ -300,6 +309,13 @@ void SourceLookupCache::addToUnqualifiedLookupCache(Range items,
           MayHaveAuxiliaryDecls.push_back(VD);
         if (AbstractFunctionDecl *AFD = getDerivative())
           CustomDerivatives.push_back(AFD);
+
+        // FIXME: [availability] Find domains defined by macro expansions.
+        if (auto *attr =
+                VD->getAttrs().getAttribute<AvailabilityDomainAttr>()) {
+          if (!attr->getName().empty())
+            AvailabilityDomainDecls[attr->getName()].push_back(VD);
+        }
       }
     }
 
@@ -636,6 +652,16 @@ void SourceLookupCache::lookupPrecedenceGroup(
 
   for (auto *group : groups->second)
     results.push_back(group);
+}
+
+void SourceLookupCache::lookupAvailabilityDomainDecls(
+    Identifier name, TinyPtrVector<ValueDecl *> &results) {
+  auto decls = AvailabilityDomainDecls.find(name);
+  if (decls == AvailabilityDomainDecls.end())
+    return;
+
+  for (auto *decl : decls->second)
+    results.push_back(decl);
 }
 
 void SourceLookupCache::lookupVisibleDecls(ImportPath::Access AccessPath,
@@ -1266,6 +1292,17 @@ void SourceFile::lookupObjCMethods(
   auto known = ObjCMethods.find(selector);
   if (known == ObjCMethods.end()) return;
   results.append(known->second.begin(), known->second.end());
+}
+
+void SourceFile::lookupAvailabilityDomains(
+    Identifier identifier, SmallVectorImpl<AvailabilityDomain> &results) const {
+  TinyPtrVector<ValueDecl *> decls;
+  getCache().lookupAvailabilityDomainDecls(identifier, decls);
+
+  for (auto *decl : decls) {
+    if (auto domain = AvailabilityDomain::forCustom(decl))
+      results.push_back(*domain);
+  }
 }
 
 void ModuleDecl::getLocalTypeDecls(SmallVectorImpl<TypeDecl*> &Results) const {

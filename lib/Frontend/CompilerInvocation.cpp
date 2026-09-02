@@ -1029,12 +1029,17 @@ bool swift::parseFeatureArgs(LangOptions &Opts, llvm::opt::ArgList &Args,
     bool forMigration = featureMode.has_value();
 
     // Enable the feature if requested.
-    if (isEnableFeatureFlag)
+    if (isEnableFeatureFlag) {
       Opts.enableFeature(*feature, forMigration);
 
-    // 'StandaloneSwiftAvailability' implies 'SwiftRuntimeAvailability'
-    if (*feature == Feature::StandaloneSwiftAvailability)
-      Opts.enableFeature(Feature::SwiftRuntimeAvailability, forMigration);
+      // 'CustomAvailabilityDomains' implies 'CustomAvailability'
+      if (*feature == Feature::CustomAvailabilityDomains)
+        Opts.enableFeature(Feature::CustomAvailability, forMigration);
+
+      // 'StandaloneSwiftAvailability' implies 'SwiftRuntimeAvailability'
+      if (*feature == Feature::StandaloneSwiftAvailability)
+        Opts.enableFeature(Feature::SwiftRuntimeAvailability, forMigration);
+    }
   }
 
   // Since pseudo-features don't have a boolean on/off state, process them in

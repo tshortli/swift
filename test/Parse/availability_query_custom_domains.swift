@@ -1,10 +1,16 @@
 // RUN: %target-typecheck-verify-swift \
-// RUN:  -enable-experimental-feature CustomAvailability \
-// RUN:  -define-enabled-availability-domain EnabledDomain \
-// RUN:  -define-disabled-availability-domain DisabledDomain \
-// RUN:  -define-dynamic-availability-domain DynamicDomain
+// RUN:  -enable-experimental-feature CustomAvailabilityDomains
 
-// REQUIRES: swift_feature_CustomAvailability
+// REQUIRES: swift_feature_CustomAvailabilityDomains
+
+@_availabilityDomain(EnabledDomain)
+_const let enabledDomain = true
+
+@_availabilityDomain(DisabledDomain)
+_const let disabledDomain = false
+
+@_availabilityDomain(DynamicDomain)
+let dynamicDomain = Bool.random()
 
 if #available(EnabledDomain) { }
 if #available(DisabledDomain) { }

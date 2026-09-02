@@ -3932,6 +3932,50 @@ public:
   }
 };
 
+/// Designates a global `let` declaration as the definition of a custom
+/// availability domain. For example:
+class AvailabilityDomainAttr final : public DeclAttribute {
+  Identifier Name;
+  SourceLoc NameLoc;
+  SourceLoc DefaultedLoc;
+
+  AvailabilityDomainAttr(SourceLoc atLoc, SourceRange range, Identifier name,
+                         SourceLoc nameLoc, SourceLoc defaultedLoc,
+                         bool implicit)
+      : DeclAttribute(DeclAttrKind::AvailabilityDomain, atLoc, range, implicit),
+        Name(name), NameLoc(nameLoc), DefaultedLoc(defaultedLoc) {}
+
+public:
+  static AvailabilityDomainAttr *create(ASTContext &ctx, SourceLoc atLoc,
+                                        SourceRange range, Identifier name,
+                                        SourceLoc nameLoc,
+                                        SourceLoc defaultedLoc, bool implicit);
+
+  /// The name of the availability domain that the decl defines.
+  Identifier getName() const { return Name; }
+
+  SourceLoc getNameLoc() const { return NameLoc; }
+
+  /// Whether `defaulted` was specified, indicating that the domain is enabled
+  /// for all deployments.
+  bool isDefaulted() const { return DefaultedLoc.isValid(); }
+
+  SourceLoc getDefaultedLoc() const { return DefaultedLoc; }
+
+  static bool classof(const DeclAttribute *DA) {
+    return DA->getKind() == DeclAttrKind::AvailabilityDomain;
+  }
+
+  AvailabilityDomainAttr *clone(ASTContext &ctx) const {
+    return create(ctx, AtLoc, Range, Name, NameLoc, DefaultedLoc, isImplicit());
+  }
+
+  bool isEquivalent(const AvailabilityDomainAttr *other,
+                    Decl *attachedTo) const {
+    return Name == other->Name && isDefaulted() == other->isDefaulted();
+  }
+};
+
 /// The kind of unary operator, if any.
 enum class UnaryOperatorKind : uint8_t { None, Prefix, Postfix };
 

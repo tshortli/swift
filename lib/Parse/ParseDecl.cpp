@@ -2222,6 +2222,64 @@ Parser::parseAllowFeatureSuppressionAttribute(bool inverted, SourceLoc atLoc,
       features));
 }
 
+/// Parse the arguments of an `@_availabilityDomain` attribute:
+///
+///   '@_availabilityDomain' '(' identifier (',' 'defaulted')? ')'
+ParserResult<AvailabilityDomainAttr>
+Parser::parseAvailabilityDomainAttribute(SourceLoc atLoc, SourceLoc loc) {
+  StringRef attrName = "_availabilityDomain";
+
+  Identifier name;
+  SourceLoc nameLoc;
+  SourceLoc defaultedLoc;
+  bool sawArgument = false;
+  SourceRange parensRange;
+  auto status = parseAttributeArguments(
+      loc, attrName, /*isModifier=*/false, parensRange, [&]() -> ParserStatus {
+        // The first argument names the availability domain.
+        if (!sawArgument) {
+          sawArgument = true;
+          if (parseIdentifier(name, nameLoc,
+                              diag::attr_availability_domain_expected_name,
+                              /*diagnoseDollarPrefix=*/true))
+            return makeParserError();
+
+          return makeParserSuccess();
+        }
+
+        // The only other accepted argument is 'defaulted', and it may only be
+        // written once.
+        if (defaultedLoc.isValid()) {
+          diagnose(Tok, diag::attr_expected_rparen, attrName,
+                   /*isModifier=*/false);
+          return makeParserError();
+        }
+
+        if (parseSpecificIdentifier(
+                "defaulted", defaultedLoc,
+                diag::attr_availability_domain_expected_defaulted))
+          return makeParserError();
+
+        return makeParserSuccess();
+      });
+  if (!status.isSuccess())
+    return status;
+
+  // The domain name is required, so an empty argument list is an error.
+  if (!sawArgument) {
+    diagnose(parensRange.End, diag::attr_availability_domain_expected_name);
+    return makeParserError();
+  }
+
+  if (nameLoc.isInvalid())
+    return makeParserError();
+
+  auto range = SourceRange(loc, parensRange.End);
+  return makeParserResult(AvailabilityDomainAttr::create(
+      Context, atLoc, range, name, nameLoc, defaultedLoc,
+      /*implicit=*/false));
+}
+
 static std::optional<MacroIntroducedDeclNameKind>
 getMacroIntroducedDeclNameKind(Identifier name) {
   return llvm::StringSwitch<std::optional<MacroIntroducedDeclNameKind>>(
@@ -4219,6 +4277,15 @@ ParserStatus Parser::parseNewDeclAttribute(DeclAttributes &Attributes,
   case DeclAttrKind::AllowFeatureSuppression: {
     auto inverted = (AttrName == "_disallowFeatureSuppression");
     auto Attr = parseAllowFeatureSuppressionAttribute(inverted, AtLoc, Loc);
+    Status |= Attr;
+    if (Attr.isNonNull())
+      Attributes.add(Attr.get());
+    else
+      return makeParserSuccess();
+    break;
+  }
+  case DeclAttrKind::AvailabilityDomain: {
+    auto Attr = parseAvailabilityDomainAttribute(AtLoc, Loc);
     Status |= Attr;
     if (Attr.isNonNull())
       Attributes.add(Attr.get());

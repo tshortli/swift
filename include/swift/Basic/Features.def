@@ -562,6 +562,10 @@ SUPPRESSIBLE_EXPERIMENTAL_FEATURE(AddressableTypes, true)
 /// Allow custom availability domains to be defined and referenced.
 EXPERIMENTAL_FEATURE(CustomAvailability, true)
 
+/// Allow custom availability domains to be declared in Swift source with the
+/// '@_availabilityDomain' attribute. Implies 'CustomAvailability'.
+EXPERIMENTAL_FEATURE(CustomAvailabilityDomains, false)
+
 /// Syntax sugar features for concurrency.
 EXPERIMENTAL_FEATURE(ConcurrencySyntaxSugar, true)
 

@@ -4,6 +4,7 @@
 // RUN:   -enable-experimental-feature Extern \
 // RUN:   -enable-experimental-feature Lifetimes \
 // RUN:   -enable-experimental-feature RawLayout \
+// RUN:   -enable-experimental-feature CustomAvailabilityDomains \
 // RUN:   -enable-experimental-concurrency \
 // RUN:   -enable-experimental-move-only \
 // RUN:   -enable-experimental-feature ParserASTGen \
@@ -13,6 +14,7 @@
 // RUN:   -enable-experimental-feature Extern \
 // RUN:   -enable-experimental-feature Lifetimes \
 // RUN:   -enable-experimental-feature RawLayout \
+// RUN:   -enable-experimental-feature CustomAvailabilityDomains \
 // RUN:   -enable-experimental-concurrency \
 // RUN:   -enable-experimental-move-only \
 // RUN:   | %sanitize-address > %t/cpp-parser.ast
@@ -25,6 +27,7 @@
 // RUN:   -enable-experimental-feature Extern \
 // RUN:   -enable-experimental-feature Lifetimes \
 // RUN:   -enable-experimental-feature RawLayout \
+// RUN:   -enable-experimental-feature CustomAvailabilityDomains \
 // RUN:   -enable-experimental-concurrency \
 // RUN:   -enable-experimental-move-only
 
@@ -34,6 +37,7 @@
 // REQUIRES: swift_feature_Extern
 // REQUIRES: swift_feature_Lifetimes
 // REQUIRES: swift_feature_RawLayout
+// REQUIRES: swift_feature_CustomAvailabilityDomains
 
 // rdar://116686158
 // UNSUPPORTED: asan
@@ -87,6 +91,15 @@ func fn(_: Int) {}
 @_alignment(8) struct AnyAlignment {}
 
 @_allowFeatureSuppression(IsolatedAny) public func testFeatureSuppression(fn: @isolated(any) @Sendable () -> ()) {}
+
+@_availabilityDomain(EnabledDomain)
+_const let enabledDomain = true
+
+@_availabilityDomain(AlwaysEnabledDomain, defaulted)
+_const let alwaysEnabledDomain = true
+
+@_availabilityDomain(DynamicDomain)
+let dynamicDomain = Bool.random()
 
 @_disallowFeatureSuppression(NoncopyableGenerics) public struct LoudlyNC<T: ~Copyable> {}
 

@@ -1,11 +1,15 @@
 // RUN:  %target-swift-frontend -typecheck %s \
-// RUN:  -enable-experimental-feature CustomAvailability \
-// RUN:  -define-enabled-availability-domain A \
-// RUN:  -define-enabled-availability-domain B \
+// RUN:  -enable-experimental-feature CustomAvailabilityDomains \
 // RUN:  -dump-availability-scopes > %t.dump 2>&1
 // RUN: %FileCheck --strict-whitespace %s < %t.dump
 
-// REQUIRES: swift_feature_CustomAvailability
+// REQUIRES: swift_feature_CustomAvailabilityDomains
+
+@_availabilityDomain(A)
+_const let domainA = true
+
+@_availabilityDomain(B)
+_const let domainB = true
 
 // CHECK: {{^}}(root version={{.*}}
 // CHECK: {{^}}  (decl version={{.*}} available=A decl=availableInA()

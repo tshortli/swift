@@ -15,6 +15,7 @@
 #include "swift/AST/AvailabilityContext.h"
 #include "swift/AST/Decl.h"
 #include "swift/AST/DiagnosticsSema.h"
+#include "swift/AST/Expr.h"
 #include "swift/AST/Module.h"
 #include "swift/AST/TypeCheckRequests.h"
 #include "swift/Basic/Assertions.h"
@@ -77,6 +78,65 @@ customDomainForClangDecl(ValueDecl *decl) {
       decl->getModuleContext(), decl, predicate, ctx);
 }
 
+/// If `varDecl` is initialized with a boolean literal, returns the literal
+/// expression. Returns `nullptr` otherwise.
+static BooleanLiteralExpr *getBooleanLiteralInit(VarDecl *varDecl) {
+  auto *initExpr = varDecl->getParentInitializer();
+  if (!initExpr)
+    return nullptr;
+
+  return dyn_cast<BooleanLiteralExpr>(initExpr->getSemanticsProvidingExpr());
+}
+
+/// Returns the availability domain that `decl` defines with an
+/// `@_availabilityDomain` attribute, or `nullptr` if it does not define one.
+///
+/// This must remain a purely syntactic query. `DiagnosticEngine` asks every
+/// `ValueDecl` that it formats whether the decl represents a domain, so type
+/// checking here would be reachable from diagnostic emission.
+static const CustomAvailabilityDomain *
+customDomainForSwiftDecl(ValueDecl *decl) {
+  auto *attr = decl->getAttrs().getAttribute<AvailabilityDomainAttr>();
+  if (!attr)
+    return nullptr;
+
+  // The attribute is only meaningful on an immutable global variable. The
+  // remaining requirements, like having type `Bool`, are diagnosed separately
+  // by the attribute checker.
+  auto *varDecl = dyn_cast<VarDecl>(decl);
+  if (!varDecl || !varDecl->isLet() ||
+      !varDecl->getDeclContext()->isModuleScopeContext())
+    return nullptr;
+
+  // A domain that is not declared '_const' must be queried at runtime.
+  auto kind = CustomAvailabilityDomain::Kind::Dynamic;
+  if (varDecl->getAttrs().hasAttribute<CompileTimeLiteralAttr>()) {
+    // The value of a '_const' domain determines whether it is enabled. A
+    // domain that is both enabled and defaulted is enabled for every
+    // deployment.
+    //
+    // FIXME: [availability] A .swiftinterface has no initializer to inspect,
+    // so the kind must be encoded in the printed attribute instead.
+    kind = CustomAvailabilityDomain::Kind::Enabled;
+    if (auto *initExpr = getBooleanLiteralInit(varDecl)) {
+      if (initExpr->getValue()) {
+        if (attr->isDefaulted())
+          kind = CustomAvailabilityDomain::Kind::AlwaysEnabled;
+      } else {
+        kind = CustomAvailabilityDomain::Kind::Disabled;
+      }
+    }
+  }
+
+  // FIXME: [availability] Return the getter as the predicate function for a
+  // dynamic domain once SILGen can emit a call to it.
+  FuncDecl *predicate = nullptr;
+
+  return CustomAvailabilityDomain::get(attr->getName().str(), kind,
+                                       decl->getModuleContext(), decl,
+                                       predicate, decl->getASTContext());
+}
+
 std::optional<AvailabilityDomain>
 AvailabilityDomainForDeclRequest::evaluate(Evaluator &evaluator,
                                            ValueDecl *decl) const {
@@ -87,7 +147,8 @@ AvailabilityDomainForDeclRequest::evaluate(Evaluator &evaluator,
     if (auto *customDomain = customDomainForClangDecl(decl))
       return AvailabilityDomain::forCustom(customDomain);
   } else {
-    // FIXME: [availability] Handle Swift availability domains decls.
+    if (auto *customDomain = customDomainForSwiftDecl(decl))
+      return AvailabilityDomain::forCustom(customDomain);
   }
 
   return std::nullopt;

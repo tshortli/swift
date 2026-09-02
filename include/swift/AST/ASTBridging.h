@@ -933,6 +933,12 @@ BridgedPreInverseGenericsAttr_createParsed(BridgedASTContext cContext,
                                            swift::SourceLoc atLoc,
                                            swift::SourceRange range);
 
+SWIFT_NAME("BridgedAvailabilityDomainAttr.createParsed(_:atLoc:range:name:"
+           "nameLoc:defaultedLoc:)")
+BridgedAvailabilityDomainAttr BridgedAvailabilityDomainAttr_createParsed(
+    BridgedASTContext cContext, swift::SourceLoc atLoc,
+    swift::SourceRange range, swift::Identifier name, swift::SourceLoc nameLoc,
+    swift::SourceLoc defaultedLoc);
 SWIFT_NAME(
     "BridgedBackDeployedAttr.createParsed(_:atLoc:range:platform:version:)")
 BridgedBackDeployedAttr BridgedBackDeployedAttr_createParsed(

@@ -1683,6 +1683,7 @@ namespace  {
     UNINTERESTING_ATTR(MainType)
     UNINTERESTING_ATTR(Preconcurrency)
     UNINTERESTING_ATTR(AllowFeatureSuppression)
+    UNINTERESTING_ATTR(AvailabilityDomain)
 
     // Differentiation-related attributes.
     UNINTERESTING_ATTR(Differentiable)

@@ -945,7 +945,17 @@ DECL_ATTR(cxx, CxxDecl,
   178)
 DECL_ATTR_FEATURE_REQUIREMENT(CxxDecl, CxxImplementation)
 
-LAST_DECL_ATTR(CxxDecl)
+// Designates a global 'let' declaration as the definition of a custom
+// availability domain. The 'CustomAvailabilityDomains' feature requirement is
+// enforced in TypeCheckAttr.cpp instead of with
+// DECL_ATTR_FEATURE_REQUIREMENT(), since the attribute must be accepted in
+// .swiftinterface files regardless of whether the feature is enabled.
+DECL_ATTR(_availabilityDomain, AvailabilityDomain,
+  OnVar,
+  NotSerialized | ABIStableToAdd | ABIStableToRemove | APIBreakingToAdd | APIBreakingToRemove | ForbiddenInABIAttr,
+  179)
+
+LAST_DECL_ATTR(AvailabilityDomain)
 
 #undef DECL_ATTR_ALIAS
 #undef CONTEXTUAL_DECL_ATTR_ALIAS

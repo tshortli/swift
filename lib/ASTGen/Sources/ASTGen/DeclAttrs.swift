@@ -132,6 +132,8 @@ extension ASTGenVisitor {
         return handle(self.generateAlignmentAttr(attribute: node)?.asDeclAttribute)
       case .AllowFeatureSuppression:
         return handle(self.generateAllowFeatureSuppressionAttr(attribute: node, attrName: attrName)?.asDeclAttribute)
+      case .AvailabilityDomain:
+        return handle(self.generateAvailabilityDomainAttr(attribute: node)?.asDeclAttribute)
       case .Available:
         return self.generateAvailableAttr(attribute: node, attrName: attrName).forEach { handle($0.asDeclAttribute) }
       case .BackDeployed:
@@ -510,6 +512,48 @@ extension ASTGenVisitor {
       range: self.generateAttrSourceRange(node),
       inverted: inverted,
       features: features)
+  }
+
+  /// E.g.:
+  ///   ```
+  ///   @_availabilityDomain(EnabledDomain)
+  ///   @_availabilityDomain(AlwaysEnabledDomain, defaulted)
+  ///   ```
+  func generateAvailabilityDomainAttr(attribute node: AttributeSyntax) -> BridgedAvailabilityDomainAttr? {
+    return self.generateWithLabeledExprListArguments(attribute: node) { args in
+      // The domain name.
+      guard
+        let nameAndLoc: (identifier: Identifier, sourceLoc: SourceLoc) = self.generateConsumingPlainIdentifierAttrOption(
+          args: &args,
+          { ($0.rawTokenKind == .identifier) ? self.generateIdentifierAndSourceLoc($0) : nil }
+        )
+      else {
+        return nil
+      }
+
+      // The optional 'defaulted' argument.
+      var defaultedLoc: SourceLoc = nil
+      if !args.isEmpty {
+        guard
+          let loc: SourceLoc = self.generateConsumingPlainIdentifierAttrOption(
+            args: &args,
+            { ($0.rawText == "defaulted") ? self.generateSourceLoc($0) : nil }
+          )
+        else {
+          return nil
+        }
+        defaultedLoc = loc
+      }
+
+      return .createParsed(
+        self.ctx,
+        atLoc: self.generateSourceLoc(node.atSign),
+        range: self.generateAttrSourceRange(node),
+        name: nameAndLoc.identifier,
+        nameLoc: nameAndLoc.sourceLoc,
+        defaultedLoc: defaultedLoc
+      )
+    }
   }
 
   /// E.g.:

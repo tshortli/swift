@@ -521,6 +521,7 @@ static bool usesFeatureCoroutineAccessors(Decl *decl) {
 
 UNINTERESTING_FEATURE(GeneralizedIsSameMetaTypeBuiltin)
 UNINTERESTING_FEATURE(CustomAvailability)
+UNINTERESTING_FEATURE(CustomAvailabilityDomains)
 UNINTERESTING_FEATURE(BuiltinMarkDependence)
 UNINTERESTING_FEATURE(BuiltinGepProjection)
 

@@ -7800,6 +7800,25 @@ NOTE(availability_decl_is_available_in, none,
      (const Decl *, AvailabilityDomain, llvm::VersionTuple))
 
 //------------------------------------------------------------------------------
+// MARK: @_availabilityDomain
+//------------------------------------------------------------------------------
+
+ERROR(attr_availability_domain_not_global_let, none,
+      "'%0' may only be used on a global 'let' declaration",
+      (const DeclAttribute))
+ERROR(attr_availability_domain_invalid_type, none,
+      "availability domain %0 must have type 'Bool'", (Identifier))
+ERROR(attr_availability_domain_defaulted_not_enabled, none,
+      "'defaulted' may only be used on an availability domain that has "
+      "a value of 'true' and is '_const'", ())
+ERROR(attr_availability_domain_redefinition, none,
+      "invalid redeclaration of availability domain %0", (Identifier))
+NOTE(attr_availability_domain_previous_definition, none,
+     "availability domain %0 previously defined here", (Identifier))
+ERROR(attr_availability_domain_builtin_name, none,
+      "%0 is a built-in availability domain", (Identifier))
+
+//------------------------------------------------------------------------------
 // MARK: if #available(...)
 //------------------------------------------------------------------------------
 

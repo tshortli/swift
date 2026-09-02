@@ -1676,6 +1676,12 @@ ERROR(attr_availability_duplicate,none,
       "duplicate definition of availability macro '%0' for version '%1'",
       (StringRef, StringRef))
 
+// _availabilityDomain
+ERROR(attr_availability_domain_expected_name,none,
+      "expected an availability domain name in '@_availabilityDomain'", ())
+ERROR(attr_availability_domain_expected_defaulted,none,
+      "expected 'defaulted' in '@_availabilityDomain'", ())
+
 // originallyDefinedIn
 ERROR(originally_defined_in_missing_rparen,none,
       "expected ')' in '@_originallyDefinedIn' argument list", ())

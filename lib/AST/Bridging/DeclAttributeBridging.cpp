@@ -191,6 +191,14 @@ BridgedPreInverseGenericsAttr_createParsed(BridgedASTContext cContext,
   return new (cContext.unbridged()) PreInverseGenericsAttr(atLoc, range);
 }
 
+BridgedAvailabilityDomainAttr BridgedAvailabilityDomainAttr_createParsed(
+    BridgedASTContext cContext, SourceLoc atLoc, SourceRange range,
+    Identifier name, SourceLoc nameLoc, SourceLoc defaultedLoc) {
+  return AvailabilityDomainAttr::create(cContext.unbridged(), atLoc, range,
+                                        name, nameLoc, defaultedLoc,
+                                        /*implicit=*/false);
+}
+
 BridgedBackDeployedAttr BridgedBackDeployedAttr_createParsed(
     BridgedASTContext cContext, SourceLoc atLoc, SourceRange range,
     swift::PlatformKind platform, BridgedVersionTuple cVersion) {

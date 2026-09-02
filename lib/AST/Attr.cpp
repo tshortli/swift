@@ -1261,6 +1261,16 @@ bool DeclAttribute::printImpl(ASTPrinter &Printer, const PrintOptions &Options,
     Printer << "(\"" << cast<SILGenNameAttr>(this)->Name << "\")";
     break;
 
+  case DeclAttrKind::AvailabilityDomain: {
+    auto Attr = cast<AvailabilityDomainAttr>(this);
+    Printer.printAttrName("@_availabilityDomain");
+    Printer << "(" << Attr->getName();
+    if (Attr->isDefaulted())
+      Printer << ", defaulted";
+    Printer << ")";
+    break;
+  }
+
   case DeclAttrKind::OriginallyDefinedIn: {
     Printer.printAttrName("@_originallyDefinedIn");
     Printer << "(module: ";
@@ -2183,6 +2193,8 @@ StringRef DeclAttribute::getAttrName() const {
     case ExecutionSemantics::Once:
       return "called(once)";
     }
+  case DeclAttrKind::AvailabilityDomain:
+    return "_availabilityDomain";
   }
   llvm_unreachable("bad DeclAttrKind");
 }
@@ -3585,6 +3597,13 @@ isEquivalent(const AllowFeatureSuppressionAttr *other, Decl *attachedTo) const {
     return false;
 
   return sameElements(getSuppressedFeatures(), other->getSuppressedFeatures());
+}
+
+AvailabilityDomainAttr *AvailabilityDomainAttr::create(
+    ASTContext &ctx, SourceLoc atLoc, SourceRange range, Identifier name,
+    SourceLoc nameLoc, SourceLoc defaultedLoc, bool implicit) {
+  return new (ctx) AvailabilityDomainAttr(atLoc, range, name, nameLoc,
+                                          defaultedLoc, implicit);
 }
 
 LifetimeAttr *LifetimeAttr::create(ASTContext &context, SourceLoc atLoc,

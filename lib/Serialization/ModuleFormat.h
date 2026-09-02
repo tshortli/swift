@@ -2476,6 +2476,9 @@ namespace decls_block {
   using PrivateImportDeclAttrLayout = BCRecordLayout<PrivateImport_DECL_ATTR>;
   using AllowFeatureSuppressionDeclAttrLayout =
       BCRecordLayout<AllowFeatureSuppression_DECL_ATTR>;
+  // FIXME: [availability] Serialize '@_availabilityDomain'.
+  using AvailabilityDomainDeclAttrLayout =
+      BCRecordLayout<AvailabilityDomain_DECL_ATTR>;
   using ProjectedValuePropertyDeclAttrLayout = BCRecordLayout<
       ProjectedValueProperty_DECL_ATTR,
       BCFixed<1>,        // isImplicit

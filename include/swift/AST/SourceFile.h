@@ -596,6 +596,10 @@ public:
          ObjCSelector selector,
          SmallVectorImpl<AbstractFunctionDecl *> &results) const override;
 
+  void lookupAvailabilityDomains(
+      Identifier identifier,
+      SmallVectorImpl<AvailabilityDomain> &results) const override;
+
 protected:
   virtual void
   lookupOperatorDirect(Identifier name, OperatorFixity fixity,

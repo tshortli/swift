@@ -1140,6 +1140,10 @@ public:
   parseAllowFeatureSuppressionAttribute(bool inverted, SourceLoc atLoc,
                                         SourceLoc loc);
 
+  /// Parse the @_availabilityDomain attribute.
+  ParserResult<AvailabilityDomainAttr>
+  parseAvailabilityDomainAttribute(SourceLoc atLoc, SourceLoc loc);
+
   /// Parse the @attached or @freestanding attribute that specifies a macro
   /// role.
   ParserResult<MacroRoleAttr> parseMacroRoleAttribute(

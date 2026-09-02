@@ -1,11 +1,6 @@
 // DEFINE: %{args} = \
 // DEFINE:   -module-name main \
-// DEFINE:   -enable-experimental-feature CustomAvailability \
-// DEFINE:   -define-enabled-availability-domain EnabledDomain \
-// DEFINE:   -define-always-enabled-availability-domain AlwaysEnabledDomain \
-// DEFINE:   -define-disabled-availability-domain DisabledDomain \
-// DEFINE:   -define-dynamic-availability-domain DynamicDomain \
-// DEFINE:   -define-dynamic-availability-domain OtherDynamicDomain
+// DEFINE:   -enable-experimental-feature CustomAvailabilityDomains
 
 // RUN: %target-swift-frontend -print-ast %s -verify %{args} | %FileCheck %s
 
@@ -13,7 +8,22 @@
 // RUN: %target-swift-frontend -emit-sil -o /dev/null %s -verify %{args}
 // RUN: %target-swift-frontend -emit-sil -o /dev/null %s -verify %{args} -enable-library-evolution
 
-// REQUIRES: swift_feature_CustomAvailability
+// REQUIRES: swift_feature_CustomAvailabilityDomains
+
+@_availabilityDomain(EnabledDomain)
+_const public let enabledDomain = true
+
+@_availabilityDomain(AlwaysEnabledDomain, defaulted)
+_const public let alwaysEnabledDomain = true
+
+@_availabilityDomain(DisabledDomain)
+_const public let disabledDomain = false
+
+@_availabilityDomain(DynamicDomain)
+public let dynamicDomain = Bool.random()
+
+@_availabilityDomain(OtherDynamicDomain)
+public let otherDynamicDomain = Bool.random()
 
 // CHECK-LABEL:  public enum RawValueEnum : Int {
 

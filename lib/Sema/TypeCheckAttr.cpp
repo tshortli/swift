@@ -545,6 +545,8 @@ public:
   void visitUnsafeSelfDependentResultAttr(UnsafeSelfDependentResultAttr *attr);
 
   void visitCalledAttr(CalledAttr *attr);
+
+  void visitAvailabilityDomainAttr(AvailabilityDomainAttr *attr);
 };
 
 } // end anonymous namespace
@@ -9207,6 +9209,99 @@ void AttributeChecker::visitCalledAttr(CalledAttr *attr) {
     diagnoseAndRemoveAttr(attr, diag::requires_experimental_feature, "@called",
                           false, Feature::CalledAttribute.getName());
     return;
+  }
+}
+
+void AttributeChecker::visitAvailabilityDomainAttr(
+    AvailabilityDomainAttr *attr) {
+  auto *DC = D->getDeclContext();
+
+  // The attribute is written into .swiftinterface files, which must be
+  // accepted whether or not the feature is enabled.
+  if (!Ctx.LangOpts.hasFeature(Feature::CustomAvailabilityDomains) &&
+      !DC->isInSwiftinterface()) {
+    diagnose(attr->getLocation(), diag::attribute_requires_experimental_feature,
+             attr, Feature::CustomAvailabilityDomains.getName());
+  }
+
+  // Only a global 'let' declaration can define an availability domain.
+  auto *VD = dyn_cast<VarDecl>(D);
+  if (!VD || !VD->isLet() || !DC->isModuleScopeContext()) {
+    diagnoseAndRemoveAttr(attr, diag::attr_availability_domain_not_global_let,
+                          attr);
+    return;
+  }
+
+  auto name = attr->getName();
+  if (name.empty())
+    return;
+
+  // The domain must not already be defined.
+  llvm::SmallVector<AvailabilityDomain, 4> existingDomains;
+  DC->lookupAvailabilityDomains(name, existingDomains);
+  for (auto existingDomain : existingDomains) {
+    if (!existingDomain.isCustom()) {
+      diagnoseAndRemoveAttr(attr, diag::attr_availability_domain_builtin_name,
+                            name);
+      return;
+    }
+
+    auto *existingDecl = existingDomain.getDecl();
+    if (!existingDecl || existingDecl == VD)
+      continue;
+
+    // FIXME: [availability] Diagnose conflicts with domains defined in other
+    // modules, which requires resolving the ambiguity in domain lookup first.
+    if (existingDecl->getModuleContext() != VD->getModuleContext())
+      continue;
+
+    // Point at the previous definition's attribute, which is where the domain
+    // name was written.
+    SourceLoc previousLoc = existingDecl->getLoc();
+    if (auto *existingAttr =
+            existingDecl->getAttrs().getAttribute<AvailabilityDomainAttr>()) {
+      if (existingAttr->getNameLoc().isValid())
+        previousLoc = existingAttr->getNameLoc();
+    }
+
+    diagnose(attr->getNameLoc(), diag::attr_availability_domain_redefinition,
+             name);
+    diagnose(previousLoc, diag::attr_availability_domain_previous_definition,
+             name);
+    attr->setInvalid();
+    return;
+  }
+
+  // The domain must have type 'Bool'.
+  auto interfaceType = VD->getInterfaceType();
+  if (!interfaceType->hasError() &&
+      !interfaceType->isEqual(Ctx.getBoolType())) {
+    diagnose(attr->getNameLoc(), diag::attr_availability_domain_invalid_type,
+             name);
+    attr->setInvalid();
+    return;
+  }
+
+  // A '_const' domain is required to have a literal initializer, which
+  // pattern binding checking already enforces. The value of that literal
+  // determines whether the domain is enabled.
+  //
+  // 'defaulted' only applies to a domain that is enabled at compile time.
+  if (attr->isDefaulted()) {
+    auto domain = AvailabilityDomain::forCustom(VD);
+    auto kind = domain ? domain->getCustomDomain()->getKind()
+                       : CustomAvailabilityDomain::Kind::Dynamic;
+    switch (kind) {
+    case CustomAvailabilityDomain::Kind::Enabled:
+    case CustomAvailabilityDomain::Kind::AlwaysEnabled:
+      break;
+    case CustomAvailabilityDomain::Kind::Disabled:
+    case CustomAvailabilityDomain::Kind::Dynamic:
+      diagnose(attr->getDefaultedLoc(),
+               diag::attr_availability_domain_defaulted_not_enabled);
+      attr->setInvalid();
+      return;
+    }
   }
 }
 

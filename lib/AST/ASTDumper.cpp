@@ -5227,6 +5227,12 @@ public:
                          Label::always("features"));
     printFoot();
   }
+  void visitAvailabilityDomainAttr(AvailabilityDomainAttr *Attr, Label label) {
+    printCommon(Attr, "availability_domain_attr", label);
+    printFieldQuoted(Attr->getName(), Label::always("name"));
+    printFlag(Attr->isDefaulted(), "defaulted");
+    printFoot();
+  }
   void visitAvailableAttr(AvailableAttr *Attr, Label label) {
     printCommon(Attr, "available_attr", label);
 

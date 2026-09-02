@@ -3068,6 +3068,8 @@ class Serializer::DeclSerializer : public DeclVisitor<DeclSerializer> {
     case DeclAttrKind::AllowFeatureSuppression:
     case DeclAttrKind::Diagnose:
     case DeclAttrKind::Called:
+    // FIXME: [availability] Serialize '@_availabilityDomain'.
+    case DeclAttrKind::AvailabilityDomain:
       llvm_unreachable("cannot serialize attribute");
 
 #define SIMPLE_DECL_ATTR(_, CLASS, ...)                                        \
