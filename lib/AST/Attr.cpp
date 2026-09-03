@@ -3602,8 +3602,18 @@ isEquivalent(const AllowFeatureSuppressionAttr *other, Decl *attachedTo) const {
 AvailabilityDomainAttr *AvailabilityDomainAttr::create(
     ASTContext &ctx, SourceLoc atLoc, SourceRange range, Identifier name,
     SourceLoc nameLoc, SourceLoc defaultedLoc, bool implicit) {
-  return new (ctx) AvailabilityDomainAttr(atLoc, range, name, nameLoc,
-                                          defaultedLoc, implicit);
+  return new (ctx)
+      AvailabilityDomainAttr(atLoc, range, name, nameLoc,
+                             defaultedLoc.isValid(), defaultedLoc, implicit);
+}
+
+AvailabilityDomainAttr *AvailabilityDomainAttr::create(ASTContext &ctx,
+                                                       Identifier name,
+                                                       bool isDefaulted,
+                                                       bool implicit) {
+  return new (ctx)
+      AvailabilityDomainAttr(SourceLoc(), SourceRange(), name, SourceLoc(),
+                             isDefaulted, SourceLoc(), implicit);
 }
 
 LifetimeAttr *LifetimeAttr::create(ASTContext &context, SourceLoc atLoc,

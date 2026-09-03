@@ -5846,6 +5846,22 @@ decodeDomainKind(uint8_t kind) {
   }
 }
 
+static std::optional<CustomAvailabilityDomain::Kind>
+decodeCustomDomainKind(uint8_t kind) {
+  switch (kind) {
+  case static_cast<uint8_t>(CustomAvailabilityDomainKind::Enabled):
+    return CustomAvailabilityDomain::Kind::Enabled;
+  case static_cast<uint8_t>(CustomAvailabilityDomainKind::AlwaysEnabled):
+    return CustomAvailabilityDomain::Kind::AlwaysEnabled;
+  case static_cast<uint8_t>(CustomAvailabilityDomainKind::Disabled):
+    return CustomAvailabilityDomain::Kind::Disabled;
+  case static_cast<uint8_t>(CustomAvailabilityDomainKind::Dynamic):
+    return CustomAvailabilityDomain::Kind::Dynamic;
+  default:
+    return std::nullopt;
+  }
+}
+
 static AvailabilityDomain
 decodeNonCustomAvailabilityDomain(AvailabilityDomainKind domainKind,
                                   std::optional<PlatformKind> platformKind) {
@@ -6291,6 +6307,29 @@ llvm::Error DeclDeserializer::deserializeDeclCommon() {
           return MF.diagnoseFatal(attrOrError.takeError());
 
         Attr = attrOrError.get();
+        break;
+      }
+
+      case decls_block::AvailabilityDomain_DECL_ATTR: {
+        bool isImplicit;
+        bool isDefaulted;
+        uint8_t rawDomainKind;
+        IdentifierID nameID;
+        serialization::decls_block::AvailabilityDomainDeclAttrLayout::
+            readRecord(scratch, isImplicit, isDefaulted, rawDomainKind, nameID);
+
+        auto domainKind = decodeCustomDomainKind(rawDomainKind);
+        if (!domainKind)
+          return MF.diagnoseFatal();
+
+        auto *theAttr = AvailabilityDomainAttr::create(
+            ctx, MF.getIdentifier(nameID), isDefaulted, isImplicit);
+
+        // The initializer that the kind of the domain is otherwise inferred
+        // from is not serialized, so cache the kind that the record states.
+        theAttr->setCachedDomainKind(*domainKind);
+
+        Attr = theAttr;
         break;
       }
 

@@ -937,6 +937,7 @@ void Serializer::writeBlockInfoBlock() {
   BLOCK_RECORD(index_block, CLANG_TYPE_OFFSETS);
   BLOCK_RECORD(index_block, LOCAL_TYPE_DECLS);
   BLOCK_RECORD(index_block, OPAQUE_RETURN_TYPE_DECLS);
+  BLOCK_RECORD(index_block, AVAILABILITY_DOMAINS);
   BLOCK_RECORD(index_block, ABSTRACT_CONFORMANCE_OFFSETS);
   BLOCK_RECORD(index_block, PROTOCOL_CONFORMANCE_OFFSETS);
   BLOCK_RECORD(index_block, PACK_CONFORMANCE_OFFSETS);
@@ -2696,6 +2697,23 @@ static uint8_t getRawStableAccessLevel(swift::AccessLevel access) {
   llvm_unreachable("Unhandled AccessLevel in switch.");
 }
 
+static uint8_t getRawStableCustomAvailabilityDomainKind(
+    swift::CustomAvailabilityDomain::Kind kind) {
+  switch (kind) {
+#define CASE(NAME)                                                             \
+  case swift::CustomAvailabilityDomain::Kind::NAME:                            \
+    return static_cast<uint8_t>(                                               \
+        serialization::CustomAvailabilityDomainKind::NAME);
+  CASE(Enabled)
+  CASE(AlwaysEnabled)
+  CASE(Disabled)
+  CASE(Dynamic)
+#undef CASE
+  }
+
+  llvm_unreachable("Unhandled CustomAvailabilityDomain::Kind in switch.");
+}
+
 static serialization::SelfAccessKind
 getStableSelfAccessKind(swift::SelfAccessKind MM) {
   switch (MM) {
@@ -3068,8 +3086,6 @@ class Serializer::DeclSerializer : public DeclVisitor<DeclSerializer> {
     case DeclAttrKind::AllowFeatureSuppression:
     case DeclAttrKind::Diagnose:
     case DeclAttrKind::Called:
-    // FIXME: [availability] Serialize '@_availabilityDomain'.
-    case DeclAttrKind::AvailabilityDomain:
       llvm_unreachable("cannot serialize attribute");
 
 #define SIMPLE_DECL_ATTR(_, CLASS, ...)                                        \
@@ -3271,6 +3287,27 @@ class Serializer::DeclSerializer : public DeclVisitor<DeclSerializer> {
           LIST_VER_TUPLE_PIECES(Moved),
           static_cast<unsigned>(theAttr->getPlatform()),
           blob);
+      return;
+    }
+
+    case DeclAttrKind::AvailabilityDomain: {
+      auto *theAttr = cast<AvailabilityDomainAttr>(DA);
+
+      // The kind of the domain is inferred from the initializer of the
+      // variable, and initializers aren't serialized, so record the kind here
+      // for the reader to state in the deserialized attribute.
+      auto kind = evaluateOrDefault(
+          S.getASTContext().evaluator,
+          AvailabilityDomainAttrDomainKindRequest{theAttr, D},
+          CustomAvailabilityDomain::Kind::Dynamic);
+
+      auto abbrCode =
+          S.DeclTypeAbbrCodes[AvailabilityDomainDeclAttrLayout::Code];
+      AvailabilityDomainDeclAttrLayout::emitRecord(
+          S.Out, S.ScratchRecord, abbrCode, theAttr->isImplicit(),
+          theAttr->isDefaulted(),
+          getRawStableCustomAvailabilityDomainKind(kind),
+          S.addDeclBaseNameRef(theAttr->getName()));
       return;
     }
 
@@ -7348,11 +7385,13 @@ void Serializer::writeAST(ModuleOrSourceFile DC) {
   ObjCMethodTable objcMethods;
   NestedTypeDeclsTable nestedTypeDecls;
   LocalTypeHashTableGenerator localTypeGenerator, opaqueReturnTypeGenerator;
+  LocalTypeHashTableGenerator availabilityDomainGenerator;
   ExtensionTable extensionDecls;
   UniquedDerivativeFunctionConfigTable uniquedDerivativeConfigs;
   DeclFingerprintsTable declFingerprints;
   bool hasLocalTypes = false;
   bool hasOpaqueReturnTypes = false;
+  bool hasAvailabilityDomains = false;
 
   std::optional<DeclID> entryPointClassID;
   SmallVector<DeclID, 16> orderedTopLevelDecls;
@@ -7399,6 +7438,17 @@ void Serializer::writeAST(ModuleOrSourceFile DC) {
           continue;
         topLevelDecls[VD->getBaseName()]
           .push_back({ getKindForTable(D), addDeclRef(D) });
+
+        // Record the custom availability domain that the decl defines, if it
+        // defines one, so that another module can look the domain up by name.
+        if (auto *domainAttr =
+                VD->getAttrs().getAttribute<AvailabilityDomainAttr>()) {
+          if (!domainAttr->getName().empty()) {
+            hasAvailabilityDomains = true;
+            availabilityDomainGenerator.insert(domainAttr->getName().str(),
+                                               addDeclRef(D));
+          }
+        }
       } else if (auto ED = dyn_cast<ExtensionDecl>(D)) {
         const NominalTypeDecl *extendedNominal = ED->getExtendedNominal();
         if (extendedNominal) {
@@ -7533,6 +7583,9 @@ void Serializer::writeAST(ModuleOrSourceFile DC) {
     if (hasOpaqueReturnTypes)
       writeLocalDeclTable(DeclList, index_block::OPAQUE_RETURN_TYPE_DECLS,
                           opaqueReturnTypeGenerator);
+    if (hasAvailabilityDomains)
+      writeLocalDeclTable(DeclList, index_block::AVAILABILITY_DOMAINS,
+                          availabilityDomainGenerator);
 
     if (!extensionDecls.empty()) {
       index_block::ExtensionTableLayout ExtensionTable(Out);

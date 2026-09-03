@@ -1072,6 +1072,9 @@ bool ModuleFileSharedCore::readIndexBlock(llvm::BitstreamCursor &cursor) {
       case index_block::OPAQUE_RETURN_TYPE_DECLS:
         OpaqueReturnTypeDecls = readLocalDeclTable(scratch, blobData);
         break;
+      case index_block::AVAILABILITY_DOMAINS:
+        AvailabilityDomainDecls = readLocalDeclTable(scratch, blobData);
+        break;
       case index_block::NESTED_TYPE_DECLS:
         NestedTypeDecls = readNestedTypeDeclsTable(scratch, blobData);
         break;

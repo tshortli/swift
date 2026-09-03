@@ -5816,6 +5816,29 @@ public:
   void cacheResult(std::optional<AvailabilityDomain> domain) const;
 };
 
+/// Determines the kind of the availability domain that an
+/// `@_availabilityDomain` attribute defines.
+class AvailabilityDomainAttrDomainKindRequest
+    : public SimpleRequest<AvailabilityDomainAttrDomainKindRequest,
+                           CustomAvailabilityDomain::Kind(
+                               const AvailabilityDomainAttr *, const Decl *),
+                           RequestFlags::SeparatelyCached> {
+public:
+  using SimpleRequest::SimpleRequest;
+
+private:
+  friend SimpleRequest;
+
+  CustomAvailabilityDomain::Kind evaluate(Evaluator &evaluator,
+                                          const AvailabilityDomainAttr *attr,
+                                          const Decl *decl) const;
+
+public:
+  bool isCached() const { return true; }
+  std::optional<CustomAvailabilityDomain::Kind> getCachedResult() const;
+  void cacheResult(CustomAvailabilityDomain::Kind kind) const;
+};
+
 class IsCustomAvailabilityDomainPermanentlyEnabled
     : public SimpleRequest<IsCustomAvailabilityDomainPermanentlyEnabled,
                            bool(const CustomAvailabilityDomain *),

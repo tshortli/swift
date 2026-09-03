@@ -58,7 +58,7 @@ const uint16_t SWIFTMODULE_VERSION_MAJOR = 0;
 /// describe what change you made. The content of this comment isn't important;
 /// it just ensures a conflict if two people change the module format.
 /// Don't worry about adhering to the 80-column limit for this line.
-const uint16_t SWIFTMODULE_VERSION_MINOR = 1021; // Hidden type layout placeholder
+const uint16_t SWIFTMODULE_VERSION_MINOR = 1022; // @_availabilityDomain attribute
 
 /// A standard hash seed used for all string hashes in a serialized module.
 ///
@@ -799,6 +799,16 @@ enum class AvailabilityDomainKind : uint8_t {
   StandaloneSwiftRuntime,
 };
 using AvailabilityDomainKindField = BCFixed<3>;
+
+// These IDs must \em not be renumbered or reordered without incrementing
+// the module version.
+enum class CustomAvailabilityDomainKind : uint8_t {
+  Enabled = 0,
+  AlwaysEnabled,
+  Disabled,
+  Dynamic,
+};
+using CustomAvailabilityDomainKindField = BCFixed<2>;
 
 /// The various types of blocks that can occur within a serialized Swift
 /// module.
@@ -2476,9 +2486,15 @@ namespace decls_block {
   using PrivateImportDeclAttrLayout = BCRecordLayout<PrivateImport_DECL_ATTR>;
   using AllowFeatureSuppressionDeclAttrLayout =
       BCRecordLayout<AllowFeatureSuppression_DECL_ATTR>;
-  // FIXME: [availability] Serialize '@_availabilityDomain'.
-  using AvailabilityDomainDeclAttrLayout =
-      BCRecordLayout<AvailabilityDomain_DECL_ATTR>;
+
+  using AvailabilityDomainDeclAttrLayout = BCRecordLayout<
+      AvailabilityDomain_DECL_ATTR,
+      BCFixed<1>,                        // isImplicit
+      BCFixed<1>,                        // isDefaulted
+      CustomAvailabilityDomainKindField, // kind of the domain
+      IdentifierIDField                  // name of the domain
+  >;
+
   using ProjectedValuePropertyDeclAttrLayout = BCRecordLayout<
       ProjectedValueProperty_DECL_ATTR,
       BCFixed<1>,        // isImplicit
@@ -2840,7 +2856,13 @@ namespace index_block {
     SUBSTITUTION_MAP_OFFSETS,
     CLANG_TYPE_OFFSETS,
     EXPORTED_PRESPECIALIZATION_DECLS,
-    LastRecordKind = EXPORTED_PRESPECIALIZATION_DECLS,
+
+    /// The availability domain table, which maps the name of each custom
+    /// availability domain that the module defines to the declaration that
+    /// defines it.
+    AVAILABILITY_DOMAINS,
+
+    LastRecordKind = AVAILABILITY_DOMAINS,
   };
 
   constexpr const unsigned RecordIDFieldWidth = 5;

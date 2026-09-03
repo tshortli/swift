@@ -952,7 +952,7 @@ DECL_ATTR_FEATURE_REQUIREMENT(CxxDecl, CxxImplementation)
 // .swiftinterface files regardless of whether the feature is enabled.
 DECL_ATTR(_availabilityDomain, AvailabilityDomain,
   OnVar,
-  NotSerialized | ABIStableToAdd | ABIStableToRemove | APIBreakingToAdd | APIBreakingToRemove | ForbiddenInABIAttr,
+  ABIStableToAdd | ABIStableToRemove | APIBreakingToAdd | APIBreakingToRemove | ForbiddenInABIAttr,
   179)
 
 LAST_DECL_ATTR(AvailabilityDomain)

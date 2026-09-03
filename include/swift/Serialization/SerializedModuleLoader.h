@@ -529,6 +529,10 @@ public:
   virtual void
   getOpaqueReturnTypeDecls(SmallVectorImpl<OpaqueTypeDecl*> &results) const override;
 
+  virtual void lookupAvailabilityDomains(
+      Identifier identifier,
+      SmallVectorImpl<AvailabilityDomain> &results) const override;
+
   virtual void getDisplayDecls(SmallVectorImpl<Decl*> &results, bool recursive = false) const override;
 
   virtual void

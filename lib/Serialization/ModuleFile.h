@@ -900,6 +900,11 @@ public:
   /// Add all opaque return type decls in the module to the given vector.
   void getOpaqueReturnTypeDecls(SmallVectorImpl<OpaqueTypeDecl*> &Results);
 
+  /// Finds the custom availability domain that this module defines with the
+  /// given name, and if there is one adds it to \p results.
+  void lookupAvailabilityDomains(Identifier identifier,
+                                 SmallVectorImpl<AvailabilityDomain> &results);
+
   /// Adds all top-level decls to the given vector.
   ///
   /// This includes all decls that should be displayed to clients of the module.

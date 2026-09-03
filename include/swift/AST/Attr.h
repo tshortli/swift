@@ -152,6 +152,11 @@ enum : unsigned {
       static_cast<unsigned>(ExecutionSemantics::Last_ExecutionSemantics))
 };
 
+enum : unsigned {
+  NumCustomAvailabilityDomainKindBits = countBitsUsed(
+      static_cast<unsigned>(CustomAvailabilityDomain::Kind::Last_Kind))
+};
+
 enum : unsigned { NumDeclAttrKindBits = countBitsUsed(NumDeclAttrKinds - 1) };
 
 enum : unsigned { NumTypeAttrKindBits = countBitsUsed(NumTypeAttrKinds - 1) };
@@ -199,6 +204,17 @@ protected:
       : NumPadBits,
       // The alignment value.
       Value : 32
+    );
+
+    SWIFT_INLINE_BITFIELD(AvailabilityDomainAttr, DeclAttribute, 1+1+2,
+      /// Whether `defaulted` was specified.
+      IsDefaulted : 1,
+
+      /// State storage for `AvailabilityDomainAttrDomainKindRequest`.
+      HasComputedDomainKind : 1,
+
+      /// A `CustomAvailabilityDomain::Kind` value.
+      DomainKind : NumCustomAvailabilityDomainKindBits
     );
 
     SWIFT_INLINE_BITFIELD(AvailableAttr, DeclAttribute, 4+1+1+1+1+1+1+1,
@@ -3940,16 +3956,26 @@ class AvailabilityDomainAttr final : public DeclAttribute {
   SourceLoc DefaultedLoc;
 
   AvailabilityDomainAttr(SourceLoc atLoc, SourceRange range, Identifier name,
-                         SourceLoc nameLoc, SourceLoc defaultedLoc,
-                         bool implicit)
+                         SourceLoc nameLoc, bool isDefaulted,
+                         SourceLoc defaultedLoc, bool implicit)
       : DeclAttribute(DeclAttrKind::AvailabilityDomain, atLoc, range, implicit),
-        Name(name), NameLoc(nameLoc), DefaultedLoc(defaultedLoc) {}
+        Name(name), NameLoc(nameLoc), DefaultedLoc(defaultedLoc) {
+    Bits.AvailabilityDomainAttr.IsDefaulted = isDefaulted;
+    Bits.AvailabilityDomainAttr.HasComputedDomainKind = false;
+    Bits.AvailabilityDomainAttr.DomainKind = 0;
+  }
 
 public:
+  /// Creates an attribute for a domain that was defined in source.
   static AvailabilityDomainAttr *create(ASTContext &ctx, SourceLoc atLoc,
                                         SourceRange range, Identifier name,
                                         SourceLoc nameLoc,
                                         SourceLoc defaultedLoc, bool implicit);
+
+  /// Creates an attribute that has no source locations, for a domain that was
+  /// deserialized from a module file.
+  static AvailabilityDomainAttr *create(ASTContext &ctx, Identifier name,
+                                        bool isDefaulted, bool implicit);
 
   /// The name of the availability domain that the decl defines.
   Identifier getName() const { return Name; }
@@ -3958,21 +3984,46 @@ public:
 
   /// Whether `defaulted` was specified, indicating that the domain is enabled
   /// for all deployments.
-  bool isDefaulted() const { return DefaultedLoc.isValid(); }
+  bool isDefaulted() const { return Bits.AvailabilityDomainAttr.IsDefaulted; }
 
   SourceLoc getDefaultedLoc() const { return DefaultedLoc; }
+
+  /// Records the kind of the domain that the attribute defines. Used by
+  /// `AvailabilityDomainAttrDomainKindRequest` and deserialization.
+  void setCachedDomainKind(CustomAvailabilityDomain::Kind kind) {
+    Bits.AvailabilityDomainAttr.HasComputedDomainKind = true;
+    Bits.AvailabilityDomainAttr.DomainKind = static_cast<unsigned>(kind);
+  }
 
   static bool classof(const DeclAttribute *DA) {
     return DA->getKind() == DeclAttrKind::AvailabilityDomain;
   }
 
   AvailabilityDomainAttr *clone(ASTContext &ctx) const {
-    return create(ctx, AtLoc, Range, Name, NameLoc, DefaultedLoc, isImplicit());
+    auto *attr = new (ctx) AvailabilityDomainAttr(
+        AtLoc, Range, Name, NameLoc, isDefaulted(), DefaultedLoc, isImplicit());
+    if (auto kind = getDomainKind())
+      attr->setCachedDomainKind(*kind);
+
+    return attr;
   }
 
   bool isEquivalent(const AvailabilityDomainAttr *other,
                     Decl *attachedTo) const {
     return Name == other->Name && isDefaulted() == other->isDefaulted();
+  }
+
+private:
+  friend class AvailabilityDomainAttrDomainKindRequest;
+
+  /// The kind of the domain that the attribute defines, or `std::nullopt` if it
+  /// isn't known yet.
+  std::optional<CustomAvailabilityDomain::Kind> getDomainKind() const {
+    if (!Bits.AvailabilityDomainAttr.HasComputedDomainKind)
+      return std::nullopt;
+
+    return static_cast<CustomAvailabilityDomain::Kind>(
+        Bits.AvailabilityDomainAttr.DomainKind);
   }
 };
 

@@ -417,6 +417,8 @@ public:
     Disabled,
     /// A domain with an enablement state that must be queried at runtime.
     Dynamic,
+
+    Last_Kind = Dynamic,
   };
 
 private:

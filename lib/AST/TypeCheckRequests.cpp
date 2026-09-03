@@ -3076,6 +3076,22 @@ void AvailabilityDomainForDeclRequest::cacheResult(
 }
 
 //----------------------------------------------------------------------------//
+// AvailabilityDomainAttrDomainKindRequest computation.
+//----------------------------------------------------------------------------//
+
+std::optional<CustomAvailabilityDomain::Kind>
+AvailabilityDomainAttrDomainKindRequest::getCachedResult() const {
+  return std::get<0>(getStorage())->getDomainKind();
+}
+
+void AvailabilityDomainAttrDomainKindRequest::cacheResult(
+    CustomAvailabilityDomain::Kind kind) const {
+  auto *attr = const_cast<AvailabilityDomainAttr *>(std::get<0>(getStorage()));
+
+  attr->setCachedDomainKind(kind);
+}
+
+//----------------------------------------------------------------------------//
 // IsCustomAvailabilityDomainPermanentlyEnabled computation.
 //----------------------------------------------------------------------------//
 std::optional<bool>

@@ -2029,6 +2029,11 @@ SerializedASTFile::getOpaqueReturnTypeDecls(
   File.getOpaqueReturnTypeDecls(results);
 }
 
+void SerializedASTFile::lookupAvailabilityDomains(
+    Identifier identifier, SmallVectorImpl<AvailabilityDomain> &results) const {
+  File.lookupAvailabilityDomains(identifier, results);
+}
+
 void
 SerializedASTFile::getDisplayDecls(SmallVectorImpl<Decl*> &results, bool recursive) const {
   File.getDisplayDecls(results, recursive);

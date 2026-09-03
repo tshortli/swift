@@ -80,12 +80,39 @@ customDomainForClangDecl(ValueDecl *decl) {
 
 /// If `varDecl` is initialized with a boolean literal, returns the literal
 /// expression. Returns `nullptr` otherwise.
-static BooleanLiteralExpr *getBooleanLiteralInit(VarDecl *varDecl) {
+static BooleanLiteralExpr *getBooleanLiteralInit(const VarDecl *varDecl) {
   auto *initExpr = varDecl->getParentInitializer();
   if (!initExpr)
     return nullptr;
 
   return dyn_cast<BooleanLiteralExpr>(initExpr->getSemanticsProvidingExpr());
+}
+
+CustomAvailabilityDomain::Kind
+AvailabilityDomainAttrDomainKindRequest::evaluate(
+    Evaluator &evaluator, const AvailabilityDomainAttr *attr,
+    const Decl *decl) const {
+  // A domain that is not declared '_const' must be queried at runtime.
+  auto *varDecl = dyn_cast<VarDecl>(decl);
+  if (!varDecl || !varDecl->getAttrs().hasAttribute<CompileTimeLiteralAttr>())
+    return CustomAvailabilityDomain::Kind::Dynamic;
+
+  // The value of a '_const' domain determines whether it is enabled. A domain
+  // that is both enabled and defaulted is enabled for every deployment.
+  //
+  // FIXME: [availability] A .swiftinterface has no initializer to inspect, so
+  // the kind must be encoded in the printed attribute instead.
+  auto *initExpr = getBooleanLiteralInit(varDecl);
+  if (!initExpr)
+    return CustomAvailabilityDomain::Kind::Enabled;
+
+  if (!initExpr->getValue())
+    return CustomAvailabilityDomain::Kind::Disabled;
+
+  if (attr->isDefaulted())
+    return CustomAvailabilityDomain::Kind::AlwaysEnabled;
+
+  return CustomAvailabilityDomain::Kind::Enabled;
 }
 
 /// Returns the availability domain that `decl` defines with an
@@ -108,25 +135,10 @@ customDomainForSwiftDecl(ValueDecl *decl) {
       !varDecl->getDeclContext()->isModuleScopeContext())
     return nullptr;
 
-  // A domain that is not declared '_const' must be queried at runtime.
-  auto kind = CustomAvailabilityDomain::Kind::Dynamic;
-  if (varDecl->getAttrs().hasAttribute<CompileTimeLiteralAttr>()) {
-    // The value of a '_const' domain determines whether it is enabled. A
-    // domain that is both enabled and defaulted is enabled for every
-    // deployment.
-    //
-    // FIXME: [availability] A .swiftinterface has no initializer to inspect,
-    // so the kind must be encoded in the printed attribute instead.
-    kind = CustomAvailabilityDomain::Kind::Enabled;
-    if (auto *initExpr = getBooleanLiteralInit(varDecl)) {
-      if (initExpr->getValue()) {
-        if (attr->isDefaulted())
-          kind = CustomAvailabilityDomain::Kind::AlwaysEnabled;
-      } else {
-        kind = CustomAvailabilityDomain::Kind::Disabled;
-      }
-    }
-  }
+  auto &ctx = decl->getASTContext();
+  auto kind = evaluateOrDefault(
+      ctx.evaluator, AvailabilityDomainAttrDomainKindRequest{attr, decl},
+      CustomAvailabilityDomain::Kind::Dynamic);
 
   // FIXME: [availability] Return the getter as the predicate function for a
   // dynamic domain once SILGen can emit a call to it.
@@ -134,7 +146,7 @@ customDomainForSwiftDecl(ValueDecl *decl) {
 
   return CustomAvailabilityDomain::get(attr->getName().str(), kind,
                                        decl->getModuleContext(), decl,
-                                       predicate, decl->getASTContext());
+                                       predicate, ctx);
 }
 
 std::optional<AvailabilityDomain>

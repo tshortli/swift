@@ -455,6 +455,22 @@ OpaqueTypeDecl *ModuleFile::lookupOpaqueResultType(StringRef MangledName) {
   return cast<OpaqueTypeDecl>(getDecl(*iter));
 }
 
+void ModuleFile::lookupAvailabilityDomains(
+    Identifier identifier, SmallVectorImpl<AvailabilityDomain> &results) {
+  PrettyStackTraceModuleFile stackEntry(*this);
+
+  if (!Core->AvailabilityDomainDecls)
+    return;
+
+  auto iter = Core->AvailabilityDomainDecls->find(identifier.str());
+  if (iter == Core->AvailabilityDomainDecls->end())
+    return;
+
+  auto *decl = cast<ValueDecl>(getDecl(*iter));
+  if (auto domain = AvailabilityDomain::forCustom(decl))
+    results.push_back(*domain);
+}
+
 TypeDecl *ModuleFile::lookupNestedType(Identifier name,
                                        const NominalTypeDecl *parent) {
   PrettyStackTraceModuleFile stackEntry(*this);

@@ -307,6 +307,7 @@ private:
   std::unique_ptr<SerializedExtensionTable> ExtensionDecls;
   std::unique_ptr<SerializedLocalDeclTable> LocalTypeDecls;
   std::unique_ptr<SerializedOpaqueReturnTypeDeclTable> OpaqueReturnTypeDecls;
+  std::unique_ptr<SerializedLocalDeclTable> AvailabilityDomainDecls;
   std::unique_ptr<SerializedNestedTypeDeclsTable> NestedTypeDecls;
   std::unique_ptr<SerializedDeclMemberNamesTable> DeclMemberNames;
   std::unique_ptr<SerializedDeclFingerprintsTable> DeclFingerprints;
