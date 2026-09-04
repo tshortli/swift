@@ -4007,6 +4007,41 @@ void PrintAST::visitExtensionDecl(ExtensionDecl *decl) {
     printExtension(decl);
 }
 
+/// The kind of an availability domain defined with `@_availabilityDomain` is
+/// inferred from the initializer of the global variable that defines it, so a
+/// .swiftinterface has to print that initializer. If \p decl defines a domain
+/// whose kind is fixed at compile time, this returns the boolean value that
+/// makes a printed interface infer the same kind.
+///
+/// Returns `std::nullopt` for a variable that does not define a domain, and for
+/// a domain that is queried at runtime. A runtime domain is the one kind that
+/// the absence of `_const` identifies, so it needs no initializer.
+static std::optional<bool>
+getAvailabilityDomainInitValueToPrint(VarDecl *decl,
+                                      const PrintOptions &options) {
+  if (!options.IsForSwiftInterface)
+    return std::nullopt;
+
+  if (!decl || !decl->getAttrs().hasAttribute<AvailabilityDomainAttr>())
+    return std::nullopt;
+
+  auto domain = AvailabilityDomain::forCustom(decl);
+  if (!domain || !domain->isCustom())
+    return std::nullopt;
+
+  switch (domain->getCustomDomain()->getKind()) {
+  case CustomAvailabilityDomain::Kind::Enabled:
+  case CustomAvailabilityDomain::Kind::AlwaysEnabled:
+    return true;
+  case CustomAvailabilityDomain::Kind::Disabled:
+    return false;
+  case CustomAvailabilityDomain::Kind::Dynamic:
+    break;
+  }
+
+  return std::nullopt;
+}
+
 void PrintAST::visitPatternBindingDecl(PatternBindingDecl *decl) {
   // FIXME: We're not printing proper "{ get set }" annotations in pattern
   // binding decls.  As a hack, scan the decl to find out if any of the
@@ -4083,8 +4118,10 @@ void PrintAST::visitPatternBindingDecl(PatternBindingDecl *decl) {
       }
     } else if (Options.VarInitializers) {
       auto *vd = decl->getAnchoringVarDecl(idx);
-      if (decl->hasInitStringRepresentation(idx) &&
-          vd->isInitExposedToClients()) {
+      if (auto value = getAvailabilityDomainInitValueToPrint(vd, Options)) {
+        Printer << " = " << (*value ? "true" : "false");
+      } else if (decl->hasInitStringRepresentation(idx) &&
+                 vd->isInitExposedToClients()) {
         SmallString<128> scratch;
         Printer << " = " << decl->getInitStringRepresentation(idx, scratch);
       }

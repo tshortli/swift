@@ -521,7 +521,27 @@ static bool usesFeatureCoroutineAccessors(Decl *decl) {
 
 UNINTERESTING_FEATURE(GeneralizedIsSameMetaTypeBuiltin)
 UNINTERESTING_FEATURE(CustomAvailability)
-UNINTERESTING_FEATURE(CustomAvailabilityDomains)
+
+static bool usesFeatureCustomAvailabilityDomains(Decl *decl) {
+  // A module-scope variable is printed as part of its PatternBindingDecl, so
+  // look through to the variables that the pattern binding declares.
+  if (auto *PBD = dyn_cast<PatternBindingDecl>(decl)) {
+    for (auto i : range(PBD->getNumPatternEntries())) {
+      bool definesDomain = false;
+      PBD->getPattern(i)->forEachVariable([&](VarDecl *var) {
+        definesDomain |= usesFeatureCustomAvailabilityDomains(var);
+      });
+
+      if (definesDomain)
+        return true;
+    }
+
+    return false;
+  }
+
+  return decl->getAttrs().hasAttribute<AvailabilityDomainAttr>();
+}
+
 UNINTERESTING_FEATURE(BuiltinMarkDependence)
 UNINTERESTING_FEATURE(BuiltinGepProjection)
 

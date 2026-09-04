@@ -100,8 +100,9 @@ AvailabilityDomainAttrDomainKindRequest::evaluate(
   // The value of a '_const' domain determines whether it is enabled. A domain
   // that is both enabled and defaulted is enabled for every deployment.
   //
-  // FIXME: [availability] A .swiftinterface has no initializer to inspect, so
-  // the kind must be encoded in the printed attribute instead.
+  // A global variable's initializer is not normally part of a module's
+  // interface, but a .swiftinterface prints the initializer of a '_const'
+  // domain so that this query gives the same answer there.
   auto *initExpr = getBooleanLiteralInit(varDecl);
   if (!initExpr)
     return CustomAvailabilityDomain::Kind::Enabled;
