@@ -1862,8 +1862,8 @@ bool WitnessChecker::findBestWitness(
     }
   }
 
-  // If there are multiple viable matches, drop any that are less available than the
-  // requirement.
+  // If there are multiple viable matches, drop any that are less available than
+  // the requirement, or that require a conformance that is.
   if (numViable > 1) {
     SmallVector<RequirementMatch, 2> checkedMatches;
     bool foundCheckedMatch = false;
@@ -1871,7 +1871,12 @@ bool WitnessChecker::findBestWitness(
     for (auto match : matches) {
       if (!match.isViable()) {
         checkedMatches.push_back(match);
-      } else if (!checkWitness(requirement, match).isLessAvailable()) {
+        continue;
+      }
+
+      auto check = checkWitness(requirement, match);
+      if (!check.isLessAvailable() &&
+          !check.isLessAvailableConformanceRequired()) {
         foundCheckedMatch = true;
         checkedMatches.push_back(match);
       }
@@ -2040,25 +2045,96 @@ static bool checkWitnessAccess(DeclContext *dc,
   return false;
 }
 
+/// A conformance that referencing a witness requires, paired with the
+/// availability restriction that makes it unusable in some of the contexts
+/// where the witnessed requirement is usable.
+using ConformanceAvailabilityRestriction =
+    std::pair<AvailabilityRestriction, const RootProtocolConformance *>;
+
+static std::optional<ConformanceAvailabilityRestriction>
+getConformanceAvailabilityRestriction(SubstitutionMap subs,
+                                      AvailabilityContext &requiredContext);
+
+/// Determines whether \p conformance, or any conformance that it depends on,
+/// cannot be used in every context that \p requiredContext describes.
+static std::optional<ConformanceAvailabilityRestriction>
+getConformanceAvailabilityRestriction(ProtocolConformanceRef conformance,
+                                      AvailabilityContext &requiredContext) {
+  if (conformance.isInvalid() || conformance.isAbstract())
+    return std::nullopt;
+
+  if (conformance.isPack()) {
+    for (auto patternConf : conformance.getPack()->getPatternConformances()) {
+      if (auto result = getConformanceAvailabilityRestriction(patternConf,
+                                                              requiredContext))
+        return result;
+    }
+    return std::nullopt;
+  }
+
+  auto *concrete = conformance.getConcrete();
+  auto *rootConf = concrete->getRootConformance();
+
+  // Conformance to Copyable and Escapable has no availability of its own,
+  // independent of the availability of the conforming type.
+  if (rootConf->getProtocol()->getInvertibleProtocolKind())
+    return std::nullopt;
+
+  // Only a conformance declared by an extension can be less available than the
+  // type that conforms. A conformance declared on the type itself is covered by
+  // the availability of the type.
+  if (auto *ext = dyn_cast<ExtensionDecl>(rootConf->getDeclContext())) {
+    if (auto restriction = requiredContext.unsatisfiedRestrictionForDecl(ext))
+      return std::make_pair(*restriction, rootConf);
+  }
+
+  return getConformanceAvailabilityRestriction(concrete->getSubstitutionMap(),
+                                               requiredContext);
+}
+
+/// Searches \p subs for a conformance that cannot be used in every context that
+/// \p requiredContext describes.
+static std::optional<ConformanceAvailabilityRestriction>
+getConformanceAvailabilityRestriction(SubstitutionMap subs,
+                                      AvailabilityContext &requiredContext) {
+  for (auto conformance : subs.getConformances()) {
+    if (auto result =
+            getConformanceAvailabilityRestriction(conformance, requiredContext))
+      return result;
+  }
+
+  return std::nullopt;
+}
+
+static bool shouldCheckWitnessAvailability(const ValueDecl *requirement,
+                                      const ValueDecl *witness,
+                                      const DeclContext *dc) {
+  auto &ctx = dc->getASTContext();
+  if (ctx.LangOpts.DisableAvailabilityChecking)
+    return false;
+
+  // If the requirement is self-witnessing then no need to check availability.
+  if (requirement == witness)
+    return false;
+
+  // We assume conformances in implicit code have already been checked for
+  // availability.
+  if (!dc->getParentSourceFile())
+    return false;
+
+  assert(dc->getSelfNominalTypeDecl() &&
+         "Must have a nominal or extension context");
+
+  return true;
+}
+
 static std::optional<AvailabilityRestriction>
 checkWitnessAvailability(const ValueDecl *requirement, const ValueDecl *witness,
                          const DeclContext *dc,
                          AvailabilityContext &requiredContext) {
   auto &ctx = dc->getASTContext();
-  if (ctx.LangOpts.DisableAvailabilityChecking)
+  if (!shouldCheckWitnessAvailability(requirement, witness, dc))
     return std::nullopt;
-
-  // If the requirement is self-witnessing then no need to check availability.
-  if (requirement == witness)
-    return std::nullopt;
-
-  // We assume conformances in implicit code have already been checked for
-  // availability.
-  if (!dc->getParentSourceFile())
-    return std::nullopt;
-
-  assert(dc->getSelfNominalTypeDecl() &&
-         "Must have a nominal or extension context");
 
   // FIXME: [availability] Adopt getRequirementMatchAvailabilityRestriction().
 
@@ -2093,6 +2169,35 @@ checkWitnessAvailability(const ValueDecl *requirement, const ValueDecl *witness,
   return requiredContext.unsatisfiedRestrictionForDecl(witness, flags);
 }
 
+/// Checks that the conformances needed to reference the witness in \p match are
+/// available everywhere the requirement is available.
+///
+/// This matters for a witness that comes from a constrained extension. The
+/// availability of such a witness depends implicitly on the availability of
+/// the conformances required by the `where` clause.
+static std::optional<ConformanceAvailabilityRestriction>
+checkWitnessConformanceAvailability(const ValueDecl *requirement,
+                                    const RequirementMatch &match,
+                                    const DeclContext *dc,
+                                    AvailabilityContext &requiredContext) {
+  if (!shouldCheckWitnessAvailability(requirement, match.Witness, dc))
+    return std::nullopt;
+
+  // ALLANXXX
+  // A module interface describes a binary that was already built, and that
+  // binary's witness tables are fixed. Running this check here would reject the
+  // witness the original build selected and then pick a different one, which is
+  // an ABI mismatch rather than a fix. Interfaces emitted by a compiler without
+  // this check are common: rebuilding the macOS SDK's 'Dispatch' interface
+  // fails without this exemption, because the conformance of 'DispatchQueue' to
+  // 'Executor' is introduced in macOS 14.0.
+  if (dc->isInSwiftinterface())
+    return std::nullopt;
+
+  return getConformanceAvailabilityRestriction(match.WitnessSubstitutions,
+                                               requiredContext);
+}
+
 RequirementCheck WitnessChecker::checkWitness(ValueDecl *requirement,
                                               const RequirementMatch &match) {
   if (!match.OptionalAdjustments.empty())
@@ -2118,6 +2223,13 @@ RequirementCheck WitnessChecker::checkWitness(ValueDecl *requirement,
   if (auto constraint = checkWitnessAvailability(requirement, match.Witness, DC,
                                                  requiredContext))
     return RequirementCheck(*constraint, requiredContext);
+
+  // Neither can any of the conformances that referencing the witness requires.
+  // Note that `requiredContext` was populated by the call above.
+  if (auto restrictedConformance = checkWitnessConformanceAvailability(
+          requirement, match, DC, requiredContext))
+    return RequirementCheck(restrictedConformance->first, requiredContext,
+                            restrictedConformance->second);
 
   // An unavailable requirement cannot be witnessed, just like an unavailable
   // method cannot be overridden.
@@ -4798,6 +4910,80 @@ ConformanceChecker::resolveWitnessViaLookup(ValueDecl *requirement) {
       getASTContext().addDelayedConformanceDiag(Conformance, false,
                                                 DiagnoseUsableFromInline(witness));
       break;
+
+    case CheckKind::WitnessConformanceAvailability: {
+      // Referencing this witness requires a conformance that is not available
+      // everywhere the requirement is available. Reject the witness and let
+      // the derivation strategy supply one instead.
+      if (canDerive)
+        return ResolveWitnessResult::Missing;
+
+      getASTContext().addDelayedConformanceDiag(
+          Conformance, /*isError=*/false,
+          [witness, requirement,
+           check](NormalProtocolConformance *conformance) {
+            ASTContext &ctx = witness->getASTContext();
+            auto &diags = ctx.Diags;
+            auto diagLoc = getLocForDiagnosingWitness(conformance, witness);
+            auto restriction = check.getAvailabilityRestriction();
+            auto attr = restriction.getAttr();
+            auto domain = attr.getDomain();
+            auto *requiredConf = check.getRequiredConformance();
+            auto adopteeTy = requiredConf->getType();
+            auto requiredProtoTy =
+                requiredConf->getProtocol()->getDeclaredInterfaceType();
+
+            if (restriction.isUnavailable()) {
+              EncodedDiagnosticMessage encodedMessage(attr.getMessage());
+              diags.diagnose(
+                  diagLoc,
+                  diag::availability_protocol_requires_unavailable_conformance,
+                  conformance->getProtocol(), adopteeTy, requiredProtoTy,
+                  restriction.shouldHideDomainNameInDiagnostics(),
+                  restriction.getDomainAndRange(ctx).getDomain(),
+                  encodedMessage.Message);
+            } else {
+              auto requiredRange =
+                  check.getRequiredAvailabilityContext().getAvailabilityRange(
+                      domain, ctx);
+              if (requiredRange) {
+                diags.diagnose(
+                    diagLoc,
+                    diag::availability_protocol_requires_conformance_version,
+                    conformance->getProtocol(), adopteeTy, requiredProtoTy,
+                    domain.isPlatform() ? ctx.getTargetAvailabilityDomain()
+                                        : domain,
+                    *requiredRange);
+              } else {
+                diags.diagnose(
+                    diagLoc,
+                    diag::
+                        availability_protocol_requires_conformance_available_in,
+                    conformance->getProtocol(), adopteeTy, requiredProtoTy,
+                    domain);
+              }
+            }
+
+            // Point at the conformance that is not available. For a
+            // potentially unavailable conformance the restriction does not
+            // emit a note of its own, so emit one here.
+            auto *ext = cast<ExtensionDecl>(requiredConf->getDeclContext());
+            if (!restriction.emitNoteForConformance(ext, requiredConf)) {
+              auto domainAndRange = restriction.getDomainAndRange(ctx);
+              diags.diagnose(
+                  ext, diag::conformance_availability_introduced_in_version,
+                  adopteeTy, requiredProtoTy, domainAndRange.getDomain(),
+                  domainAndRange.getRange());
+            }
+
+            diags.diagnose(witness,
+                           diag::availability_conformance_required_by_witness,
+                           witness);
+            diags.diagnose(requirement,
+                           diag::availability_protocol_requirement_here);
+          });
+      break;
+    }
 
     case CheckKind::Availability: {
       if (check.isLessAvailable()) {

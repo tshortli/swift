@@ -236,6 +236,12 @@ enum class CheckKind : unsigned {
   /// The witness is less available than the requirement.
   Availability,
 
+  /// Referencing the witness requires a conformance that is less available
+  /// than the requirement. This happens when the witness comes from a
+  /// constrained extension and one of the conformances that satisfies the
+  /// extension's requirements is not as available as requirement.
+  WitnessConformanceAvailability,
+
   /// The requirement was marked explicitly unavailable.
   RequirementUnavailable,
 
@@ -263,18 +269,26 @@ class RequirementCheck {
       bool forSetter;
     } Access;
 
-    /// Storage for `CheckKind::Availability`.
+    /// Storage for `CheckKind::Availability` and
+    /// `CheckKind::WitnessConformanceAvailability`.
     struct {
       AvailabilityRestriction restriction;
       AvailabilityContext requiredContext;
+      const RootProtocolConformance *conformance;
     } Availability;
   };
+
+  bool isAvailabilityCheck() const {
+    return Kind == CheckKind::Availability ||
+           Kind == CheckKind::WitnessConformanceAvailability;
+  }
 
 public:
   RequirementCheck(CheckKind kind) : Kind(kind) {
     // These kinds have their own constructors.
     ASSERT(kind != CheckKind::Access);
     ASSERT(kind != CheckKind::Availability);
+    ASSERT(kind != CheckKind::WitnessConformanceAvailability);
   }
 
   RequirementCheck(AccessScope requiredAccessScope, bool forSetter)
@@ -283,7 +297,13 @@ public:
   RequirementCheck(AvailabilityRestriction restriction,
                    AvailabilityContext requiredContext)
       : Kind(CheckKind::Availability),
-        Availability{restriction, requiredContext} {}
+        Availability{restriction, requiredContext, nullptr} {}
+
+  RequirementCheck(AvailabilityRestriction restriction,
+                   AvailabilityContext requiredContext,
+                   const RootProtocolConformance *conformance)
+      : Kind(CheckKind::WitnessConformanceAvailability),
+        Availability{restriction, requiredContext, conformance} {}
 
   CheckKind getKind() const { return Kind; }
 
@@ -300,6 +320,13 @@ public:
                : false;
   }
 
+  /// True if referencing the witness requires a conformance that is not
+  /// available everywhere the requirement is available. Another match should be
+  /// preferred over this one whenever one exists.
+  bool isLessAvailableConformanceRequired() const {
+    return Kind == CheckKind::WitnessConformanceAvailability;
+  }
+
   /// The required access scope for checks that failed due to the witness being
   /// less accessible than the requirement.
   AccessScope getRequiredAccessScope() const {
@@ -307,18 +334,25 @@ public:
     return Access.requiredScope;
   }
 
-  /// The availability restriction that would fail if the witness were accessed
-  /// from contexts in which the requirement is available.
+  /// The availability restriction that would be violated if the witness were
+  /// accessed from contexts in which the requirement is available.
   AvailabilityRestriction getAvailabilityRestriction() const {
-    ASSERT(Kind == CheckKind::Availability);
+    ASSERT(isAvailabilityCheck());
     return Availability.restriction;
   }
 
   /// The required availability range for checks that failed due to the witness
   /// being less available than the requirement.
   AvailabilityContext getRequiredAvailabilityContext() const {
-    ASSERT(Kind == CheckKind::Availability);
+    ASSERT(isAvailabilityCheck());
     return Availability.requiredContext;
+  }
+
+  /// The conformance that referencing the witness requires, for checks that
+  /// failed because that conformance is less available than the requirement.
+  const RootProtocolConformance *getRequiredConformance() const {
+    ASSERT(Kind == CheckKind::WitnessConformanceAvailability);
+    return Availability.conformance;
   }
 };
 

@@ -543,6 +543,61 @@ extension Spaceship : Vehicle {
   func move() {}
 }
 
+// rdar://130308868 - A witness drawn from a constrained extension must not
+// require a conformance that is less available than the conformance being
+// checked, since SILGen bakes that conformance into the witness thunk.
+protocol Stable {}
+
+protocol Stall {
+  associatedtype Occupant
+  func muck()
+  func groom() // expected-note 2 {{protocol requirement here}}
+}
+
+extension Stall {
+  func muck() {}
+}
+
+extension Stall where Occupant : Stable {
+  func muck() {}
+  func groom() {} // expected-note 2 {{instance method 'groom()' requires this conformance}}
+}
+
+struct Hay {}
+
+@available(macOS 200, *)
+extension Hay : Stable {}
+// expected-note@-1 {{conformance of 'Hay' to 'Stable' was introduced in macOS 200}}
+
+// 'muck()' falls back to the unconstrained default, so it is not diagnosed.
+// 'groom()' has no other candidate.
+@available(macOS 100, *)
+struct HayStall : Stall {
+  // expected-error@-1 {{protocol 'Stall' requires the conformance of 'Hay' to 'Stable' to be available in macOS 100 and newer}}
+  typealias Occupant = Hay
+}
+
+@available(macOS 200, *)
+struct HayStall2 : Stall {
+  typealias Occupant = Hay
+}
+
+struct Straw {}
+
+@available(macOS, unavailable)
+extension Straw : Stable {}
+// expected-note@-2 {{conformance of 'Straw' to 'Stable' has been explicitly marked unavailable here}}
+
+struct StrawStall : Stall {
+  // expected-error@-1 {{protocol 'Stall' requires the conformance of 'Straw' to 'Stable', which is unavailable in macOS}}
+  typealias Occupant = Straw
+}
+
+@available(macOS, unavailable)
+struct StrawStall2 : Stall {
+  typealias Occupant = Straw
+}
+
 // rdar://problem/75430966 - Allow using unavailable conformances from unavailable contexts.
 @available(*, unavailable)
 public enum UnavailableEnum {

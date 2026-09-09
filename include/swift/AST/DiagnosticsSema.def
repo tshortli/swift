@@ -7770,6 +7770,25 @@ ERROR(availability_protocol_requirement_only_available_in,
       "is only available in %2",
       (const ProtocolDecl *, const ValueDecl *, AvailabilityDomain))
 
+ERROR(availability_protocol_requires_conformance_version,
+      none, "protocol %0 requires the conformance of %1 to %2 to be available "
+      "in %3 %4 and newer",
+      (const ProtocolDecl *, Type, Type, AvailabilityDomain,
+       AvailabilityRange))
+
+ERROR(availability_protocol_requires_conformance_available_in,
+      none, "protocol %0 requires the conformance of %1 to %2, which is only "
+      "available in %3",
+      (const ProtocolDecl *, Type, Type, AvailabilityDomain))
+
+ERROR(availability_protocol_requires_unavailable_conformance,
+      none, "protocol %0 requires the conformance of %1 to %2, which is "
+      "unavailable%select{ in %4|}3%select{|: %5}5",
+      (const ProtocolDecl *, Type, Type, bool, AvailabilityDomain, StringRef))
+
+NOTE(availability_conformance_required_by_witness, none,
+     "%kind0 requires this conformance", (const ValueDecl *))
+
 NOTE(availability_protocol_requirement_here, none,
      "protocol requirement here", ())
 
