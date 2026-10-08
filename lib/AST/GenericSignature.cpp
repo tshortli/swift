@@ -1583,9 +1583,11 @@ void RequirementSignature::getRequirementsWithInverses(
   auto sig = owner->getGenericSignature();
 
   llvm::SmallDenseSet<CanType, 2> assocTypes;
+  llvm::SmallDenseSet<CanType, 2> visited;
 
-  auto visit = [&](Type interfaceType) {
-    assocTypes.insert(interfaceType->getCanonicalType());
+  auto addInverses = [&](Type interfaceType) {
+    if (!visited.insert(interfaceType->getCanonicalType()).second)
+      return;
 
     // Any associated type declaration with a superclass bound or concrete type
     // does not have an inverse.
@@ -1606,11 +1608,42 @@ void RequirementSignature::getRequirementsWithInverses(
     }
   };
 
+  auto visit = [&](Type interfaceType) {
+    assocTypes.insert(interfaceType->getCanonicalType());
+    addInverses(interfaceType);
+  };
+
   visit(owner->getSelfInterfaceType());
 
   // Record the absence of conformances to invertible protocols.
   for (auto assocType : owner->getAssociatedTypeMembers()) {
     visit(assocType->getDeclaredInterfaceType());
+  }
+
+  // Primary associated types of the protocols in conformance requirements
+  // are assumed to be Copyable and Escapable, so record any suppressed
+  // conformances for them, too. For example, given:
+  //
+  //     protocol Q<A> { associatedtype A: ~Copyable }
+  //     protocol P { associatedtype T: Q where T.A: ~Copyable }
+  //
+  // P must mention the inverse `Self.T.A: ~Copyable`. See the corresponding
+  // logic in GenericSignatureImpl::getRequirementsWithInversesImpl.
+  //
+  // Explicit conformances of these member types to invertible protocols are
+  // not filtered out below, to remain compatible with the deprecated
+  // SuppressedAssociatedTypes feature.
+  for (auto req : getRequirements()) {
+    if (req.getKind() != RequirementKind::Conformance)
+      continue;
+
+    for (auto pat : req.getProtocolDecl()->getPrimaryAssociatedTypes()) {
+      auto member = DependentMemberType::get(req.getFirstType(), pat);
+      if (!sig->isValidTypeParameter(member))
+        continue;
+
+      addInverses(member);
+    }
   }
 
   // Filter out explicit conformances to invertible protocols.

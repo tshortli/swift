@@ -2398,17 +2398,21 @@ void PrintAST::printRequirementSignature(ProtocolDecl *owner,
       return location.InWhereClause;
     });
 
-    auto interfaceTy =
-      (isa<ProtocolDecl>(attachingTo)
-       ? cast<ProtocolDecl>(attachingTo)->getSelfInterfaceType()
-       : cast<AssociatedTypeDecl>(attachingTo)->getDeclaredInterfaceType());
-
     llvm::erase_if(inverses,
-                   [&](InverseRequirement req) {
-      // We print inverse requirements in the inheritance clause only.
-      if (flags & PrintRequirements)
+                   [&](InverseRequirement inverse) {
+      // An inverse on the declaration itself goes in its inheritance clause,
+      // while an inverse on a nested member type, such as `Self.T.A`, goes in
+      // a where clause.
+      Requirement req(RequirementKind::Conformance, inverse.subject,
+                      inverse.protocol->getDeclaredInterfaceType());
+      auto location = bestRequirementPrintLocation(owner, req);
+      if (location.AttachedTo != attachingTo)
         return true;
-      return !req.subject->isEqual(interfaceTy);
+
+      if (flags & PrintRequirements)
+        return !location.InWhereClause;
+
+      return location.InWhereClause;
     });
   }
 

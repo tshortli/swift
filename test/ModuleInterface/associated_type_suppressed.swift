@@ -154,3 +154,44 @@ extension P where Element: Copyable {
   // SIL:    @$s5assoc1PPAAE19forceIntoInterface5yyF :
   public func forceIntoInterface5() {}
 }
+
+// Inverses on the primary associated types of an associated type's
+// conformances must be printed in the protocol's where clauses.
+
+public protocol Q<A, B> {
+  associatedtype A: ~Copyable & ~Escapable
+  associatedtype B: ~Copyable
+}
+
+// INTERFACE-LABEL: public protocol HasNCElement {
+// INTERFACE-NEXT:    associatedtype S : assoc::P where Self.S.Element : ~Copyable
+// INTERFACE-NEXT:  }
+public protocol HasNCElement {
+  associatedtype S: P where S.Element: ~Copyable
+}
+
+// INTERFACE-LABEL: public struct NCElementConformer<S> : assoc::HasNCElement where S : assoc::P, S.Element : ~Copyable {
+public struct NCElementConformer<S: P>: HasNCElement where S.Element: ~Copyable {}
+
+// INTERFACE-LABEL:    public protocol HasDefaultedElement {
+// INTERFACE-NEW-NEXT:    associatedtype S : assoc::P where Self.S.Element : Swift::Copyable
+// INTERFACE-LEGACY-NEXT: associatedtype S : assoc::P where Self.S.Element : ~Copyable
+// INTERFACE-NEXT:     }
+public protocol HasDefaultedElement {
+  associatedtype S: P
+}
+
+// INTERFACE-LABEL:    public protocol HasPartiallySuppressed {
+// INTERFACE-NEW-NEXT:    associatedtype S : assoc::Q where Self.S.A : Swift::Copyable, Self.S.B : Swift::Copyable, Self.S.A : ~Escapable
+// INTERFACE-LEGACY-NEXT: associatedtype S : assoc::Q where Self.S.A : ~Copyable, Self.S.A : ~Escapable, Self.S.B : ~Copyable
+// INTERFACE-NEXT:     }
+public protocol HasPartiallySuppressed {
+  associatedtype S: Q where S.A: ~Escapable
+}
+
+// INTERFACE-LABEL: public protocol RefinesP : assoc::P where Self.Element : ~Copyable {
+public protocol RefinesP: P where Element: ~Copyable {}
+
+// INTERFACE-NEW-LABEL:    public protocol RefinesPDefaulted : assoc::P where Self.Element : Swift::Copyable {
+// INTERFACE-LEGACY-LABEL: public protocol RefinesPDefaulted : assoc::P where Self.Element : ~Copyable {
+public protocol RefinesPDefaulted: P {}
