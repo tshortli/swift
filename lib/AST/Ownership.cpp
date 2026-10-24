@@ -32,20 +32,44 @@ llvm::StringRef swift::getOwnershipSpelling(ValueOwnership ownership) {
   llvm_unreachable("Invalid ValueOwnership");
 }
 
-ValueOwnership swift::getLoweredOwnership(ValueOwnership written,
-                                          const AbstractFunctionDecl *fn,
-                                          bool isSelf) {
-  if (written != ValueOwnership::Default)
-    return written;
-  if (isa_and_nonnull<ConstructorDecl>(fn))
-    return ValueOwnership::Owned;
-  if (auto *ad = dyn_cast_or_null<AccessorDecl>(fn)) {
-    if (ad->getAccessorKind() == AccessorKind::Set)
-      return isSelf ? ValueOwnership::InOut : ValueOwnership::Owned;
-    if (isYieldingMutableAccessor(ad->getAccessorKind())) {
-      assert(isSelf);
-      return ValueOwnership::InOut;
-    }
+llvm::StringRef swift::getOwnershipSpelling(LoweredOwnership ownership) {
+  switch (ownership) {
+  case LoweredOwnership::Shared:
+    return getOwnershipSpelling(ValueOwnership::Shared);
+  case LoweredOwnership::InOut:
+    return getOwnershipSpelling(ValueOwnership::InOut);
+  case LoweredOwnership::Owned:
+    return getOwnershipSpelling(ValueOwnership::Owned);
   }
-  return ValueOwnership::Shared;
+  llvm_unreachable("Invalid LoweredOwnership");
+}
+
+LoweredOwnership swift::getLoweredOwnership(ValueOwnership written,
+                                            const AbstractFunctionDecl *fn,
+                                            bool isSelf) {
+  switch (written) {
+  case ValueOwnership::Shared:
+    return LoweredOwnership::Shared;
+  case ValueOwnership::InOut:
+    return LoweredOwnership::InOut;
+  case ValueOwnership::Owned:
+    return LoweredOwnership::Owned;
+  case ValueOwnership::Default:
+    break;
+  }
+  if (isa_and_nonnull<ConstructorDecl>(fn))
+    return LoweredOwnership::Owned;
+  if (auto *ad = dyn_cast_or_null<AccessorDecl>(fn)) {
+    // A setter or an init accessor owns its parameters other than `self`. A
+    // setter that's mutating writes `self` as `inout`, so if it isn't written,
+    // `self` is borrowed.
+    if (ad->getAccessorKind() == AccessorKind::Set ||
+        ad->getAccessorKind() == AccessorKind::Init)
+      return isSelf ? LoweredOwnership::Shared : LoweredOwnership::Owned;
+    // A modify or mutate accessor's `self` is `inout`. Its other parameters
+    // are borrowed, like those of any other function.
+    if (isYieldingMutableAccessor(ad->getAccessorKind()) && isSelf)
+      return LoweredOwnership::InOut;
+  }
+  return LoweredOwnership::Shared;
 }
