@@ -1,5 +1,8 @@
-// RUN: %target-sil-opt -sil-print-types -enable-sil-verify-all %s -redundant-load-elimination | %FileCheck %s
+// RUN: %target-sil-opt -sil-print-types -enable-sil-verify-all %s -redundant-load-elimination \
+// RUN:   -enable-experimental-feature Lifetimes | %FileCheck %s
 // TODO : Add a version with semantic-arc-opts when #34971 is landed or DCE is enabled on OSSA
+
+// REQUIRES: swift_feature_Lifetimes
 
 
 sil_stage canonical
@@ -145,6 +148,18 @@ struct NC : ~Copyable {
   let b: Int
 
   deinit
+}
+
+struct Int64Pair {
+  var x: Builtin.Int64
+  var y: Builtin.Int64
+}
+
+struct NEPointer : ~Escapable {
+  var p: Builtin.RawPointer
+
+  @_lifetime(immortal)
+  init()
 }
 
 sil_global @total : $Int32
@@ -1840,4 +1855,288 @@ bb0(%0 : $Builtin.RawPointer):
   store %1 to [init] %a
   %r = tuple ()
   return %r
+}
+
+sil @unknown : $@convention(thin) () -> ()
+sil @use_raw_pointer : $@convention(thin) (Builtin.RawPointer) -> ()
+sil @modify_64 : $@convention(thin) (@inout Builtin.Int64) -> ()
+
+// The following tests scan more than 16 instructions, so that the scanner only visits the users of a
+// non-escaping stack location.
+
+// CHECK-LABEL: sil [ossa] @forward_over_long_scan_of_non_escaping_stack :
+// CHECK-NOT:     load
+// CHECK:         return %0
+// CHECK-LABEL: } // end sil function 'forward_over_long_scan_of_non_escaping_stack'
+sil [ossa] @forward_over_long_scan_of_non_escaping_stack : $@convention(thin) (Builtin.Int64) -> Builtin.Int64 {
+bb0(%0 : $Builtin.Int64):
+  %1 = alloc_stack $Builtin.Int64
+  store %0 to [trivial] %1
+  %f = function_ref @unknown : $@convention(thin) () -> ()
+  %a = apply %f() : $@convention(thin) () -> ()
+  %i0 = integer_literal $Builtin.Int64, 0
+  %i1 = integer_literal $Builtin.Int64, 1
+  %i2 = integer_literal $Builtin.Int64, 2
+  %i3 = integer_literal $Builtin.Int64, 3
+  %i4 = integer_literal $Builtin.Int64, 4
+  %i5 = integer_literal $Builtin.Int64, 5
+  %i6 = integer_literal $Builtin.Int64, 6
+  %i7 = integer_literal $Builtin.Int64, 7
+  %i8 = integer_literal $Builtin.Int64, 8
+  %i9 = integer_literal $Builtin.Int64, 9
+  %i10 = integer_literal $Builtin.Int64, 10
+  %i11 = integer_literal $Builtin.Int64, 11
+  %i12 = integer_literal $Builtin.Int64, 12
+  %i13 = integer_literal $Builtin.Int64, 13
+  %i14 = integer_literal $Builtin.Int64, 14
+  %i15 = integer_literal $Builtin.Int64, 15
+  %i16 = integer_literal $Builtin.Int64, 16
+  %i17 = integer_literal $Builtin.Int64, 17
+  %2 = load [trivial] %1
+  dealloc_stack %1
+  return %2
+}
+
+// CHECK-LABEL: sil [ossa] @dont_forward_over_long_scan_of_escaping_stack :
+// CHECK:         apply
+// CHECK:         [[L:%.*]] = load [trivial] %1
+// CHECK:         return [[L]]
+// CHECK-LABEL: } // end sil function 'dont_forward_over_long_scan_of_escaping_stack'
+sil [ossa] @dont_forward_over_long_scan_of_escaping_stack : $@convention(thin) (Builtin.Int64) -> Builtin.Int64 {
+bb0(%0 : $Builtin.Int64):
+  %1 = alloc_stack $Builtin.Int64
+  %p = address_to_pointer %1 to $Builtin.RawPointer
+  %u = function_ref @use_raw_pointer : $@convention(thin) (Builtin.RawPointer) -> ()
+  %ua = apply %u(%p) : $@convention(thin) (Builtin.RawPointer) -> ()
+  store %0 to [trivial] %1
+  %f = function_ref @unknown : $@convention(thin) () -> ()
+  %a = apply %f() : $@convention(thin) () -> ()
+  %i0 = integer_literal $Builtin.Int64, 0
+  %i1 = integer_literal $Builtin.Int64, 1
+  %i2 = integer_literal $Builtin.Int64, 2
+  %i3 = integer_literal $Builtin.Int64, 3
+  %i4 = integer_literal $Builtin.Int64, 4
+  %i5 = integer_literal $Builtin.Int64, 5
+  %i6 = integer_literal $Builtin.Int64, 6
+  %i7 = integer_literal $Builtin.Int64, 7
+  %i8 = integer_literal $Builtin.Int64, 8
+  %i9 = integer_literal $Builtin.Int64, 9
+  %i10 = integer_literal $Builtin.Int64, 10
+  %i11 = integer_literal $Builtin.Int64, 11
+  %i12 = integer_literal $Builtin.Int64, 12
+  %i13 = integer_literal $Builtin.Int64, 13
+  %i14 = integer_literal $Builtin.Int64, 14
+  %i15 = integer_literal $Builtin.Int64, 15
+  %i16 = integer_literal $Builtin.Int64, 16
+  %i17 = integer_literal $Builtin.Int64, 17
+  %2 = load [trivial] %1
+  dealloc_stack %1
+  return %2
+}
+
+// CHECK-LABEL: sil [ossa] @dont_forward_over_long_scan_of_modified_stack_projection :
+// CHECK:         apply
+// CHECK:         [[L:%.*]] = load [trivial]
+// CHECK:         return [[L]]
+// CHECK-LABEL: } // end sil function 'dont_forward_over_long_scan_of_modified_stack_projection'
+sil [ossa] @dont_forward_over_long_scan_of_modified_stack_projection : $@convention(thin) (Builtin.Int64) -> Builtin.Int64 {
+bb0(%0 : $Builtin.Int64):
+  %1 = alloc_stack $(Builtin.Int64, Builtin.Int64)
+  %2 = tuple_element_addr %1, 0
+  store %0 to [trivial] %2
+  %3 = begin_access [modify] [static] %2
+  %f = function_ref @modify_64 : $@convention(thin) (@inout Builtin.Int64) -> ()
+  %a = apply %f(%3) : $@convention(thin) (@inout Builtin.Int64) -> ()
+  end_access %3
+  %i0 = integer_literal $Builtin.Int64, 0
+  %i1 = integer_literal $Builtin.Int64, 1
+  %i2 = integer_literal $Builtin.Int64, 2
+  %i3 = integer_literal $Builtin.Int64, 3
+  %i4 = integer_literal $Builtin.Int64, 4
+  %i5 = integer_literal $Builtin.Int64, 5
+  %i6 = integer_literal $Builtin.Int64, 6
+  %i7 = integer_literal $Builtin.Int64, 7
+  %i8 = integer_literal $Builtin.Int64, 8
+  %i9 = integer_literal $Builtin.Int64, 9
+  %i10 = integer_literal $Builtin.Int64, 10
+  %i11 = integer_literal $Builtin.Int64, 11
+  %i12 = integer_literal $Builtin.Int64, 12
+  %i13 = integer_literal $Builtin.Int64, 13
+  %i14 = integer_literal $Builtin.Int64, 14
+  %i15 = integer_literal $Builtin.Int64, 15
+  %i16 = integer_literal $Builtin.Int64, 16
+  %i17 = integer_literal $Builtin.Int64, 17
+  %4 = tuple_element_addr %1, 0
+  %5 = load [trivial] %4
+  dealloc_stack %1
+  return %5
+}
+
+sil [ossa] @Int64Pair_x_mutate : $@convention(method) (@inout Int64Pair) -> @inout Builtin.Int64 {
+[%0: read v**]
+[global: ]
+bb0(%0 : $*Int64Pair):
+  %1 = struct_element_addr %0, #Int64Pair.x
+  return %1
+}
+
+// The apply returns an address of the stack location.
+// CHECK-LABEL: sil [ossa] @dont_forward_over_long_scan_of_stack_with_address_result :
+// CHECK:         store %1 to [trivial]
+// CHECK:         [[L:%.*]] = load [trivial]
+// CHECK:         return [[L]]
+// CHECK-LABEL: } // end sil function 'dont_forward_over_long_scan_of_stack_with_address_result'
+sil [ossa] @dont_forward_over_long_scan_of_stack_with_address_result : $@convention(thin) (Builtin.Int64, Builtin.Int64) -> Builtin.Int64 {
+bb0(%0 : $Builtin.Int64, %1 : $Builtin.Int64):
+  %2 = alloc_stack $Int64Pair
+  %3 = struct_element_addr %2, #Int64Pair.x
+  store %0 to [trivial] %3
+  %f = function_ref @Int64Pair_x_mutate : $@convention(method) (@inout Int64Pair) -> @inout Builtin.Int64
+  %4 = apply %f(%2) : $@convention(method) (@inout Int64Pair) -> @inout Builtin.Int64
+  store %1 to [trivial] %4
+  %i0 = integer_literal $Builtin.Int64, 0
+  %i1 = integer_literal $Builtin.Int64, 1
+  %i2 = integer_literal $Builtin.Int64, 2
+  %i3 = integer_literal $Builtin.Int64, 3
+  %i4 = integer_literal $Builtin.Int64, 4
+  %i5 = integer_literal $Builtin.Int64, 5
+  %i6 = integer_literal $Builtin.Int64, 6
+  %i7 = integer_literal $Builtin.Int64, 7
+  %i8 = integer_literal $Builtin.Int64, 8
+  %i9 = integer_literal $Builtin.Int64, 9
+  %i10 = integer_literal $Builtin.Int64, 10
+  %i11 = integer_literal $Builtin.Int64, 11
+  %i12 = integer_literal $Builtin.Int64, 12
+  %i13 = integer_literal $Builtin.Int64, 13
+  %i14 = integer_literal $Builtin.Int64, 14
+  %i15 = integer_literal $Builtin.Int64, 15
+  %i16 = integer_literal $Builtin.Int64, 16
+  %i17 = integer_literal $Builtin.Int64, 17
+  %5 = struct_element_addr %2, #Int64Pair.x
+  %6 = load [trivial] %5
+  dealloc_stack %2
+  return %6
+}
+
+sil @scoped_dependence_on_inout : $@convention(thin) (@inout Builtin.Int64) -> @lifetime(borrow 0) @owned NEPointer {
+[%0: escape => %r, read v**]
+[global: ]
+}
+
+// The result of the apply has a scoped dependence on the stack location.
+// CHECK-LABEL: sil [ossa] @dont_forward_over_long_scan_of_stack_with_scoped_dependence :
+// CHECK:         store %1 to [trivial]
+// CHECK:         [[L:%.*]] = load [trivial]
+// CHECK:         return [[L]]
+// CHECK-LABEL: } // end sil function 'dont_forward_over_long_scan_of_stack_with_scoped_dependence'
+sil [ossa] @dont_forward_over_long_scan_of_stack_with_scoped_dependence : $@convention(thin) (Builtin.Int64, Builtin.Int64) -> Builtin.Int64 {
+bb0(%0 : $Builtin.Int64, %1 : $Builtin.Int64):
+  %2 = alloc_stack $Builtin.Int64
+  store %0 to [trivial] %2
+  %f = function_ref @scoped_dependence_on_inout : $@convention(thin) (@inout Builtin.Int64) -> @lifetime(borrow 0) @owned NEPointer
+  %3 = apply %f(%2) : $@convention(thin) (@inout Builtin.Int64) -> @lifetime(borrow 0) @owned NEPointer
+  %4 = begin_borrow %3
+  %5 = struct_extract %4, #NEPointer.p
+  %6 = pointer_to_address %5 to [strict] $*Builtin.Int64
+  store %1 to [trivial] %6
+  end_borrow %4
+  destroy_value %3
+  %i0 = integer_literal $Builtin.Int64, 0
+  %i1 = integer_literal $Builtin.Int64, 1
+  %i2 = integer_literal $Builtin.Int64, 2
+  %i3 = integer_literal $Builtin.Int64, 3
+  %i4 = integer_literal $Builtin.Int64, 4
+  %i5 = integer_literal $Builtin.Int64, 5
+  %i6 = integer_literal $Builtin.Int64, 6
+  %i7 = integer_literal $Builtin.Int64, 7
+  %i8 = integer_literal $Builtin.Int64, 8
+  %i9 = integer_literal $Builtin.Int64, 9
+  %i10 = integer_literal $Builtin.Int64, 10
+  %i11 = integer_literal $Builtin.Int64, 11
+  %i12 = integer_literal $Builtin.Int64, 12
+  %i13 = integer_literal $Builtin.Int64, 13
+  %i14 = integer_literal $Builtin.Int64, 14
+  %i15 = integer_literal $Builtin.Int64, 15
+  %i16 = integer_literal $Builtin.Int64, 16
+  %i17 = integer_literal $Builtin.Int64, 17
+  %7 = load [trivial] %2
+  dealloc_stack %2
+  return %7
+}
+
+// A load_borrow of the stack location doesn't prevent forwarding.
+// CHECK-LABEL: sil [ossa] @forward_over_long_scan_of_stack_with_load_borrow :
+// CHECK:         [[C:%.*]] = copy_value %0
+// CHECK-NOT:     load [copy]
+// CHECK:         return [[C]]
+// CHECK-LABEL: } // end sil function 'forward_over_long_scan_of_stack_with_load_borrow'
+sil [ossa] @forward_over_long_scan_of_stack_with_load_borrow : $@convention(thin) (@owned C1) -> @owned C1 {
+bb0(%0 : @owned $C1):
+  %1 = alloc_stack $C1
+  store %0 to [init] %1
+  %2 = load_borrow %1
+  end_borrow %2
+  %i0 = integer_literal $Builtin.Int64, 0
+  %i1 = integer_literal $Builtin.Int64, 1
+  %i2 = integer_literal $Builtin.Int64, 2
+  %i3 = integer_literal $Builtin.Int64, 3
+  %i4 = integer_literal $Builtin.Int64, 4
+  %i5 = integer_literal $Builtin.Int64, 5
+  %i6 = integer_literal $Builtin.Int64, 6
+  %i7 = integer_literal $Builtin.Int64, 7
+  %i8 = integer_literal $Builtin.Int64, 8
+  %i9 = integer_literal $Builtin.Int64, 9
+  %i10 = integer_literal $Builtin.Int64, 10
+  %i11 = integer_literal $Builtin.Int64, 11
+  %i12 = integer_literal $Builtin.Int64, 12
+  %i13 = integer_literal $Builtin.Int64, 13
+  %i14 = integer_literal $Builtin.Int64, 14
+  %i15 = integer_literal $Builtin.Int64, 15
+  %i16 = integer_literal $Builtin.Int64, 16
+  %i17 = integer_literal $Builtin.Int64, 17
+  %3 = load [copy] %1
+  destroy_addr %1
+  dealloc_stack %1
+  return %3
+}
+
+sil @modify_pack : $@convention(thin) (@pack_inout Pack{Builtin.Int64}) -> ()
+
+// The address of the stack location is stored into the pack.
+// CHECK-LABEL: sil [ossa] @dont_forward_over_long_scan_of_stack_stored_into_pack :
+// CHECK:         apply
+// CHECK:         [[L:%.*]] = load [trivial] %2
+// CHECK:         return [[L]]
+// CHECK-LABEL: } // end sil function 'dont_forward_over_long_scan_of_stack_stored_into_pack'
+sil [ossa] @dont_forward_over_long_scan_of_stack_stored_into_pack : $@convention(thin) (Builtin.Int64) -> Builtin.Int64 {
+bb0(%0 : $Builtin.Int64):
+  %1 = alloc_pack $Pack{Builtin.Int64}
+  %2 = alloc_stack $Builtin.Int64
+  %3 = scalar_pack_index 0 of $Pack{Builtin.Int64}
+  pack_element_set %2 into %3 of %1
+  store %0 to [trivial] %2
+  %f = function_ref @modify_pack : $@convention(thin) (@pack_inout Pack{Builtin.Int64}) -> ()
+  %a = apply %f(%1) : $@convention(thin) (@pack_inout Pack{Builtin.Int64}) -> ()
+  %i0 = integer_literal $Builtin.Int64, 0
+  %i1 = integer_literal $Builtin.Int64, 1
+  %i2 = integer_literal $Builtin.Int64, 2
+  %i3 = integer_literal $Builtin.Int64, 3
+  %i4 = integer_literal $Builtin.Int64, 4
+  %i5 = integer_literal $Builtin.Int64, 5
+  %i6 = integer_literal $Builtin.Int64, 6
+  %i7 = integer_literal $Builtin.Int64, 7
+  %i8 = integer_literal $Builtin.Int64, 8
+  %i9 = integer_literal $Builtin.Int64, 9
+  %i10 = integer_literal $Builtin.Int64, 10
+  %i11 = integer_literal $Builtin.Int64, 11
+  %i12 = integer_literal $Builtin.Int64, 12
+  %i13 = integer_literal $Builtin.Int64, 13
+  %i14 = integer_literal $Builtin.Int64, 14
+  %i15 = integer_literal $Builtin.Int64, 15
+  %i16 = integer_literal $Builtin.Int64, 16
+  %i17 = integer_literal $Builtin.Int64, 17
+  %4 = load [trivial] %2
+  dealloc_stack %2
+  dealloc_pack %1
+  return %4
 }

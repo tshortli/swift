@@ -278,6 +278,7 @@ private extension LoadingInstruction {
 
   func isRedundant(at accessPath: AccessPath, complexityBudget: inout Int, _ context: FunctionPassContext) -> DataflowResult {
     var scanner = InstructionScanner(load: self, accessPath: accessPath, context.aliasAnalysis)
+    defer { scanner.deinitialize() }
 
     switch scanner.scan(instructions: ReverseInstructionList(first: self.previous),
                         in: parentBlock,
@@ -574,6 +575,21 @@ private struct InstructionScanner {
   private let aliasAnalysis: AliasAnalysis
   private let loadAddress: AddressWithAccessPath
 
+  private enum AccessingInstructions {
+    case notComputed
+    // The load is not from a stack location, or the address of the stack location may escape.
+    case unknown
+    // Only these instructions can read or write the non-escaping stack location.
+    case known(InstructionSet)
+  }
+
+  // Long scans use the instructions which can access a non-escaping stack location to skip alias analysis
+  // queries for all other instructions. The instructions are computed lazily, once `numScannedInstructions`
+  // exceeds `accessingInstructionsThreshold`.
+  private var accessingInstructions = AccessingInstructions.notComputed
+  private var numScannedInstructions = 0
+  private static let accessingInstructionsThreshold = 16
+
   private(set) var potentiallyRedundantSubpath: AccessPath? = nil
   private(set) var availableValues = Array<AvailableValue>()
 
@@ -585,10 +601,24 @@ private struct InstructionScanner {
     self.loadAddress = AddressWithAccessPath(load.address)
   }
 
+  mutating func deinitialize() {
+    if case .known(var instructions) = accessingInstructions {
+      instructions.deinitialize()
+    }
+  }
+
   enum ScanResult {
     case overwritten
     case available
     case transparent
+  }
+
+  private mutating func computeAccessingInstructions() {
+    if let instructions = aliasAnalysis.computeAccessingInstructions(ofStackAddress: loadAddress) {
+      accessingInstructions = .known(instructions)
+    } else {
+      accessingInstructions = .unknown
+    }
   }
 
   mutating func scan(instructions: ReverseInstructionList,
@@ -599,6 +629,17 @@ private struct InstructionScanner {
       complexityBudget -= 1
       if complexityBudget <= 0 {
         return .overwritten
+      }
+
+      numScannedInstructions += 1
+      if numScannedInstructions > InstructionScanner.accessingInstructionsThreshold {
+        if case .notComputed = accessingInstructions {
+          computeAccessingInstructions()
+        }
+        if case .known(let instructions) = accessingInstructions, !instructions.contains(inst) {
+          // The instruction cannot read or write the non-escaping stack location.
+          continue
+        }
       }
 
       switch visit(instruction: inst) {

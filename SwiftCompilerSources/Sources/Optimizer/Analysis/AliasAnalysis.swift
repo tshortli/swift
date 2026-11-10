@@ -136,6 +136,29 @@ struct AliasAnalysis {
     return address.value.allContainedAddresses.canAddressAlias(with: v2.allContainedAddresses, context)
   }
 
+  /// Returns all instructions which may read or write the memory at `address`, whose access base must be a stack
+  /// location. Returns nil if the instructions cannot be determined, e.g. because the address escapes.
+  ///
+  /// `getMemoryEffect(of: inst, on: address)` returns no effects for each instruction `inst` which is not in the
+  /// returned set. Clients which check many instructions against the same address can use the set to skip the
+  /// queries for most of the instructions. The caller must deinitialize the returned set.
+  ///
+  /// This is restricted to stack locations, because for other access bases `computeMemoryEffect` computes some
+  /// effects without escape analysis, e.g. the effects of an `end_borrow` on the interior pointers of the borrowed
+  /// value.
+  func computeAccessingInstructions(ofStackAddress address: AddressWithAccessPath) -> InstructionSet? {
+    guard case .stack = address.accessPath.base else {
+      return nil
+    }
+    // Do the same walk as `defaultEffects`, `getApplyEffect` and the other escape-based queries. Those queries
+    // only find effects for instructions which are visited by the walk.
+    return MemoryLocation.addressWithAccessPath(address).addressWithPath.visit(
+      using: AccessingInstructionsVisitor(context),
+      initialWalkingDirection: MemoryLocation.addressWithAccessPath(address).walkingDirection,
+      complexityBudget: getComplexityBudget(for: address.value.parentFunction),
+      context)
+  }
+
   static func register() {
     BridgedAliasAnalysis.registerAnalysis(
       // initFn
@@ -239,6 +262,8 @@ struct AliasAnalysis {
     case let endAccess as EndAccessInst:
       // Similar to begin_access, we model it as a memory read and/or write to prevent optimizations to move
       // other aliased loads/stores into the access scope.
+      // Note: `AccessingInstructionsVisitor` must handle each scope-ending instruction whose effects are computed
+      // from the instruction which begins the scope.
       return getAccessScopeEffect(of: endAccess.beginAccess, on: memLoc)
 
     case is InjectEnumAddrInst,
@@ -345,6 +370,8 @@ struct AliasAnalysis {
       return getPartialApplyEffect(of: partialApply, on: memLoc)
 
     case let endApply as EndApplyInst:
+      // Note: `AccessingInstructionsVisitor` must handle each scope-ending instruction whose effects are computed
+      // from the instruction which begins the scope.
       let beginApply = endApply.beginApply
       if case .yield(let addr) = memLoc.accessBase, addr.parentInstruction == beginApply {
         // The lifetime of yielded values always end at the end_apply. This is required because a yielded
@@ -356,6 +383,7 @@ struct AliasAnalysis {
       return getApplyEffect(of: beginApply, on: memLoc)
 
     case let abortApply as AbortApplyInst:
+      // See the note for `end_apply` above.
       let beginApply = abortApply.beginApply
       if case .yield(let addr) = memLoc.accessBase, addr.parentInstruction == beginApply {
         // See the comment for `end_apply` above.
@@ -380,6 +408,8 @@ struct AliasAnalysis {
       case let beginBorrow as BeginBorrowInst where !beginBorrow.hasPointerEscape:
         return getBorrowEffects(of: endBorrow, on: memLoc)
       case let loadBorrow as LoadBorrowInst:
+        // Note: `AccessingInstructionsVisitor` must handle each scope-ending instruction whose effects are
+        // computed from the instruction which begins the scope.
         let borrowEffects = getBorrowEffects(of: endBorrow, on: memLoc)
         // In addition to the "regular" borrow effects, a load_borrow also has effects on the memory location
         // from where it loads the value. This includes "write" to prevent any optimization to change the
@@ -994,6 +1024,54 @@ private struct PartialApplyEffectsVisitor : EscapeVisitorWithResult {
 }
 
 private struct AddressVisibleByBuiltinOnceVisitor : EscapeVisitor {
+  var followTrivialTypes: Bool { true }
+  var followLoads: Bool { false }
+}
+
+/// Collects all instructions which may access an address. See `AliasAnalysis.computeAccessingInstructions`.
+private struct AccessingInstructionsVisitor : EscapeVisitorWithResult {
+  var result: InstructionSet
+
+  init(_ context: FunctionPassContext) {
+    self.result = InstructionSet(context)
+  }
+
+  mutating func visitUse(operand: Operand, path: EscapePath) -> UseResult {
+    let user = operand.instruction
+    result.insert(user)
+
+    // `computeMemoryEffect` computes the effects of the following scope-ending instructions from the instructions
+    // which begin their scopes. The scope-ending instructions are not uses of the address. Therefore the walk
+    // doesn't visit them, and they must be added here.
+    switch user {
+    case let beginAccess as BeginAccessInst:
+      for endAccess in beginAccess.endAccessInstructions {
+        result.insert(endAccess)
+      }
+    case let loadBorrow as LoadBorrowInst:
+      for endBorrow in loadBorrow.uses.endingLifetime.users {
+        if endBorrow is BranchInst {
+          // The effects of the end of a reborrow are computed by `isEndOfReborrowedLoadBorrow`.
+          return .abort
+        }
+        result.insert(endBorrow)
+      }
+    case let beginApply as BeginApplyInst:
+      for endApply in beginApply.token.uses.users {
+        result.insert(endApply)
+      }
+    default:
+      break
+    }
+    // Note that, unlike the other visitors, uses in return instructions are not ignored, because
+    // `AddressVisibleByBuiltinOnceVisitor` doesn't ignore them either.
+    return .continueWalk
+  }
+
+  mutating func cleanupOnAbort() {
+    result.deinitialize()
+  }
+
   var followTrivialTypes: Bool { true }
   var followLoads: Bool { false }
 }
